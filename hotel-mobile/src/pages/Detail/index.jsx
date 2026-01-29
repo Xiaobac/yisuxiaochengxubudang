@@ -8,6 +8,8 @@ import {
   List,
   Loading,
   Toast,
+  DatePicker,
+  Button,
 } from 'antd-mobile';
 import {
   StarFill,
@@ -25,6 +27,9 @@ function Detail() {
   const [loading, setLoading] = useState(true);
   const [checkInDate, setCheckInDate] = useState(dayjs());
   const [checkOutDate, setCheckOutDate] = useState(dayjs().add(1, 'day'));
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [dateType, setDateType] = useState('checkIn');
+  const [selectedRoom, setSelectedRoom] = useState(null);
 
   useEffect(() => {
     loadHotelDetail();
@@ -45,6 +50,46 @@ function Detail() {
 
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const handleDateClick = (type) => {
+    setDateType(type);
+    setDatePickerVisible(true);
+  };
+
+  const handleDateConfirm = (val) => {
+    if (dateType === 'checkIn') {
+      setCheckInDate(dayjs(val));
+      // 如果入住日期晚于离店日期,自动调整离店日期
+      if (dayjs(val).isAfter(checkOutDate)) {
+        setCheckOutDate(dayjs(val).add(1, 'day'));
+      }
+    } else {
+      setCheckOutDate(dayjs(val));
+    }
+    setDatePickerVisible(false);
+  };
+
+  const handleRoomSelect = (room) => {
+    setSelectedRoom(room);
+    Toast.show({
+      content: `已选择 ${room.name || room.room_type}`,
+      duration: 1000,
+    });
+  };
+
+  const handleBooking = () => {
+    if (!selectedRoom) {
+      Toast.show({
+        content: '请先选择房型',
+        icon: 'fail',
+      });
+      return;
+    }
+    Toast.show({
+      content: '预订功能开发中...',
+      icon: 'success',
+    });
   };
 
   const renderStars = (rating) => {
@@ -134,7 +179,10 @@ function Detail() {
       {/* 日期选择 */}
       <Card className="date-card">
         <div className="date-selector">
-          <div className="date-item">
+          <div
+            className="date-item clickable"
+            onClick={() => handleDateClick('checkIn')}
+          >
             <div className="date-label">
               <CalendarOutline />
               <span>入住</span>
@@ -147,7 +195,10 @@ function Detail() {
             </div>
           </div>
           <div className="date-nights">{nights}晚</div>
-          <div className="date-item">
+          <div
+            className="date-item clickable"
+            onClick={() => handleDateClick('checkOut')}
+          >
             <div className="date-label">
               <CalendarOutline />
               <span>离店</span>
@@ -162,6 +213,16 @@ function Detail() {
         </div>
       </Card>
 
+      {/* 日期选择器 */}
+      <DatePicker
+        visible={datePickerVisible}
+        onClose={() => setDatePickerVisible(false)}
+        value={dateType === 'checkIn' ? checkInDate.toDate() : checkOutDate.toDate()}
+        onConfirm={handleDateConfirm}
+        min={new Date()}
+        title={dateType === 'checkIn' ? '选择入住日期' : '选择离店日期'}
+      />
+
       {/* 房型价格列表 */}
       <Card className="room-card" title="选择房型">
         <List>
@@ -169,15 +230,39 @@ function Detail() {
             hotel.Rooms.sort((a, b) => a.price - b.price).map((room) => (
               <List.Item
                 key={room.id}
+                clickable
+                arrow={false}
+                onClick={() => handleRoomSelect(room)}
                 extra={
-                  <div className="room-price">
-                    <div className="price-value">¥{room.price}</div>
-                    <div className="price-label">每晚</div>
+                  <div className="room-actions">
+                    <div className="room-price">
+                      <div className="price-value">¥{room.price}</div>
+                      <div className="price-label">每晚</div>
+                    </div>
+                    <Button
+                      color={selectedRoom?.id === room.id ? 'success' : 'primary'}
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRoomSelect(room);
+                      }}
+                    >
+                      {selectedRoom?.id === room.id ? '已选' : '选择'}
+                    </Button>
                   </div>
                 }
-                description={`剩余 ${room.total_count} 间`}
+                description={
+                  <div>
+                    <div>剩余 {room.available_count || room.total_count} 间</div>
+                    {room.bed_type && <div>床型: {room.bed_type}</div>}
+                    {room.size && <div>面积: {room.size}㎡</div>}
+                    {room.max_guests && <div>最多入住: {room.max_guests}人</div>}
+                  </div>
+                }
               >
-                {room.room_type}
+                <div style={{ fontWeight: selectedRoom?.id === room.id ? 'bold' : 'normal' }}>
+                  {room.name || room.room_type}
+                </div>
               </List.Item>
             ))
           ) : (
@@ -185,6 +270,32 @@ function Detail() {
           )}
         </List>
       </Card>
+
+      {/* 底部预订栏 */}
+      {hotel.Rooms && hotel.Rooms.length > 0 && (
+        <div className="booking-bar">
+          <div className="booking-info">
+            {selectedRoom ? (
+              <div>
+                <div className="selected-room">{selectedRoom.name || selectedRoom.room_type}</div>
+                <div className="total-price">
+                  共 {nights} 晚 ¥{selectedRoom.price * nights}
+                </div>
+              </div>
+            ) : (
+              <div className="select-tip">请选择房型</div>
+            )}
+          </div>
+          <Button
+            color="primary"
+            size="large"
+            onClick={handleBooking}
+            disabled={!selectedRoom}
+          >
+            立即预订
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

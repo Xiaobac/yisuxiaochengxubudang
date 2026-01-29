@@ -1,7 +1,7 @@
 .detail-page {
   min-height: 100vh;
   background-color: #f5f5f5;
-  padding-bottom: 20px;
+  padding-bottom: 80px;
 }
 
 .loading-page {
@@ -97,6 +97,14 @@
 .date-item {
   flex: 1;
   text-align: center;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.date-item.clickable:active {
+  background-color: #f5f5f5;
 }
 
 .date-label {
@@ -150,4 +158,53 @@
   padding: 20px;
   text-align: center;
   color: #999;
+}
+
+.room-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.booking-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 12px 16px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 100;
+}
+
+.booking-info {
+  flex: 1;
+}
+
+.selected-room {
+  font-size: 14px;
+  font-weight: 500;
+  color: #000;
+  margin-bottom: 4px;
+}
+
+.total-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ff6b00;
+}
+
+.select-tip {
+  font-size: 14px;
+  color: #999;
+}
+
+.booking-bar .adm-button {
+  flex-shrink: 0;
+  min-width: 120px;
 }
