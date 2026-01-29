@@ -60,7 +60,7 @@ router.get('/:id', (req, res) => {
 });
 
 // 获取我的酒店列表（商户）
-router.get('/my/list', authenticateToken, requireRole('merchant'), (req, res) => {
+router.get('/my/hotels', authenticateToken, requireRole('merchant'), (req, res) => {
   try {
     const hotels = store.hotels.getByMerchantId(req.user.id);
 
