@@ -28,6 +28,7 @@ function Home() {
   const [customPriceVisible, setCustomPriceVisible] = useState(false);
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
 
   // Banner 数据
   const banners = [
@@ -78,6 +79,14 @@ function Home() {
 
   // 快捷标签
   const quickTags = ['亲子', '豪华', '免费停车场', '游泳池', '健身房', 'WiFi'];
+
+  const handleTagClick = (tag) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter(t => t !== tag));
+    } else {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
 
   const handleSearch = () => {
     const params = {
@@ -266,7 +275,13 @@ function Home() {
           <div className="filter-label">快捷筛选</div>
           <Space wrap>
             {quickTags.map((tag) => (
-              <Tag key={tag} color="default" fill="outline">
+              <Tag
+                key={tag}
+                color={selectedTags.includes(tag) ? 'primary' : 'default'}
+                fill={selectedTags.includes(tag) ? 'solid' : 'outline'}
+                onClick={() => handleTagClick(tag)}
+                style={{ cursor: 'pointer' }}
+              >
                 {tag}
               </Tag>
             ))}

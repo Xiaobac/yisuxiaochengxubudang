@@ -34,15 +34,16 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 15px;
   color: #666;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .search-value {
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 24px;
+  font-weight: 600;
   color: #000;
+  padding: 8px 0;
 }
 
 .date-picker {
