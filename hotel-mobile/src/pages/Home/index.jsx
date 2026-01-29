@@ -29,6 +29,10 @@ function Home() {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
+  const [cityPickerVisible, setCityPickerVisible] = useState(false);
+
+  // 城市列表
+  const cities = ['上海', '北京', '杭州', '成都', '广州', '深圳', '南京', '苏州'];
 
   // Banner 数据
   const banners = [
@@ -88,6 +92,11 @@ function Home() {
     }
   };
 
+  const handleCitySelect = (selectedCity) => {
+    setCity(selectedCity);
+    setCityPickerVisible(false);
+  };
+
   const handleSearch = () => {
     const params = {
       city,
@@ -134,10 +143,51 @@ function Home() {
             <EnvironmentOutline />
             <span>目的地</span>
           </div>
-          <div className="search-value" onClick={() => setCity('上海')}>
+          <div
+            className="search-value clickable"
+            onClick={() => setCityPickerVisible(true)}
+          >
             {city}
           </div>
         </div>
+
+        {/* 城市选择弹窗 */}
+        <Modal
+          visible={cityPickerVisible}
+          onClose={() => setCityPickerVisible(false)}
+          title="选择目的地"
+          content={
+            <div style={{ padding: '12px 0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                {cities.map((cityItem) => (
+                  <div
+                    key={cityItem}
+                    onClick={() => handleCitySelect(cityItem)}
+                    style={{
+                      padding: '12px',
+                      textAlign: 'center',
+                      backgroundColor: city === cityItem ? '#1677ff' : '#f5f5f5',
+                      color: city === cityItem ? '#fff' : '#333',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '15px',
+                      fontWeight: city === cityItem ? '600' : '400',
+                    }}
+                  >
+                    {cityItem}
+                  </div>
+                ))}
+              </div>
+            </div>
+          }
+          actions={[
+            {
+              key: 'close',
+              text: '关闭',
+              onClick: () => setCityPickerVisible(false),
+            },
+          ]}
+        />
 
         {/* 关键字搜索 */}
         <div className="search-item">
