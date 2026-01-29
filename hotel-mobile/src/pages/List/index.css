@@ -53,11 +53,18 @@
 /* 重置 List.Item 的默认样式 */
 .hotel-item .adm-list-item {
   padding: 0 !important;
+  display: block !important;
 }
 
 .hotel-item .adm-list-item-content {
   padding: 0 !important;
   border: none !important;
+  display: block !important;
+}
+
+.hotel-item .adm-list-item-content-main {
+  padding: 0 !important;
+  display: block !important;
 }
 
 .hotel-item:active {
