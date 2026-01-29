@@ -24,8 +24,11 @@ function HotelList() {
   const [filters, setFilters] = useState({
     city: location.state?.city || '上海',
     keyword: location.state?.keyword || '',
-    starRating: '',
-    priceRange: '',
+    checkInDate: location.state?.checkInDate || '',
+    checkOutDate: location.state?.checkOutDate || '',
+    starRating: location.state?.starRating || '',
+    priceRange: location.state?.priceRange || '',
+    tags: location.state?.tags || '',
     sortBy: 'default',
   });
 
@@ -40,7 +43,46 @@ function HotelList() {
         city: filters.city,
         status: 'published',
       });
-      setHotels(data || []);
+
+      let filteredData = data || [];
+
+      // 关键字筛选
+      if (filters.keyword) {
+        filteredData = filteredData.filter(hotel =>
+          hotel.name.toLowerCase().includes(filters.keyword.toLowerCase())
+        );
+      }
+
+      // 星级筛选
+      if (filters.starRating) {
+        const ratings = filters.starRating.toString().split(',').map(Number);
+        filteredData = filteredData.filter(hotel =>
+          ratings.includes(hotel.star_rating)
+        );
+      }
+
+      // 价格区间筛选
+      if (filters.priceRange) {
+        const ranges = filters.priceRange.split(',');
+        filteredData = filteredData.filter(hotel => {
+          return ranges.some(range => {
+            if (range === '1000+') {
+              return hotel.price >= 1000;
+            }
+            const [min, max] = range.split('-').map(v => v === '∞' ? Infinity : Number(v));
+            return hotel.price >= min && hotel.price <= max;
+          });
+        });
+      }
+
+      // 排序
+      if (filters.sortBy === 'price_asc') {
+        filteredData.sort((a, b) => a.price - b.price);
+      } else if (filters.sortBy === 'price_desc') {
+        filteredData.sort((a, b) => b.price - a.price);
+      }
+
+      setHotels(filteredData);
       setHasMore(false);
     } catch (error) {
       console.error('加载酒店列表失败:', error);

@@ -101,8 +101,11 @@ function Home() {
     const params = {
       city,
       keyword,
+      checkInDate: dayjs(checkInDate).format('YYYY-MM-DD'),
+      checkOutDate: dayjs(checkOutDate).format('YYYY-MM-DD'),
       starRating: starRating.join(','),
       priceRange: priceRange.join(','),
+      tags: selectedTags.join(','),
     };
     navigate('/list', { state: params });
   };
