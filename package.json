@@ -1,0 +1,27 @@
+{
+  "name": "trip-hotel-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "酒店管理系统 MonoRepo",
+  "scripts": {
+    "dev": "concurrently -n \"backend,admin,mobile\" -c \"cyan,magenta,green\" \"npm run dev:backend\" \"npm run dev:admin\" \"npm run dev:mobile\"",
+    "dev:backend": "cd \"$PWD/hotel-backend\" && npm run dev",
+    "dev:admin": "cd \"$PWD/hotel-admin\" && npm run dev",
+    "dev:mobile": "cd \"$PWD/hotel-mobile\" && npm run dev",
+    "build": "npm run build:admin && npm run build:mobile",
+    "build:admin": "cd hotel-admin && npm run build",
+    "build:mobile": "cd hotel-mobile && npm run build",
+    "install:all": "npm install && cd hotel-backend && npm install && cd ../hotel-admin && npm install && cd ../hotel-mobile && npm install",
+    "clean": "rm -rf hotel-*/node_modules node_modules",
+    "lint": "npm run lint:admin && npm run lint:mobile",
+    "lint:admin": "cd hotel-admin && npm run lint",
+    "lint:mobile": "cd hotel-mobile && npm run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

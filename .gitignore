@@ -46,3 +46,5 @@ uploads/
 coverage/
 *.lcov
 .nyc_output
+.claude/
+Claude.md
