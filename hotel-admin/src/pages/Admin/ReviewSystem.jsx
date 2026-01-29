@@ -54,8 +54,7 @@ function ReviewSystem() {
 
   const handleApprove = async (hotelId) => {
     try {
-      await reviewHotel({
-        hotel_id: hotelId,
+      await reviewHotel(hotelId, {
         status: 'approved',
       });
       message.success('审核通过');
@@ -79,8 +78,7 @@ function ReviewSystem() {
     }
 
     try {
-      await reviewHotel({
-        hotel_id: rejectingHotel.id,
+      await reviewHotel(rejectingHotel.id, {
         status: 'rejected',
         reason: rejectReason,
       });
