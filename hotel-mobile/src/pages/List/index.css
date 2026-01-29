@@ -49,39 +49,61 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
+/* 重置 List.Item 的默认样式 */
+.hotel-item .adm-list-item {
+  padding: 0 !important;
+}
+
+.hotel-item .adm-list-item-content {
+  padding: 0 !important;
+  border: none !important;
+}
+
 .hotel-item:active {
   background-color: #f9f9f9;
 }
 
 .hotel-card {
-  display: flex;
+  display: flex !important;
+  flex-direction: row !important;
   gap: 12px;
   padding: 12px;
-  align-items: stretch;
+  align-items: flex-start !important;
   min-height: 110px;
+  width: 100%;
 }
 
 .hotel-image {
-  flex-shrink: 0;
-  width: 110px;
-  height: 90px;
+  flex-shrink: 0 !important;
+  width: 110px !important;
+  min-width: 110px !important;
+  max-width: 110px !important;
+  height: 90px !important;
+  min-height: 90px !important;
+  max-height: 90px !important;
   border-radius: 6px;
   overflow: hidden;
   background-color: #f0f0f0;
+  position: relative;
 }
 
 .hotel-image img {
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: cover;
   display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .hotel-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .hotel-name {
