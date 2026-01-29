@@ -91,11 +91,12 @@ router.post('/', authenticateToken, requireRole('merchant'), (req, res) => {
       description,
       images,
       rooms,
+      opening_date,
     } = req.body;
 
     // 验证必填字段
-    if (!name || !city || !address || !star_rating || !price || !rooms || rooms.length === 0) {
-      return res.status(400).json({ message: '请填写所有必填字段' });
+    if (!name || !city || !address || !star_rating || !price || !opening_date || !rooms || rooms.length === 0) {
+      return res.status(400).json({ message: '请填写所有必填字段,包括酒店开业时间' });
     }
 
     // 创建酒店
@@ -110,6 +111,7 @@ router.post('/', authenticateToken, requireRole('merchant'), (req, res) => {
       facilities: facilities || [],
       description,
       images: images || [],
+      opening_date,
     });
 
     // 创建房间

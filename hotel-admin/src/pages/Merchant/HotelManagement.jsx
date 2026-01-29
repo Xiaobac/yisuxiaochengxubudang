@@ -12,6 +12,7 @@ import {
   Tag,
   Popconfirm,
   Select,
+  DatePicker,
 } from 'antd';
 import {
   PlusOutlined,
@@ -325,6 +326,17 @@ function HotelManagement() {
               min={0}
               style={{ width: '100%' }}
               placeholder="请输入起始价格"
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="酒店开业时间"
+            name="opening_date"
+            rules={[{ required: true, message: '请选择酒店开业时间' }]}
+          >
+            <DatePicker
+              style={{ width: '100%' }}
+              placeholder="请选择开业时间"
             />
           </Form.Item>
 

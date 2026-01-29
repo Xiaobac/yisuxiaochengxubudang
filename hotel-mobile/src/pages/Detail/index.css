@@ -1,0 +1,153 @@
+.detail-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-bottom: 20px;
+}
+
+.loading-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.empty-state {
+  padding: 40px;
+  text-align: center;
+  color: #999;
+}
+
+.image-swiper {
+  width: 100%;
+  height: 250px;
+}
+
+.swiper-item {
+  width: 100%;
+  height: 250px;
+}
+
+.swiper-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hotel-info-card {
+  margin: 12px;
+}
+
+.hotel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.hotel-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #000;
+}
+
+.hotel-name-en {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.hotel-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.hotel-address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.hotel-facilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.hotel-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.date-card {
+  margin: 12px;
+}
+
+.date-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.date-item {
+  flex: 1;
+  text-align: center;
+}
+
+.date-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.date-value {
+  font-size: 18px;
+  font-weight: 500;
+  color: #000;
+  margin-bottom: 4px;
+}
+
+.date-week {
+  font-size: 12px;
+  color: #999;
+}
+
+.date-nights {
+  padding: 0 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.room-card {
+  margin: 12px;
+}
+
+.room-price {
+  text-align: right;
+}
+
+.price-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ff6b00;
+}
+
+.price-label {
+  font-size: 12px;
+  color: #999;
+}
+
+.no-rooms {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+}
