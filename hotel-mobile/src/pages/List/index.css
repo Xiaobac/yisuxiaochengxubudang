@@ -46,27 +46,35 @@
   background-color: #fff;
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.hotel-item:active {
+  background-color: #f9f9f9;
 }
 
 .hotel-card {
   display: flex;
   gap: 12px;
   padding: 12px;
-  align-items: flex-start;
+  align-items: stretch;
+  min-height: 110px;
 }
 
 .hotel-image {
   flex-shrink: 0;
-  width: 120px;
+  width: 110px;
   height: 90px;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
+  background-color: #f0f0f0;
 }
 
 .hotel-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .hotel-info {
@@ -77,46 +85,65 @@
 }
 
 .hotel-name {
-  font-size: 16px;
-  font-weight: 500;
-  color: #000;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+  margin-bottom: 4px;
 }
 
 .hotel-stars {
   display: flex;
   gap: 2px;
+  margin-bottom: 4px;
 }
 
 .hotel-address {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 6px;
 }
 
 .hotel-tags {
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.hotel-tags .adm-tag {
+  font-size: 10px;
+  padding: 2px 6px;
 }
 
 .hotel-price {
   margin-top: auto;
   text-align: right;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
 }
 
 .price-value {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   color: #ff6b00;
+  line-height: 1;
 }
 
 .price-label {
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
-  margin-left: 4px;
+  margin-left: 2px;
 }

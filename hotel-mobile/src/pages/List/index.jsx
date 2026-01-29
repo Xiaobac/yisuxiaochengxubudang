@@ -6,7 +6,6 @@ import {
   Dropdown,
   InfiniteScroll,
   List,
-  Image,
   Tag,
   Loading,
   Empty,
@@ -150,11 +149,9 @@ function HotelList() {
               >
                 <div className="hotel-card">
                   <div className="hotel-image">
-                    <Image
-                      src={hotel.images?.[0] || 'https://via.placeholder.com/150'}
-                      width={120}
-                      height={90}
-                      fit="cover"
+                    <img
+                      src={hotel.images?.[0] || 'https://via.placeholder.com/120x90'}
+                      alt={hotel.name}
                     />
                   </div>
                   <div className="hotel-info">
