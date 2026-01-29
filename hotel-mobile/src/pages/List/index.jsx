@@ -128,31 +128,45 @@ function HotelList() {
           <Dropdown>
             <Dropdown.Item key="city" title={filters.city}>
               <div style={{ padding: 12 }}>
-                {['上海', '北京', '杭州', '成都'].map((city) => (
+                {['上海', '北京', '杭州', '成都', '广州', '深圳', '南京', '苏州'].map((city) => (
                   <div
                     key={city}
-                    style={{ padding: 8 }}
-                    onClick={() => setFilters({ ...filters, city })}
+                    style={{
+                      padding: 8,
+                      cursor: 'pointer',
+                      backgroundColor: filters.city === city ? '#e6f7ff' : 'transparent',
+                      borderRadius: '4px',
+                    }}
+                    onClick={() => {
+                      setFilters({ ...filters, city });
+                    }}
                   >
                     {city}
                   </div>
                 ))}
               </div>
             </Dropdown.Item>
-            <Dropdown.Item key="star" title="星级">
+            <Dropdown.Item key="star" title={filters.starRating ? `${filters.starRating}星` : '星级'}>
               <div style={{ padding: 12 }}>
-                {[3, 4, 5].map((star) => (
+                {['不限', 3, 4, 5].map((star) => (
                   <div
                     key={star}
-                    style={{ padding: 8 }}
-                    onClick={() => setFilters({ ...filters, starRating: star })}
+                    style={{
+                      padding: 8,
+                      cursor: 'pointer',
+                      backgroundColor: (star === '不限' && !filters.starRating) || filters.starRating == star ? '#e6f7ff' : 'transparent',
+                      borderRadius: '4px',
+                    }}
+                    onClick={() => {
+                      setFilters({ ...filters, starRating: star === '不限' ? '' : star });
+                    }}
                   >
-                    {star}星级
+                    {star === '不限' ? '不限' : `${star}星级`}
                   </div>
                 ))}
               </div>
             </Dropdown.Item>
-            <Dropdown.Item key="sort" title="排序">
+            <Dropdown.Item key="sort" title={filters.sortBy === 'price_asc' ? '价格升序' : filters.sortBy === 'price_desc' ? '价格降序' : '排序'}>
               <div style={{ padding: 12 }}>
                 {[
                   { label: '默认排序', value: 'default' },
@@ -161,8 +175,15 @@ function HotelList() {
                 ].map((item) => (
                   <div
                     key={item.value}
-                    style={{ padding: 8 }}
-                    onClick={() => setFilters({ ...filters, sortBy: item.value })}
+                    style={{
+                      padding: 8,
+                      cursor: 'pointer',
+                      backgroundColor: filters.sortBy === item.value ? '#e6f7ff' : 'transparent',
+                      borderRadius: '4px',
+                    }}
+                    onClick={() => {
+                      setFilters({ ...filters, sortBy: item.value });
+                    }}
                   >
                     {item.label}
                   </div>
