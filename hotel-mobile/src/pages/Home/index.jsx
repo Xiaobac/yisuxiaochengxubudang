@@ -17,10 +17,12 @@ function Home() {
   const navigate = useNavigate();
   const [city, setCity] = useState('上海');
   const [keyword, setKeyword] = useState('');
-  const [checkInDate, setCheckInDate] = useState(dayjs().format('MM月DD日'));
-  const [checkOutDate, setCheckOutDate] = useState(dayjs().add(1, 'day').format('MM月DD日'));
+  const [checkInDate, setCheckInDate] = useState(new Date());
+  const [checkOutDate, setCheckOutDate] = useState(dayjs().add(1, 'day').toDate());
   const [starRating, setStarRating] = useState([]);
   const [priceRange, setPriceRange] = useState([]);
+  const [datePickerVisible, setDatePickerVisible] = useState(false);
+  const [dateType, setDateType] = useState('checkIn'); // 'checkIn' or 'checkOut'
 
   // Banner 数据
   const banners = [
@@ -115,23 +117,57 @@ function Home() {
         </div>
 
         {/* 日期选择 */}
-        <div className="search-item date-picker">
+        <div
+          className="search-item date-picker"
+          onClick={() => {
+            setDateType('checkIn');
+            setDatePickerVisible(true);
+          }}
+        >
           <div className="date-item">
             <div className="date-label">
               <CalendarOutline />
               <span>入住</span>
             </div>
-            <div className="date-value">{checkInDate}</div>
+            <div className="date-value">{dayjs(checkInDate).format('MM月DD日')}</div>
           </div>
-          <div className="date-divider">1晚</div>
-          <div className="date-item">
+          <div className="date-divider">{dayjs(checkOutDate).diff(dayjs(checkInDate), 'day')}晚</div>
+          <div
+            className="date-item"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDateType('checkOut');
+              setDatePickerVisible(true);
+            }}
+          >
             <div className="date-label">
               <CalendarOutline />
               <span>离店</span>
             </div>
-            <div className="date-value">{checkOutDate}</div>
+            <div className="date-value">{dayjs(checkOutDate).format('MM月DD日')}</div>
           </div>
         </div>
+
+        {/* 日期选择器 */}
+        <DatePicker
+          visible={datePickerVisible}
+          onClose={() => setDatePickerVisible(false)}
+          value={dateType === 'checkIn' ? checkInDate : checkOutDate}
+          onConfirm={(val) => {
+            if (dateType === 'checkIn') {
+              setCheckInDate(val);
+              // 如果入住日期晚于离店日期,自动调整离店日期
+              if (dayjs(val).isAfter(checkOutDate)) {
+                setCheckOutDate(dayjs(val).add(1, 'day').toDate());
+              }
+            } else {
+              setCheckOutDate(val);
+            }
+          }}
+          min={dateType === 'checkIn' ? new Date() : checkInDate}
+        >
+          {(value) => dayjs(value).format('YYYY-MM-DD')}
+        </DatePicker>
 
         {/* 星级筛选 */}
         <div className="search-item">
