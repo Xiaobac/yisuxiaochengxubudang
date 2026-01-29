@@ -8,6 +8,8 @@ import {
   Selector,
   Tag,
   Space,
+  Input,
+  Modal,
 } from 'antd-mobile';
 import { EnvironmentOutline, CalendarOutline } from 'antd-mobile-icons';
 import dayjs from 'dayjs';
@@ -23,6 +25,9 @@ function Home() {
   const [priceRange, setPriceRange] = useState([]);
   const [datePickerVisible, setDatePickerVisible] = useState(false);
   const [dateType, setDateType] = useState('checkIn'); // 'checkIn' or 'checkOut'
+  const [customPriceVisible, setCustomPriceVisible] = useState(false);
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
 
   // Banner 数据
   const banners = [
@@ -51,7 +56,25 @@ function Home() {
     { label: '¥200-500', value: '200-500' },
     { label: '¥500-1000', value: '500-1000' },
     { label: '¥1000+', value: '1000+' },
+    { label: '自定义', value: 'custom' },
   ];
+
+  const handlePriceChange = (val) => {
+    if (val.includes('custom')) {
+      setCustomPriceVisible(true);
+      setPriceRange(val.filter(v => v !== 'custom'));
+    } else {
+      setPriceRange(val);
+    }
+  };
+
+  const handleCustomPriceConfirm = () => {
+    if (minPrice || maxPrice) {
+      const customRange = `${minPrice || '0'}-${maxPrice || '∞'}`;
+      setPriceRange([...priceRange.filter(p => !p.includes('-') && p !== '1000+'), customRange]);
+    }
+    setCustomPriceVisible(false);
+  };
 
   // 快捷标签
   const quickTags = ['亲子', '豪华', '免费停车场', '游泳池', '健身房', 'WiFi'];
@@ -186,10 +209,57 @@ function Home() {
           <Selector
             options={priceOptions}
             value={priceRange}
-            onChange={setPriceRange}
+            onChange={handlePriceChange}
             multiple
           />
+          {priceRange.some(p => p.includes('-') && !['0-200', '200-500', '500-1000', '1000+'].includes(p)) && (
+            <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+              已选择自定义价格: ¥{priceRange.find(p => p.includes('-') && !['0-200', '200-500', '500-1000', '1000+'].includes(p))}
+            </div>
+          )}
         </div>
+
+        {/* 自定义价格输入弹窗 */}
+        <Modal
+          visible={customPriceVisible}
+          onClose={() => setCustomPriceVisible(false)}
+          title="自定义价格区间"
+          content={
+            <div style={{ padding: '12px 0' }}>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ marginBottom: 8, fontSize: 14, color: '#666' }}>最低价格(元)</div>
+                <Input
+                  placeholder="请输入最低价格"
+                  type="number"
+                  value={minPrice}
+                  onChange={setMinPrice}
+                />
+              </div>
+              <div>
+                <div style={{ marginBottom: 8, fontSize: 14, color: '#666' }}>最高价格(元)</div>
+                <Input
+                  placeholder="请输入最高价格(可不填)"
+                  type="number"
+                  value={maxPrice}
+                  onChange={setMaxPrice}
+                />
+              </div>
+            </div>
+          }
+          actions={[
+            {
+              key: 'cancel',
+              text: '取消',
+              onClick: () => setCustomPriceVisible(false),
+            },
+            {
+              key: 'confirm',
+              text: '确定',
+              primary: true,
+              onClick: handleCustomPriceConfirm,
+            },
+          ]}
+        />
 
         {/* 快捷标签 */}
         <div className="search-item">
