@@ -228,7 +228,7 @@ function HotelList() {
                     </div>
                     {hotel.facilities && hotel.facilities.length > 0 && (
                       <div className="hotel-tags">
-                        {hotel.facilities.slice(0, 3).map((facility, idx) => (
+                        {hotel.facilities.map((facility, idx) => (
                           <Tag key={idx} color="default" fill="outline">
                             {facility}
                           </Tag>
