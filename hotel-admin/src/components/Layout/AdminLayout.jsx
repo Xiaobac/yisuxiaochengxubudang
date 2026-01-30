@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Layout, Menu, Avatar, Dropdown, message } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, message, Switch } from 'antd';
 import {
   AuditOutlined,
   UserOutlined,
   LogoutOutlined,
+  BulbOutlined,
+  BulbFilled,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
 
 const { Header, Sider, Content } = Layout;
 
@@ -13,6 +16,7 @@ function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isDark, toggleTheme } = useTheme();
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -73,7 +77,7 @@ function AdminLayout() {
 
       <Layout>
         <Header style={{
-          background: '#fff',
+          background: isDark ? '#141414' : '#fff',
           padding: '0 24px',
           display: 'flex',
           justifyContent: 'space-between',
@@ -83,17 +87,25 @@ function AdminLayout() {
           <div style={{ fontSize: '16px', fontWeight: 500 }}>
             管理员系统
           </div>
-          <Dropdown menu={{ items: userMenuItems }}>
-            <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Avatar icon={<UserOutlined />} />
-              <span>{user.username}</span>
-            </div>
-          </Dropdown>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Switch
+              checked={isDark}
+              onChange={toggleTheme}
+              checkedChildren={<BulbFilled />}
+              unCheckedChildren={<BulbOutlined />}
+            />
+            <Dropdown menu={{ items: userMenuItems }}>
+              <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Avatar icon={<UserOutlined />} />
+                <span>{user.username}</span>
+              </div>
+            </Dropdown>
+          </div>
         </Header>
 
         <Content style={{ margin: '24px' }}>
           <div style={{
-            background: '#fff',
+            background: isDark ? '#1f1f1f' : '#fff',
             padding: '24px',
             minHeight: 'calc(100vh - 112px)',
             borderRadius: '8px',
