@@ -7,6 +7,9 @@ import {
   ShopOutlined,
   UserOutlined,
   LogoutOutlined,
+  CalendarOutlined,
+  DashboardOutlined,
+  OrderedListOutlined,
 } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -51,10 +54,28 @@ export default function MerchantLayout({
 
   const menuItems: MenuProps['items'] = [
     {
+      key: '/merchant/dashboard',
+      icon: <DashboardOutlined />,
+      label: '仪表盘',
+      onClick: () => router.push('/merchant/dashboard'),
+    },
+    {
       key: '/merchant/hotels',
       icon: <ShopOutlined />,
       label: '酒店管理',
       onClick: () => router.push('/merchant/hotels'),
+    },
+    {
+      key: '/merchant/calendar',
+      icon: <CalendarOutlined />,
+      label: '房间日历',
+      onClick: () => router.push('/merchant/calendar'),
+    },
+    {
+      key: '/merchant/bookings',
+      icon: <OrderedListOutlined />,
+      label: '预订管理',
+      onClick: () => router.push('/merchant/bookings'),
     },
   ];
 

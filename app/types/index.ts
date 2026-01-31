@@ -84,6 +84,39 @@ export interface HotelListResponse {
   hasMore: boolean;
 }
 
+// 预订相关类型
+export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled';
+
+export interface Booking {
+  id?: number;
+  hotel_id: number;
+  hotel_name?: string;
+  room_type: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email?: string;
+  check_in_date: string;
+  check_out_date: string;
+  room_count: number;
+  total_price: number;
+  status: BookingStatus;
+  special_requests?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BookingFormData {
+  hotel_id: number;
+  room_type: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email?: string;
+  check_in_date: string;
+  check_out_date: string;
+  room_count: number;
+  special_requests?: string;
+}
+
 // 审核相关类型
 export interface ReviewData {
   status: 'published' | 'rejected';
