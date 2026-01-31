@@ -1,6 +1,7 @@
 // app/api/hotels/[id]/route.ts
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth } from '@/app/api/utils/auth';
 
 /**
  * @swagger
@@ -140,12 +141,12 @@ export async function PUT(
     const hotelId = parseInt(params.id);
     const body = await request.json();
 
-    // 1. 获取当前用户ID (模拟认证，实际应从Session/Token获取)
-    const userIdHeader = request.headers.get('x-user-id');
-    if (!userIdHeader) {
-      return NextResponse.json({ success: false, error: '未认证用户' }, { status: 401 });
+    // 1. 获取当前用户ID (从Token获取)
+    const authResult = verifyAuth(request);
+    if (!authResult.success) {
+      return NextResponse.json({ success: false, error: authResult.error }, { status: authResult.status });
     }
-    const userId = parseInt(userIdHeader);
+    const userId = authResult.user.userId;
 
     // 2. 获取当前用户及其角色权限
     const currentUser = await prisma.user.findUnique({
@@ -278,12 +279,12 @@ export async function DELETE(
     const params = await props.params;
     const hotelId = parseInt(params.id);
 
-    // 1. 获取当前用户ID (模拟认证)
-    const userIdHeader = request.headers.get('x-user-id');
-    if (!userIdHeader) {
-      return NextResponse.json({ success: false, error: '未认证用户' }, { status: 401 });
+    // 1. 获取当前用户ID (从Token获取)
+    const authResult = verifyAuth(request);
+    if (!authResult.success) {
+      return NextResponse.json({ success: false, error: authResult.error }, { status: authResult.status });
     }
-    const userId = parseInt(userIdHeader);
+    const userId = authResult.user.userId;
 
     // 2. 获取当前用户权限
     const currentUser = await prisma.user.findUnique({
