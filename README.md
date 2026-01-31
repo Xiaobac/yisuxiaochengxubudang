@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 易宿酒店管理系统
 
-## Getting Started
+基于 Next.js 的现代化酒店预订和管理平台。
 
-First, run the development server:
+## 技术栈
+
+- **框架**: Next.js 16.1.6 (App Router)
+- **UI 库**: React 19.2.3
+- **组件库**: Ant Design 6.2.2
+- **主题管理**: next-themes (支持深色模式)
+- **语言**: TypeScript 5
+
+## 项目结构
+
+```
+trip_front_end_project/
+├── app/                    # Next.js 应用目录
+│   ├── components/        # 共享组件
+│   ├── layout.tsx         # 根布局
+│   ├── page.tsx          # 首页
+│   ├── providers.tsx     # 全局 Provider 配置
+│   └── globals.css       # 全局样式
+├── public/               # 静态资源
+├── legacy/              # 旧版项目代码（仅供参考）
+│   ├── hotel-admin/     # React + Vite 管理端
+│   ├── hotel-web/       # React + Vite 用户端
+│   ├── hotel-mobile/    # Taro 移动端
+│   ├── hotel-backend/   # Express.js 后端
+│   └── docs/           # 项目文档和数据模型
+└── ...配置文件
+```
+
+## 快速开始
+
+### 安装依赖
+
+```bash
+npm install
+```
+
+### 启动开发服务器
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 [http://localhost:3000](http://localhost:3000) 查看应用。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 构建生产版本
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## 功能特性
 
-To learn more about Next.js, take a look at the following resources:
+### 已完成
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- ✅ Next.js 项目基础架构
+- ✅ Ant Design 组件库集成
+- ✅ 深色模式支持
+- ✅ 中文语言包配置
+- ✅ TypeScript 类型支持
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 开发中
 
-## Deploy on Vercel
+- 🚧 用户认证（登录/注册）
+- 🚧 管理员后台
+- 🚧 商户管理端
+- 🚧 用户端酒店浏览和预订
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Legacy 项目
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`legacy/` 目录包含了原有的 React + Vite 项目代码，作为功能迁移的参考。如需运行旧版项目，请查看 `legacy/README.md`。
+
+**注意**: 新功能开发应基于根目录的 Next.js 项目，`legacy/` 目录仅作参考用途。
+
+## 相关文档
+
+- [Next.js 文档](https://nextjs.org/docs)
+- [Ant Design 文档](https://ant.design/docs/react/introduce-cn)
+- [数据模型设计](legacy/docs/数据模型.jpg)
+- [开发计划](legacy/docs/development-plan.md)
