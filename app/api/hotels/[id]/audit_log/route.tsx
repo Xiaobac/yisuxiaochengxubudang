@@ -1,6 +1,7 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+import { checkPermission } from '@/app/api/utils/permissions';
 
 /**
  * @swagger
@@ -88,24 +89,7 @@ export async function GET(
     const isOwner = hotel.merchantId === userId;
     
     // 获取用户权限详情
-    const currentUser = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        role: {
-          include: {
-            rolePermission: {
-              include: {
-                permission: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const hasAuditPermission = currentUser?.role?.rolePermission.some(
-      (rp) => rp.permission.name === 'HOTEL_AUDIT'
-    );
+    const hasAuditPermission = await checkPermission(userId, 'HOTEL_AUDIT');
 
     if (!isOwner && !hasAuditPermission) {
       return NextResponse.json({ success: false, error: '无权查看审核日志' }, { status: 403 });

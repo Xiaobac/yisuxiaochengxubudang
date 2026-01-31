@@ -29,6 +29,34 @@
     *   **用途**: 用于管理员封禁违规用户。
     *   **备注**: 用户本人有权注销自己的账户，不需要此权限。
 
+## 标签管理 (Tag Management)
+
+*   `TAG_CREATE`
+    *   **描述**: 允许创建新的标签。
+    *   **用途**: 用于管理员维护系统标签库。
+
+*   `TAG_UPDATE`
+    *   **描述**: 允许修改现有标签的名称。
+    *   **用途**: 用于管理员修正标签信息。
+
+*   `TAG_DELETE`
+    *   **描述**: 允许删除标签。
+    *   **用途**: 用于管理员清理不再使用的标签。
+
+## 位置管理 (Location Management)
+
+*   `LOCATION_CREATE`
+    *   **描述**: 允许创建新的地理位置。
+    *   **用途**: 用于管理员扩展平台覆盖区域。
+
+*   `LOCATION_UPDATE`
+    *   **描述**: 允许修改现有位置的信息。
+    *   **用途**: 用于管理员更新位置描述。
+
+*   `LOCATION_DELETE`
+    *   **描述**: 允许删除地理位置。
+    *   **用途**: 用于管理员移除不再支持的区域。
+
 ## 角色说明 (Role Reference)
 
 *   `USER` (普通用户)
@@ -38,4 +66,4 @@
     *   通常拥有管理自己创建的酒店的权利，但不具备全局管理权限。
 
 *   `ADMIN` (管理员)
-    *   应当配置上述所有权限 (`HOTEL_AUDIT`, `HOTEL_DELETE`, `USER_READ`, `USER_UPDATE`, `USER_DELETE`)。
+    *   应当配置上述所有权限 (`HOTEL_AUDIT`, `HOTEL_DELETE`, `USER_READ`, `USER_UPDATE`, `USER_DELETE`, `TAG_CREATE`, `TAG_UPDATE`, `TAG_DELETE`, `LOCATION_CREATE`, `LOCATION_UPDATE`, `LOCATION_DELETE`)。
