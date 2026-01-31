@@ -21,6 +21,11 @@ import { NextRequest, NextResponse } from 'next/server';
  *         schema:
  *           type: string
  *         description: 酒店状态过滤
+ *       - in: query
+ *         name: tags
+ *         schema:
+ *           type: string
+ *         description: 酒店标签过滤 (逗号分隔，需同时满足所有标签)
  *     responses:
  *       200:
  *         description: 成功获取酒店列表
@@ -51,15 +56,39 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const locationId = searchParams.get('locationId');
     const status = searchParams.get('status');
+    const tags = searchParams.get('tags');
+
+    const where: any = {};
+    if (locationId) where.locationId = parseInt(locationId);
+    if (status) {
+      where.status = status;
+    } else {
+      // 默认只显示已发布的酒店，确保下线(offline)的酒店不被显示
+      where.status = 'published';
+    }
+    
+    // 如果有tags参数，解析并添加过滤条件 (满足所有tag)
+    if (tags) {
+      const tagList = tags.split(',').filter(t => t.trim().length > 0);
+      if (tagList.length > 0) {
+        where.AND = tagList.map(tagName => ({
+          hotelTags: {
+            some: {
+              tag: {
+                name: tagName
+              }
+            }
+          }
+        }));
+      }
+    }
 
     const hotels = await prisma.hotel.findMany({
-      where: {
-        ...(locationId && { locationId: parseInt(locationId) }),
-        ...(status && { status }),
-      },
+      where,
       include: {
         location: true, // 包含关联的Location信息
         merchant: { select: { id: true, name: true, email: true } }, // 包含商户的部分信息
+        hotelTags: { include: { tag: true } }, // 返回酒店的标签信息
       },
       orderBy: { createdAt: 'desc' },
     });

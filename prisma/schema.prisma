@@ -88,6 +88,7 @@ model Hotel {
   facilities      Json?
   openingYear     Int?
   images          Json?
+  // 酒店状态: pending(审核中)/published(已发布)/rejected(已驳回)/offline(已下线)
   status          String          @default("pending")
   rejectionReason String?
   createdAt       DateTime        @default(now())
