@@ -47,10 +47,17 @@ import { checkPermission } from '@/app/api/utils/permissions';
  *                       operator:
  *                         type: object
  *                         properties:
+ *                           id:
+ *                             type: integer
  *                           name:
  *                             type: string
  *                           email:
  *                             type: string
+ *                           role:
+ *                             type: object
+ *                             properties:
+ *                               name:
+ *                                 type: string
  *       401:
  *         description: 未认证
  *       403:

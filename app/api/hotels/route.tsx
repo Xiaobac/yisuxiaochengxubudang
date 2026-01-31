@@ -47,6 +47,38 @@ import { NextRequest, NextResponse } from 'next/server';
  *                         type: string
  *                       address:
  *                         type: string
+ *                       description:
+ *                         type: string
+ *                       starRating:
+ *                         type: integer
+ *                       location:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                       merchant:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                       hotelTags:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             tag:
+ *                               type: object
+ *                               properties:
+ *                                 id:
+ *                                   type: integer
+ *                                 name:
+ *                                   type: string
  *       500:
  *         description: 服务器内部错误
  */

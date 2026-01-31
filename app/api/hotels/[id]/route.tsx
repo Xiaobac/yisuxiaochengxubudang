@@ -35,6 +35,22 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *                       type: integer
  *                     nameZh:
  *                       type: string
+ *                     nameEn:
+ *                       type: string
+ *                     address:
+ *                       type: string
+ *                     starRating:
+ *                       type: integer
+ *                     description:
+ *                       type: string
+ *                     facilities:
+ *                       type: object
+ *                     openingYear:
+ *                       type: integer
+ *                     images:
+ *                       type: object
+ *                     status:
+ *                       type: string
  *                     hotelTags:
  *                       type: array
  *                       items:
@@ -43,8 +59,37 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *                           tag:
  *                             type: object
  *                             properties:
+ *                               id:
+ *                                 type: integer
  *                               name:
  *                                 type: string
+ *                     location:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                     merchant:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                     roomTypes:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                           price:
+ *                             type: number
  *       404:
  *         description: 酒店不存在
  *       500:

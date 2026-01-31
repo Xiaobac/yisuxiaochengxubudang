@@ -25,21 +25,60 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *             properties:
  *               name:
  *                 type: string
+ *               description:
+ *                 type: string
  *               price:
  *                 type: number
  *               stock:
  *                 type: integer
+ *               amenities:
+ *                 type: object
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               discount:
+ *                 type: number
  *     responses:
  *       200:
  *         description: 更新成功
+ *         content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  success:
+ *                    type: boolean
+ *                  data:
+ *                    type: object
+ *                    properties:
+ *                      id:
+ *                        type: integer
+ *                      name:
+ *                        type: string
  *   delete:
  *     summary: 删除房型
  *     description: 酒店拥有者删除房型
  *     tags:
  *       - RoomTypes
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: 删除成功
+ *         content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  success:
+ *                    type: boolean
+ *                  message:
+ *                    type: string
  */
 
 async function checkOwnership(userId: number, roomTypeId: number) {

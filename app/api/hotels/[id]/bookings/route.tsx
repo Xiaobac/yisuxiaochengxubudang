@@ -19,6 +19,44 @@ import { NextRequest, NextResponse } from 'next/server';
  *     responses:
  *       200:
  *         description: 成功获取列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       checkInDate:
+ *                         type: string
+ *                         format: date-time
+ *                       checkOutDate:
+ *                         type: string
+ *                         format: date-time
+ *                       totalPrice:
+ *                         type: number
+ *                       status:
+ *                         type: string
+ *                       user:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                           phone:
+ *                             type: string
+ *                       roomType:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
  *       404:
  *         description: 酒店不存在
  *       500:

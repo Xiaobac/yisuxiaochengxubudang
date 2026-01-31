@@ -31,10 +31,17 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *                       type: string
  *                     phone:
  *                       type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
  *                     role:
  *                       type: object
  *                       properties:
+ *                         id:
+ *                           type: integer
  *                         name:
+ *                           type: string
+ *                         description:
  *                           type: string
  *       401:
  *         description: 未认证

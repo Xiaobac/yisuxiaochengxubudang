@@ -14,6 +14,44 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *     responses:
  *       200:
  *         description: 成功获取列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       checkInDate:
+ *                         type: string
+ *                         format: date-time
+ *                       checkOutDate:
+ *                         type: string
+ *                         format: date-time
+ *                       totalPrice:
+ *                         type: number
+ *                       status:
+ *                         type: string
+ *                       hotel:
+ *                         type: object
+ *                         properties:
+ *                           nameZh:
+ *                             type: string
+ *                           nameEn:
+ *                             type: string
+ *                           images:
+ *                             type: object
+ *                       roomType:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
  */
 
 export async function GET(

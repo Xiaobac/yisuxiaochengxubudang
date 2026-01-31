@@ -21,6 +21,34 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *     responses:
  *       200:
  *         description: 成功获取列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       stock:
+ *                         type: integer
+ *                       amenities:
+ *                         type: object
+ *                       images:
+ *                         type: array
+ *                         items:
+ *                           type: string
  *   post:
  *     summary: 创建房型
  *     description: 酒店拥有者创建新房型
@@ -45,19 +73,46 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *             properties:
  *               name:
  *                 type: string
+ *                 description: 房型名称
  *               description:
  *                 type: string
+ *                 description: 房型描述
  *               price:
  *                 type: number
+ *                 description: 基础价格
  *               stock:
  *                 type: integer
+ *                 description: 基础库存
  *               amenities:
  *                 type: object
+ *                 description: 设施JSON
  *               images:
  *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: 图片URL列表
+ *               discount:
+ *                 type: number
+ *                 description: 默认折扣
  *     responses:
  *       201:
  *         description: 创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     price:
+ *                       type: number
  *       403:
  *         description: 无权操作
  */

@@ -32,6 +32,24 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *     responses:
  *       200:
  *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     price:
+ *                       type: number
+ *                     quota:
+ *                       type: integer
+ *                     isClosed:
+ *                       type: boolean
  *   delete:
  *     summary: 删除库存记录
  *     description: 酒店拥有者删除特定库存记录 (仅当没有预订时可删除)
@@ -46,6 +64,15 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *     responses:
  *       200:
  *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  *       400:
  *         description: 无法删除(已有预订)
  */

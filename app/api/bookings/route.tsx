@@ -42,6 +42,22 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *     responses:
  *       201:
  *         description: 预订成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     status:
+ *                       type: string
+ *                     totalPrice:
+ *                       type: number
  *       400:
  *         description: 输入无效或库存不足
  *       401:

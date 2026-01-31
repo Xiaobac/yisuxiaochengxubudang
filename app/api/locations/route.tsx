@@ -15,6 +15,24 @@ import { checkPermission } from '@/app/api/utils/permissions';
  *     responses:
  *       200:
  *         description: 成功获取位置列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
  *   post:
  *     summary: 创建位置
  *     description: 创建新的地理位置 (需要管理员权限)

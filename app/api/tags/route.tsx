@@ -15,6 +15,22 @@ import { checkPermission } from '@/app/api/utils/permissions';
  *     responses:
  *       200:
  *         description: 成功获取标签列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
  *   post:
  *     summary: 创建标签
  *     description: 创建新的标签 (需要管理员权限)

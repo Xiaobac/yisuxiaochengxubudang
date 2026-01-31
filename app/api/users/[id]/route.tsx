@@ -31,6 +31,24 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *     responses:
  *       200:
  *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     email:
+ *                       type: string
  *       403:
  *         description: 无权修改
  *       404:
@@ -132,6 +150,15 @@ export async function PUT(
  *     responses:
  *       200:
  *         description: 删除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  *       403:
  *         description: 无权删除
  *       404:

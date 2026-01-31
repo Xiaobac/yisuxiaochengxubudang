@@ -31,6 +31,22 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *     responses:
  *       200:
  *         description: 更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     status:
+ *                       type: string
+ *                     guestInfo:
+ *                       type: object
  *   delete:
  *     summary: 删除预订
  *     description: 用户删除预订记录 (并将释放库存)

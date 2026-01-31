@@ -21,6 +21,42 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *     responses:
  *       200:
  *         description: 成功获取收藏列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       hotelId:
+ *                         type: integer
+ *                       createdAt:
+ *                         type: string
+ *                       hotel:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           nameZh:
+ *                             type: string
+ *                           nameEn:
+ *                             type: string
+ *                           address:
+ *                             type: string
+ *                           starRating:
+ *                             type: integer
+ *                           images:
+ *                             type: object
+ *                           location:
+ *                             type: object
+ *                             properties:
+ *                               name:
+ *                                 type: string
  *   post:
  *     summary: 添加收藏
  *     description: 添加酒店到收藏列表 (仅限用户本人)

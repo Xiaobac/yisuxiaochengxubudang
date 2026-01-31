@@ -50,8 +50,20 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-should-be-in-env';
  *                       type: string
  *                     email:
  *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
  *                     role:
  *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                         description:
+ *                           type: string
  *       401:
  *         description: 邮箱或密码错误
  *       500:

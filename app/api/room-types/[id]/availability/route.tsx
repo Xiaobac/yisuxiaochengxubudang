@@ -33,6 +33,33 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *     responses:
  *       200:
  *         description: 成功获取
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       roomTypeId:
+ *                         type: integer
+ *                       date:
+ *                         type: string
+ *                         format: date-time
+ *                       price:
+ *                         type: number
+ *                       quota:
+ *                         type: integer
+ *                       booked:
+ *                         type: integer
+ *                       isClosed:
+ *                         type: boolean
  *   post:
  *     summary: 设置库存/价格
  *     description: 酒店拥有者批量设置某一天的库存和价格
@@ -72,6 +99,23 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *     responses:
  *       200:
  *         description: 设置成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       date:
+ *                         type: string
+ *                         format: date-time
  */
 
 export async function GET(
