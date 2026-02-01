@@ -1,0 +1,193 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+model Permission {
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  description    String?
+  createdAt      DateTime         @default(now())
+  rolePermission RolePermission[]
+}
+
+model Role {
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  description    String?
+  createdAt      DateTime         @default(now())
+  users          User[]
+  rolePermission RolePermission[]
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Location {
+  id        Int      @id @default(autoincrement())
+  name      String
+  description String?
+  createdAt DateTime @default(now())
+  hotels    Hotel[]
+
+  @@map("locations")
+}
+
+model Tag {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  hotelTags HotelTag[]
+
+  @@map("tags")
+}
+
+model User {
+  id            Int             @id @default(autoincrement())
+  email         String          @unique
+  phone         String?
+  password      String
+  roleId        Int?
+  name          String?
+  createdAt     DateTime        @default(now())
+  role          Role?           @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  hotels        Hotel[]         @relation("HotelMerchant")
+  auditLogs     HotelAuditLog[] @relation("HotelAuditOperator")
+  bookings      Booking[]
+  favorites     Favorite[]
+
+  @@map("users")
+}
+
+model Hotel {
+  id              Int             @id @default(autoincrement())
+  merchantId      Int?
+  locationId      Int?
+  nameZh          String
+  nameEn          String?
+  address         String
+  starRating      Int?
+  description     String?
+  facilities      Json?
+  openingYear     Int?
+  images          Json?
+  // 酒店状态: pending(审核中)/published(已发布)/rejected(已驳回)/offline(已下线)
+  status          String          @default("pending")
+  rejectionReason String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  merchant        User?           @relation("HotelMerchant", fields: [merchantId], references: [id], onDelete: SetNull)
+  location        Location?       @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  auditLogs       HotelAuditLog[]
+  hotelTags       HotelTag[]
+  roomTypes       RoomType[]
+  bookings        Booking[]
+  favorites       Favorite[]
+
+  @@map("hotels")
+}
+
+model HotelAuditLog {
+  id          Int       @id @default(autoincrement())
+  hotelId     Int
+  operatorId  Int?
+  oldStatus   String?
+  newStatus   String
+  comment     String?
+  createdAt   DateTime  @default(now())
+  hotel       Hotel     @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  operator    User?     @relation("HotelAuditOperator", fields: [operatorId], references: [id], onDelete: SetNull)
+
+  @@map("hotel_audit_logs")
+}
+
+model HotelTag {
+  hotelId Int
+  tagId   Int
+  hotel   Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([hotelId, tagId])
+  @@map("hotel_tags")
+}
+
+model Favorite {
+  userId    Int
+  hotelId   Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel     Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@id([userId, hotelId])
+  @@map("favorites")
+}
+
+model RoomType {
+  id          Int              @id @default(autoincrement())
+  hotelId     Int?
+  name        String
+  description String?
+  price       Decimal          @db.Decimal(10, 2)
+  discount    Decimal          @db.Decimal(3, 2) @default("1.00")
+  amenities   Json?
+  images      Json?
+  stock       Int              @default(0)
+  hotel       Hotel?           @relation(fields: [hotelId], references: [id], onDelete: SetNull)
+  availability RoomAvailability[]
+  bookings    Booking[]
+
+  @@map("room_types")
+}
+
+model RoomAvailability {
+  id         Int       @id @default(autoincrement())
+  roomTypeId Int
+  date       DateTime
+  price      Decimal?  @db.Decimal(10, 2)
+  quota      Int?
+  booked     Int       @default(0)
+  isClosed   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  roomType   RoomType  @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([roomTypeId, date])
+  @@map("room_availability")
+}
+
+model Booking {
+  id          Int       @id @default(autoincrement())
+  userId      Int?
+  hotelId     Int?
+  roomTypeId  Int?
+  checkInDate DateTime
+  checkOutDate DateTime
+  guestCount  Int       @default(1)
+  totalPrice  Decimal   @db.Decimal(10, 2)
+  // 订单状态: pending(预定中)/completed(已完成)/cancelled(已取消)
+  status      String    @default("pending")
+  guestInfo   Json?
+  createdAt   DateTime  @default(now())
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  hotel       Hotel?    @relation(fields: [hotelId], references: [id], onDelete: SetNull)
+  roomType    RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: SetNull)
+
+  @@map("bookings")
+}
