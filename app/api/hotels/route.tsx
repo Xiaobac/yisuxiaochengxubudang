@@ -87,15 +87,19 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const locationId = searchParams.get('locationId');
+    const merchantId = searchParams.get('merchantId');
     const status = searchParams.get('status');
     const tags = searchParams.get('tags');
 
     const where: any = {};
     if (locationId) where.locationId = parseInt(locationId);
+    if (merchantId) where.merchantId = parseInt(merchantId);
+
+    // 仅在没有指定status且不是商户查询自己的酒店时，才默认过滤为published
     if (status) {
       where.status = status;
-    } else {
-      // 默认只显示已发布的酒店，确保下线(offline)的酒店不被显示
+    } else if (!merchantId) {
+      // 默认只显示已发布的酒店（仅对公开查询）
       where.status = 'published';
     }
     
