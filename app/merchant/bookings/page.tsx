@@ -23,6 +23,7 @@ import {
   LogoutOutlined,
 } from '@ant-design/icons';
 import type { Booking, BookingStatus } from '@/app/types';
+import { getMyBookings, updateBookingStatus } from '@/app/services/booking';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
@@ -44,58 +45,8 @@ export default function BookingsPage() {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      // TODO: 实际调用 API
-      // const data = await getMyBookings();
-
-      // 模拟数据
-      const mockData: Booking[] = [
-        {
-          id: 1,
-          hotel_id: 1,
-          hotel_name: '北京国际大酒店',
-          room_type: '豪华套房',
-          customer_name: '张三',
-          customer_phone: '13800138000',
-          customer_email: 'zhangsan@example.com',
-          check_in_date: '2026-02-01',
-          check_out_date: '2026-02-03',
-          room_count: 1,
-          total_price: 1500,
-          status: 'confirmed',
-          created_at: '2026-01-25T10:30:00Z',
-        },
-        {
-          id: 2,
-          hotel_id: 1,
-          hotel_name: '北京国际大酒店',
-          room_type: '标准间',
-          customer_name: '李四',
-          customer_phone: '13900139000',
-          check_in_date: '2026-02-05',
-          check_out_date: '2026-02-07',
-          room_count: 2,
-          total_price: 1200,
-          status: 'pending',
-          special_requests: '需要安静的房间',
-          created_at: '2026-01-26T14:20:00Z',
-        },
-        {
-          id: 3,
-          hotel_id: 1,
-          hotel_name: '北京国际大酒店',
-          room_type: '豪华套房',
-          customer_name: '王五',
-          customer_phone: '13700137000',
-          check_in_date: '2026-01-28',
-          check_out_date: '2026-01-30',
-          room_count: 1,
-          total_price: 1500,
-          status: 'checked_in',
-          created_at: '2026-01-20T09:15:00Z',
-        },
-      ];
-
-      setBookings(mockData);
+      const data = await getMyBookings();
+      setBookings(data);
     } catch (error) {
       console.error('获取预订列表失败:', error);
       message.error('获取预订列表失败');
@@ -111,8 +62,7 @@ export default function BookingsPage() {
 
   const handleStatusChange = async (id: number, newStatus: BookingStatus) => {
     try {
-      // TODO: 调用 API 更新状态
-      // await updateBookingStatus(id, newStatus);
+      await updateBookingStatus(id, newStatus);
 
       setBookings(bookings.map(b =>
         b.id === id ? { ...b, status: newStatus } : b
@@ -124,7 +74,7 @@ export default function BookingsPage() {
       }
     } catch (error: any) {
       console.error('更新状态失败:', error);
-      message.error('更新状态失败');
+      message.error(error.response?.data?.error || '更新状态失败');
     }
   };
 

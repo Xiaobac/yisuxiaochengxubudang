@@ -33,11 +33,16 @@ request.interceptors.response.use(
     if (error.response) {
       const { status } = error.response;
 
-      // 401 未授权，清除 token 并跳转到登录页
+      // 401 未授权，清除 token 并跳转到登录页（但不在登录/注册页面时重定向）
       if (status === 401 && typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/auth/login';
+        const currentPath = window.location.pathname;
+        const isAuthPage = currentPath.startsWith('/auth/');
+
+        if (!isAuthPage) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/auth/login';
+        }
       }
     }
 

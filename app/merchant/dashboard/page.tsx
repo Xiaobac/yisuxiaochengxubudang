@@ -25,6 +25,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { Booking, BookingStatus } from '@/app/types';
+import { getMyBookings } from '@/app/services/booking';
+import { getMyHotels } from '@/app/services/hotel';
 import dayjs from 'dayjs';
 
 export default function DashboardPage() {
@@ -55,91 +57,102 @@ export default function DashboardPage() {
     try {
       setLoading(true);
 
+      // 获取所有预订数据
+      const allBookings = await getMyBookings();
+      const hotels = await getMyHotels();
+
+      // 计算统计数据
+      const today = dayjs();
+      const todayBookings = allBookings.filter(b =>
+        dayjs(b.created_at).isSame(today, 'day')
+      ).length;
+
+      const monthStart = today.startOf('month');
+      const monthRevenue = allBookings
+        .filter(b =>
+          dayjs(b.created_at).isAfter(monthStart) &&
+          b.status !== 'cancelled'
+        )
+        .reduce((sum, b) => sum + b.total_price, 0);
+
+      // 计算总房间数（注意：这里需要从实际的房型数据获取，暂时使用估算值）
+      const totalRooms = hotels.length * 20; // 简化计算，假设每个酒店平均20个房间
+
+      // 简单估算入住率（已确认+已入住的预订数 / 总房间数）
+      const occupiedRooms = allBookings.filter(b =>
+        b.status === 'confirmed' || b.status === 'checked_in'
+      ).length;
+      const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
+
       setStats({
-        todayBookings: 12,
-        monthRevenue: 156000,
-        occupancyRate: 78,
-        totalRooms: 50,
+        todayBookings,
+        monthRevenue,
+        occupancyRate,
+        totalRooms,
       });
 
-      // 模拟营收趋势数据
-      const mockRevenueData = [
-        { date: '01-25', revenue: 18000 },
-        { date: '01-26', revenue: 22000 },
-        { date: '01-27', revenue: 19500 },
-        { date: '01-28', revenue: 25000 },
-        { date: '01-29', revenue: 21000 },
-        { date: '01-30', revenue: 27000 },
-        { date: '01-31', revenue: 23500 },
-      ];
-      setRevenueData(mockRevenueData);
+      // 计算最近7天的营收趋势
+      const revenueMap = new Map<string, number>();
+      for (let i = 6; i >= 0; i--) {
+        const date = today.subtract(i, 'day').format('MM-DD');
+        revenueMap.set(date, 0);
+      }
 
-      // 模拟预订量数据
-      const mockBookingData = [
-        { date: '01-25', count: 8 },
-        { date: '01-26', count: 12 },
-        { date: '01-27', count: 10 },
-        { date: '01-28', count: 15 },
-        { date: '01-29', count: 11 },
-        { date: '01-30', count: 14 },
-        { date: '01-31', count: 13 },
-      ];
-      setBookingData(mockBookingData);
+      allBookings
+        .filter(b => b.status !== 'cancelled')
+        .forEach(b => {
+          const date = dayjs(b.created_at).format('MM-DD');
+          if (revenueMap.has(date)) {
+            revenueMap.set(date, (revenueMap.get(date) || 0) + b.total_price);
+          }
+        });
 
-      // 模拟房型占比数据
-      const mockRoomTypeData = [
-        { name: '标准间', value: 45 },
-        { name: '豪华套房', value: 30 },
-        { name: '商务单间', value: 25 },
-      ];
-      setRoomTypeData(mockRoomTypeData);
+      const revenueArray = Array.from(revenueMap.entries()).map(([date, revenue]) => ({
+        date,
+        revenue,
+      }));
+      setRevenueData(revenueArray);
 
-      const mockBookings: Booking[] = [
-        {
-          id: 1,
-          hotel_id: 1,
-          hotel_name: '北京国际大酒店',
-          room_type: '豪华套房',
-          customer_name: '张三',
-          customer_phone: '13800138000',
-          check_in_date: '2026-02-01',
-          check_out_date: '2026-02-03',
-          room_count: 1,
-          total_price: 1500,
-          status: 'confirmed',
-          created_at: '2026-01-31T10:30:00Z',
-        },
-        {
-          id: 2,
-          hotel_id: 1,
-          hotel_name: '北京国际大酒店',
-          room_type: '标准间',
-          customer_name: '李四',
-          customer_phone: '13900139000',
-          check_in_date: '2026-02-05',
-          check_out_date: '2026-02-07',
-          room_count: 2,
-          total_price: 1200,
-          status: 'pending',
-          created_at: '2026-01-31T14:20:00Z',
-        },
-        {
-          id: 3,
-          hotel_id: 1,
-          hotel_name: '北京国际大酒店',
-          room_type: '商务单间',
-          customer_name: '王五',
-          customer_phone: '13700137000',
-          check_in_date: '2026-02-10',
-          check_out_date: '2026-02-12',
-          room_count: 1,
-          total_price: 800,
-          status: 'confirmed',
-          created_at: '2026-01-31T09:15:00Z',
-        },
-      ];
+      // 计算最近7天的预订量
+      const bookingMap = new Map<string, number>();
+      for (let i = 6; i >= 0; i--) {
+        const date = today.subtract(i, 'day').format('MM-DD');
+        bookingMap.set(date, 0);
+      }
 
-      setRecentBookings(mockBookings);
+      allBookings.forEach(b => {
+        const date = dayjs(b.created_at).format('MM-DD');
+        if (bookingMap.has(date)) {
+          bookingMap.set(date, (bookingMap.get(date) || 0) + 1);
+        }
+      });
+
+      const bookingArray = Array.from(bookingMap.entries()).map(([date, count]) => ({
+        date,
+        count,
+      }));
+      setBookingData(bookingArray);
+
+      // 计算房型占比
+      const roomTypeMap = new Map<string, number>();
+      allBookings
+        .filter(b => b.status !== 'cancelled')
+        .forEach(b => {
+          const roomType = b.room_type || '其他';
+          roomTypeMap.set(roomType, (roomTypeMap.get(roomType) || 0) + 1);
+        });
+
+      const roomTypeArray = Array.from(roomTypeMap.entries()).map(([name, value]) => ({
+        name,
+        value,
+      }));
+      setRoomTypeData(roomTypeArray);
+
+      // 获取最近3条预订
+      const recent = allBookings
+        .sort((a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf())
+        .slice(0, 3);
+      setRecentBookings(recent);
     } catch (error) {
       console.error('获取仪表盘数据失败:', error);
       message.error('获取仪表盘数据失败');
@@ -274,7 +287,7 @@ export default function DashboardPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
-                <Tooltip formatter={(value: number) => `¥${value}`} />
+                <Tooltip formatter={(value) => `¥${value ?? 0}`} />
                 <Legend />
                 <Line
                   type="monotone"
@@ -314,7 +327,7 @@ export default function DashboardPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"

@@ -29,8 +29,12 @@ export function useAuth(requiredRole?: UserRole) {
       }
 
       // 检查角色权限
-      if (requiredRole && currentUser.role !== requiredRole) {
+      const userRole = currentUser.role?.name?.toUpperCase();
+      const required = requiredRole?.toUpperCase();
+
+      if (required && userRole !== required) {
         // 角色不匹配，跳转到首页或显示无权限页面
+        console.warn(`角色不匹配: 需要 ${required}, 当前用户是 ${userRole}`);
         router.push('/');
         return;
       }

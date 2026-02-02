@@ -1,16 +1,26 @@
 // 用户相关类型
-export type UserRole = 'merchant' | 'admin';
+export type UserRole = 'USER' | 'MERCHANT' | 'ADMIN';
+
+export interface Role {
+  id: number;
+  name: UserRole;
+  description?: string;
+}
 
 export interface User {
   id: number;
-  username: string;
+  name?: string;
   email: string;
-  role: UserRole;
+  phone?: string;
+  roleId?: number | null;
+  role?: Role | null;
+  createdAt?: string;
 }
 
 export interface AuthResponse {
   token: string;
   user: User;
+  refreshToken?: string;
 }
 
 export interface LoginData {
@@ -19,10 +29,11 @@ export interface LoginData {
 }
 
 export interface RegisterData {
-  username: string;
+  name: string;
   email: string;
   password: string;
-  role: UserRole;
+  phone?: string;
+  role: 'user' | 'merchant';
 }
 
 // 酒店相关类型

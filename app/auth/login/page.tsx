@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Form, Input, Button, Card, Typography, App } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
@@ -13,9 +13,14 @@ const { Title } = Typography;
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { message } = App.useApp();
   const { theme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const onFinish = async (values: LoginData) => {
     try {
@@ -28,12 +33,15 @@ export default function LoginPage() {
       message.success('登录成功');
 
       // 根据角色跳转
-      if (result.user.role === 'merchant') {
-        router.push('/merchant/hotels');
-      } else if (result.user.role === 'admin') {
+      const roleName = result.user.role?.name;
+      if (roleName === 'MERCHANT') {
+        router.push('/merchant/dashboard');
+      } else if (roleName === 'ADMIN') {
         router.push('/admin/review');
       } else {
-        message.error('角色错误');
+        // 普通用户跳转到首页（待实现）
+        message.info('普通用户端暂未开放');
+        router.push('/');
       }
     } catch (error: any) {
       console.error('登录失败:', error);
@@ -43,10 +51,12 @@ export default function LoginPage() {
     }
   };
 
-  const isDark = theme === 'dark';
+  // 只在客户端挂载后才使用主题，避免 SSR 不一致
+  const isDark = mounted ? theme === 'dark' : false;
 
   return (
     <div
+      suppressHydrationWarning
       style={{
         display: 'flex',
         justifyContent: 'center',
@@ -58,6 +68,7 @@ export default function LoginPage() {
       }}
     >
       <Card
+        suppressHydrationWarning
         style={{
           width: '100%',
           maxWidth: 450,
