@@ -4,6 +4,7 @@ import type {
   HotelFormData,
   HotelSearchParams,
   HotelListResponse,
+  ApiResponse,
 } from '@/app/types';
 
 /**
@@ -17,35 +18,35 @@ export const getHotels = (params?: HotelSearchParams) => {
  * 根据ID获取酒店详情（公开API）
  */
 export const getHotelById = (id: number) => {
-  return get<Hotel>(`/hotels/${id}`);
+  return get<ApiResponse<Hotel>>(`/hotels/${id}`);
 };
 
 /**
  * 获取我的酒店列表（商户）
  */
 export const getMyHotels = () => {
-  return get<Hotel[]>('/hotels/my/hotels');
+  return get<ApiResponse<Hotel[]>>('/hotels/my/hotels');
 };
 
 /**
  * 创建酒店（商户）
  */
 export const createHotel = (data: HotelFormData) => {
-  return post<Hotel>('/hotels', data);
+  return post<ApiResponse<Hotel>>('/hotels', data);
 };
 
 /**
  * 更新酒店（商户）
  */
 export const updateHotel = (id: number, data: Partial<HotelFormData>) => {
-  return put<Hotel>(`/hotels/${id}`, data);
+  return put<ApiResponse<Hotel>>(`/hotels/${id}`, data);
 };
 
 /**
  * 删除酒店（商户）
  */
 export const deleteHotel = (id: number) => {
-  return del(`/hotels/${id}`);
+  return del<ApiResponse<void>>(`/hotels/${id}`);
 };
 
 /**

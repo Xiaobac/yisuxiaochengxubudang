@@ -4,13 +4,14 @@ import type {
   RegisterData,
   AuthResponse,
   User,
+  ApiResponse,
 } from '@/app/types';
 
 /**
  * 用户注册
  */
 export const register = (data: RegisterData) => {
-  return post<AuthResponse>('/auth/register', data);
+  return post<ApiResponse<User>>('/auth/register', data);
 };
 
 /**
@@ -24,7 +25,7 @@ export const login = (data: LoginData) => {
  * 获取当前用户信息
  */
 export const getCurrentUser = () => {
-  return get<User>('/auth/me');
+  return get<ApiResponse<User>>('/users/profile');
 };
 
 /**

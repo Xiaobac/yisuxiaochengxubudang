@@ -1,23 +1,16 @@
-import { get, post, patch } from '@/app/lib/request';
-import type { Hotel, ReviewData, ReviewResponse, HotelStatus } from '@/app/types';
+import { get, post } from '@/app/lib/request';
+import type { Hotel, ReviewActionData, ApiResponse } from '@/app/types';
 
 /**
  * 获取待审核酒店列表（管理员）
  */
 export const getPendingHotels = () => {
-  return get<Hotel[]>('/review/pending');
+  return get<ApiResponse<Hotel[]>>('/hotels?status=pending');
 };
 
 /**
  * 审核酒店（管理员）
  */
-export const reviewHotel = (id: number, data: ReviewData) => {
-  return post<ReviewResponse>(`/review/hotels/${id}`, data);
-};
-
-/**
- * 更新酒店状态（管理员）
- */
-export const updateHotelStatus = (id: number, status: HotelStatus) => {
-  return patch<ReviewResponse>(`/review/hotels/${id}/status`, { status });
+export const reviewHotel = (id: number, data: ReviewActionData) => {
+  return post<ApiResponse>(`/hotels/${id}`, data);
 };
