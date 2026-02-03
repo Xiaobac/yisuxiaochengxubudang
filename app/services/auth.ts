@@ -17,8 +17,25 @@ export const register = (data: RegisterData) => {
 /**
  * 用户登录
  */
-export const login = (data: LoginData) => {
-  return post<AuthResponse>('/auth/login', data);
+export const login = async (data: LoginData) => {
+  // 后端期望接收 { email, password }，前端表单使用的是 username 字段。
+  const payload = {
+    email: (data as any).username ?? (data as any).email,
+    password: data.password,
+  };
+
+  // 后端返回 { success, accessToken, refreshToken, user }，这里做兼容处理并返回统一结构
+  const res = await post<any>('/auth/login', payload);
+
+  console.log('登录响应:', res); // 调试日志
+  console.log('用户角色:', res.user?.role); // 调试日志
+
+  return {
+    success: res.success ?? true,
+    accessToken: res.accessToken || res.token,
+    refreshToken: res.refreshToken,
+    user: res.user,
+  } as AuthResponse;
 };
 
 /**

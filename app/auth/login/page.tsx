@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Form, Input, Button, Card, Typography, App } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
@@ -12,8 +12,13 @@ const { Title } = Typography;
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { message } = App.useApp();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const onFinish = async (values: LoginData) => {
     try {
@@ -51,8 +56,10 @@ export default function LoginPage() {
     }
   };
 
+
   return (
     <div
+      suppressHydrationWarning
       style={{
         display: 'flex',
         justifyContent: 'center',
@@ -62,6 +69,7 @@ export default function LoginPage() {
       }}
     >
       <Card
+        suppressHydrationWarning
         style={{
           width: '100%',
           maxWidth: 450,

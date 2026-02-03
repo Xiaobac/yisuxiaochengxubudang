@@ -3,13 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getStoredUser, isAuthenticated } from '@/app/services/auth';
-import type { User, UserRole } from '@/app/types';
+import type { User, Role } from '@/app/types';
 
 /**
  * 认证 Hook
  * 用于获取当前用户信息和检查认证状态
  */
-export function useAuth(requiredRole?: UserRole) {
+export function useAuth(requiredRole?: Role['name']) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,8 +29,12 @@ export function useAuth(requiredRole?: UserRole) {
       }
 
       // 检查角色权限
-      if (requiredRole && currentUser.role !== requiredRole) {
+      const userRole = currentUser.role?.name?.toUpperCase();
+      const required = requiredRole?.toUpperCase();
+
+      if (required && userRole !== required) {
         // 角色不匹配，跳转到首页或显示无权限页面
+        console.warn(`角色不匹配: 需要 ${required}, 当前用户是 ${userRole}`);
         router.push('/');
         return;
       }

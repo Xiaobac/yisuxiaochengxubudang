@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
@@ -15,6 +20,7 @@
     "axios": "^1.13.4",
     "bcryptjs": "^3.0.3",
     "dayjs": "^1.11.19",
+    "dotenv": "^17.2.3",
     "jsonwebtoken": "^9.0.3",
     "next": "16.1.6",
     "next-swagger-doc": "^0.4.1",
@@ -35,6 +41,7 @@
     "eslint-config-next": "16.1.6",
     "prisma": "^6.19.2",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

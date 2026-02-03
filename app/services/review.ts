@@ -9,7 +9,7 @@ export const getPendingHotels = () => {
 };
 
 /**
- * 审核酒店（管理员）
+ * 审核酒店 - 通过
  */
 export const reviewHotel = (id: number, data: ReviewActionData) => {
   return post<ApiResponse>(`/hotels/${id}`, data);

@@ -21,7 +21,7 @@ import {
   EyeOutlined,
   PoweroffOutlined,
 } from '@ant-design/icons';
-import { getPendingHotels, reviewHotel, updateHotelStatus } from '@/app/services/review';
+import { getPendingHotels, approveHotel, rejectHotel, updateHotelStatus } from '@/app/services/review';
 import type { Hotel } from '@/app/types';
 
 const { TextArea } = Input;
@@ -60,15 +60,13 @@ export default function ReviewSystemPage() {
 
   const handleApprove = async (hotelId: number) => {
     try {
-      await reviewHotel(hotelId, {
-        status: 'approved',
-      });
+      await approveHotel(hotelId);
       message.success('审核通过');
       fetchHotels();
       setDrawerVisible(false);
     } catch (error: any) {
       console.error('审核失败:', error);
-      message.error(error.response?.data?.message || '审核失败');
+      message.error(error.response?.data?.error || '审核失败');
     }
   };
 
@@ -85,17 +83,14 @@ export default function ReviewSystemPage() {
     }
 
     try {
-      await reviewHotel(rejectingHotel!.id!, {
-        status: 'rejected',
-        reason: rejectReason,
-      });
+      await rejectHotel(rejectingHotel!.id!, rejectReason);
       message.success('已拒绝');
       setRejectModalVisible(false);
       fetchHotels();
       setDrawerVisible(false);
     } catch (error: any) {
       console.error('拒绝失败:', error);
-      message.error(error.response?.data?.message || '拒绝失败');
+      message.error(error.response?.data?.error || '拒绝失败');
     }
   };
 
@@ -106,7 +101,7 @@ export default function ReviewSystemPage() {
       fetchHotels();
     } catch (error: any) {
       console.error('下线失败:', error);
-      message.error(error.response?.data?.message || '下线失败');
+      message.error(error.response?.data?.error || '下线失败');
     }
   };
 
@@ -117,7 +112,7 @@ export default function ReviewSystemPage() {
       fetchHotels();
     } catch (error: any) {
       console.error('恢复失败:', error);
-      message.error(error.response?.data?.message || '恢复失败');
+      message.error(error.response?.data?.error || '恢复失败');
     }
   };
 
@@ -150,9 +145,10 @@ export default function ReviewSystemPage() {
       key: 'status',
       render: (status: string) => {
         const statusMap: Record<string, { color: string; text: string }> = {
-          draft: { color: 'processing', text: '待审核' },
+          pending: { color: 'processing', text: '待审核' },
           published: { color: 'success', text: '已发布' },
           offline: { color: 'default', text: '已下线' },
+          rejected: { color: 'error', text: '已拒绝' },
         };
         const { color, text } = statusMap[status] || { color: 'default', text: status };
         return <Tag color={color}>{text}</Tag>;
@@ -170,7 +166,7 @@ export default function ReviewSystemPage() {
           >
             查看
           </Button>
-          {record.status === 'draft' && (
+          {record.status === 'pending' && (
             <>
               <Popconfirm
                 title="确定通过审核吗？"
@@ -234,11 +230,11 @@ export default function ReviewSystemPage() {
       <Drawer
         title="酒店详情"
         placement="right"
-        width={600}
+        size="large"
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
         extra={
-          selectedHotel?.status === 'draft' && (
+          selectedHotel?.status === 'pending' && (
             <Space>
               <Button
                 type="primary"
@@ -286,8 +282,8 @@ export default function ReviewSystemPage() {
                 {selectedHotel.description || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="状态">
-                <Tag color={selectedHotel.status === 'draft' ? 'processing' : 'success'}>
-                  {selectedHotel.status === 'draft' ? '待审核' : '已发布'}
+                <Tag color={selectedHotel.status === 'pending' ? 'processing' : selectedHotel.status === 'published' ? 'success' : 'default'}>
+                  {selectedHotel.status === 'pending' ? '待审核' : selectedHotel.status === 'published' ? '已发布' : selectedHotel.status}
                 </Tag>
               </Descriptions.Item>
             </Descriptions>

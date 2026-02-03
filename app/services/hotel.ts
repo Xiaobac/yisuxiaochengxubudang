@@ -5,7 +5,11 @@ import type {
   HotelSearchParams,
   HotelListResponse,
   ApiResponse,
+  RoomType,
+  Location,
+  Tag
 } from '@/app/types';
+import { getStoredUser } from './auth';
 
 /**
  * 获取酒店列表（公开API）
@@ -25,7 +29,11 @@ export const getHotelById = (id: number) => {
  * 获取我的酒店列表（商户）
  */
 export const getMyHotels = () => {
-  return get<ApiResponse<Hotel[]>>('/hotels/my/hotels');
+  const user = getStoredUser();
+  if (!user) {
+    return Promise.reject(new Error('未登录'));
+  }
+  return get<ApiResponse<Hotel[]>>(`/hotels?merchantId=${user.id}`);
 };
 
 /**
@@ -62,3 +70,43 @@ export const uploadImage = (file: File) => {
     },
   });
 };
+
+// --- Room Types ---
+
+/**
+ * 创建房型
+ */
+export const createRoomType = (hotelId: number, data: Partial<RoomType>) => {
+  return post<ApiResponse<RoomType>>(`/hotels/${hotelId}/room-types`, data);
+};
+
+/**
+ * 更新房型
+ */
+export const updateRoomType = (id: number, data: Partial<RoomType>) => {
+  return put<ApiResponse<RoomType>>(`/room-types/${id}`, data);
+};
+
+/**
+ * 删除房型
+ */
+export const deleteRoomType = (id: number) => {
+  return del<ApiResponse<void>>(`/room-types/${id}`);
+};
+
+// --- Others ---
+
+/**
+ * 获取所有位置/城市
+ */
+export const getLocations = () => {
+  return get<ApiResponse<Location[]>>('/locations');
+};
+
+/**
+ * 获取所有标签
+ */
+export const getTags = () => {
+    return get<ApiResponse<Tag[]>>('/tags');
+};
+

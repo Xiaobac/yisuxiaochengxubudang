@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Form, Input, Button, Card, Typography, Select, App } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
@@ -13,8 +13,13 @@ const { Option } = Select;
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { message } = App.useApp();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const onFinish = async (values: RegisterData & { confirmPassword: string }) => {
     try {
@@ -33,8 +38,10 @@ export default function RegisterPage() {
     }
   };
 
+
   return (
     <div
+      suppressHydrationWarning
       style={{
         display: 'flex',
         justifyContent: 'center',
@@ -44,6 +51,7 @@ export default function RegisterPage() {
       }}
     >
       <Card
+        suppressHydrationWarning
         style={{
           width: '100%',
           maxWidth: 450,
@@ -69,6 +77,7 @@ export default function RegisterPage() {
           size="large"
         >
           <Form.Item
+
             name="email"
             rules={[
               { required: true, message: '请输入邮箱' },
@@ -78,6 +87,17 @@ export default function RegisterPage() {
             <Input
               prefix={<MailOutlined />}
               placeholder="邮箱"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="phone"
+            rules={[
+              { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号' },
+            ]}
+          >
+            <Input
+              placeholder="手机号（选填）"
             />
           </Form.Item>
 

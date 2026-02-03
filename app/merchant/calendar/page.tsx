@@ -6,6 +6,7 @@ import type { Dayjs } from 'dayjs';
 import type { BadgeProps } from 'antd';
 import dayjs from 'dayjs';
 import { getMyHotels } from '@/app/services/hotel';
+import { getHotelRoomTypes, getRoomAvailability, type RoomType, type RoomAvailability as ApiRoomAvailability } from '@/app/services/room';
 import type { Hotel, Room } from '@/app/types';
 
 const { Option } = Select;
@@ -30,6 +31,7 @@ export default function CalendarPage() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [availabilityData, setAvailabilityData] = useState<Map<string, DayAvailability>>(new Map());
+  const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const { message } = App.useApp();
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function CalendarPage() {
 
   useEffect(() => {
     if (selectedHotel) {
-      generateMockAvailabilityData();
+      fetchRoomTypesAndAvailability();
     }
   }, [selectedHotel]);
 
@@ -58,40 +60,70 @@ export default function CalendarPage() {
     }
   };
 
-  // 生成模拟的可用性数据
-  const generateMockAvailabilityData = () => {
-    const hotel = hotels.find(h => h.id === selectedHotel);
-    if (!hotel || !hotel.Rooms) return;
+  // 获取房型和可用性数据
+  const fetchRoomTypesAndAvailability = async () => {
+    if (!selectedHotel) return;
 
-    const data = new Map<string, DayAvailability>();
-    const today = dayjs();
+    try {
+      setLoading(true);
 
-    // 生成未来30天的数据
-    for (let i = 0; i < 30; i++) {
-      const date = today.add(i, 'day').format('YYYY-MM-DD');
-      const rooms: RoomAvailability[] = hotel.Rooms.map(room => {
-        // 随机生成已预订数量
-        const booked = Math.floor(Math.random() * room.total_count);
-        return {
-          room_type: room.room_type,
-          total_count: room.total_count,
-          available_count: room.total_count - booked,
-          booked_count: booked,
-        };
-      });
-      data.set(date, { date, rooms });
+      // 获取酒店的所有房型
+      const roomTypesData = await getHotelRoomTypes(selectedHotel);
+      setRoomTypes(roomTypesData);
+
+      if (roomTypesData.length === 0) {
+        setAvailabilityData(new Map());
+        return;
+      }
+
+      // 获取未来30天的可用性数据
+      const today = dayjs();
+      const endDate = today.add(30, 'day');
+
+      const data = new Map<string, DayAvailability>();
+
+      // 为每个房型获取可用性数据
+      const availabilityPromises = roomTypesData.map(roomType =>
+        getRoomAvailability(roomType.id, today.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD'))
+      );
+
+      const allAvailabilities = await Promise.all(availabilityPromises);
+
+      // 组织数据：按日期分组
+      for (let i = 0; i < 30; i++) {
+        const date = today.add(i, 'day').format('YYYY-MM-DD');
+        const rooms: RoomAvailability[] = roomTypesData.map((roomType, idx) => {
+          // 查找该房型在该日期的可用性记录
+          const availability = allAvailabilities[idx]?.find(
+            (a: ApiRoomAvailability) => dayjs(a.date).format('YYYY-MM-DD') === date
+          );
+
+          // 如果有记录，使用记录数据；否则使用房型默认值
+          const quota = availability?.quota ?? roomType.stock;
+          const booked = availability?.booked ?? 0;
+          const available = quota - booked;
+
+          return {
+            room_type: roomType.name,
+            total_count: quota,
+            available_count: available >= 0 ? available : 0,
+            booked_count: booked,
+          };
+        });
+        data.set(date, { date, rooms });
+      }
+
+      setAvailabilityData(data);
+    } catch (error) {
+      console.error('获取房型可用性失败:', error);
+      message.error('获取房型可用性失败');
+    } finally {
+      setLoading(false);
     }
-
-    setAvailabilityData(data);
-  };
-
-  const getCurrentHotel = () => {
-    return hotels.find(h => h.id === selectedHotel);
   };
 
   const getRoomTypes = () => {
-    const hotel = getCurrentHotel();
-    return hotel?.Rooms || [];
+    return roomTypes;
   };
 
   const getAvailabilityForDate = (date: Dayjs): RoomAvailability[] => {
@@ -211,8 +243,8 @@ export default function CalendarPage() {
             >
               <Option value="all">全部房型</Option>
               {getRoomTypes().map(room => (
-                <Option key={room.room_type} value={room.room_type}>
-                  {room.room_type}
+                <Option key={room.name} value={room.name}>
+                  {room.name}
                 </Option>
               ))}
             </Select>
