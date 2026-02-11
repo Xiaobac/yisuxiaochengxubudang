@@ -178,3 +178,85 @@
   color: #FF6B00;
   margin-left: 4rpx;
 }
+
+/* 定位到我的位置按钮 */
+.locate-me-btn {
+  position: absolute;
+  bottom: 180rpx;
+  right: 20rpx;
+  width: 80rpx;
+  height: 80rpx;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.locate-icon {
+  font-size: 36rpx;
+}
+
+/* 单酒店模式底部信息栏 */
+.single-hotel-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.single-hotel-info {
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.single-hotel-name {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.single-hotel-addr {
+  font-size: 24rpx;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navigate-btn {
+  background: #0066FF;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: bold;
+  padding: 16rpx 40rpx;
+  border-radius: 40rpx;
+  flex-shrink: 0;
+}
+
+/* 列表模式卡片导航按钮 */
+.card-navigate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-navigate-text {
+  background: #0066FF;
+  color: #fff;
+  font-size: 26rpx;
+  padding: 12rpx 28rpx;
+  border-radius: 30rpx;
+}

@@ -125,6 +125,8 @@ function HotelDetail() {
           img: imageUrl,
           address: rawData.address || '未知地址',
           location: rawData.location?.name || '市中心',
+          latitude: rawData.latitude || null,
+          longitude: rawData.longitude || null,
         };
         console.log('🏨 处理后的酒店数据:', hotelData);
         setHotel(hotelData);
@@ -249,13 +251,12 @@ function HotelDetail() {
   };
 
   const handleMapClick = () => {
-    if (hotel?.address) {
-      Taro.showToast({
-        title: `地址: ${hotel.address}`,
-        icon: 'none',
-        duration: 2000
-      });
-    }
+    if (!hotel) return;
+    // 统一跳转到地图页，同时显示酒店位置和自己的位置，并可直接导航
+    const url = hotel.latitude && hotel.longitude
+      ? `/pages/hotelMap/index?hotelId=${hotel.id}&name=${encodeURIComponent(hotel.name)}&address=${encodeURIComponent(hotel.address)}&lat=${hotel.latitude}&lng=${hotel.longitude}`
+      : `/pages/hotelMap/index?hotelId=${hotel.id}&name=${encodeURIComponent(hotel.name)}&address=${encodeURIComponent(hotel.address)}`;
+    Taro.navigateTo({ url });
   };
 
   const handleFacilityClick = () => {
