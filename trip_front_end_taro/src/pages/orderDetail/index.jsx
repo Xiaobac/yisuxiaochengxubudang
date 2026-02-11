@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, Button } from '@tarojs/components';
+import { View, Text, Image, Button, Textarea } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { getBookingById, cancelBooking } from '../../services/booking';
+import { createReview } from '../../services/review';
 import { formatDate, formatPrice } from '../../utils/format';
 import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -16,6 +17,11 @@ function OrderDetail() {
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewContent, setReviewContent] = useState('');
+  const [reviewed, setReviewed] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -44,6 +50,11 @@ function OrderDetail() {
           } catch (e) {
             console.error('解析图片失败:', e);
           }
+        }
+
+        // 检查是否已评价
+        if (rawData.review) {
+          setReviewed(true);
         }
 
         const orderData = {
@@ -142,6 +153,23 @@ function OrderDetail() {
     Taro.makePhoneCall({
       phoneNumber: '400-123-4567'
     });
+  };
+
+  const handleSubmitReview = async () => {
+    if (submittingReview) return;
+    try {
+      setSubmittingReview(true);
+      const res = await createReview(order.id, reviewRating, reviewContent);
+      if (res.success) {
+        setReviewed(true);
+        setShowReviewModal(false);
+        Taro.showToast({ title: '评价成功', icon: 'success' });
+      }
+    } catch {
+      Taro.showToast({ title: '提交失败，请重试', icon: 'none' });
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   const handleNavigateToHotel = () => {
@@ -293,6 +321,56 @@ function OrderDetail() {
           </Button>
         </View>
       )}
+
+      {(order.status === 'completed' || order.status === 'checked_out') && (
+        <View className='footer-actions'>
+          <Button
+            className={`footer-btn ${reviewed ? 'reviewed-btn' : 'review-btn'}`}
+            onClick={() => !reviewed && setShowReviewModal(true)}
+            disabled={reviewed}
+          >
+            {reviewed ? '已评价' : '去评价'}
+          </Button>
+        </View>
+      )}
+
+      {/* 评价弹窗 */}
+      {showReviewModal && (
+        <View className='review-modal-mask' onClick={() => setShowReviewModal(false)}>
+          <View className='review-modal' onClick={e => e.stopPropagation()}>
+            <Text className='review-modal-title'>评价 {order.hotelName}</Text>
+
+            <Text className='review-label'>满意度</Text>
+            <View className='star-row'>
+              {[1, 2, 3, 4, 5].map(star => (
+                <Text
+                  key={star}
+                  className={`star-item ${star <= reviewRating ? 'star-active' : ''}`}
+                  onClick={() => setReviewRating(star)}
+                >
+                  ★
+                </Text>
+              ))}
+              <Text className='star-score'>{reviewRating}分</Text>
+            </View>
+
+            <Text className='review-label'>点评内容（选填）</Text>
+            <Textarea
+              className='review-textarea'
+              value={reviewContent}
+              onInput={e => setReviewContent(e.detail.value)}
+              placeholder='分享您的入住体验...'
+              maxlength={300}
+            />
+
+            <View className='review-modal-footer'>
+              <Button className='review-cancel-btn' onClick={() => setShowReviewModal(false)}>取消</Button>
+              <Button className='review-submit-btn' onClick={handleSubmitReview} loading={submittingReview}>提交评价</Button>
+            </View>
+          </View>
+        </View>
+      )}
+
       <AiChatWidget />
     </View>
   );

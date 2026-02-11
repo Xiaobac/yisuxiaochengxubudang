@@ -1,0 +1,100 @@
+.review-list-container {
+  min-height: 100vh;
+  background-color: var(--color-bg-secondary);
+}
+
+.review-scroll {
+  height: 100vh;
+  padding: 20rpx 24rpx;
+  box-sizing: border-box;
+}
+
+.review-card {
+  background-color: var(--color-card-bg);
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.review-hotel-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+
+.review-hotel-name {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+.review-room-name {
+  font-size: 24rpx;
+  color: var(--color-text-tertiary);
+  background-color: var(--color-bg-tertiary);
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+}
+
+.review-stay-info {
+  margin-bottom: 16rpx;
+}
+
+.review-stay-text {
+  font-size: 24rpx;
+  color: var(--color-text-secondary);
+}
+
+.review-stars-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.review-stars {
+  font-size: 34rpx;
+  color: #ff9a03;
+  letter-spacing: 4rpx;
+  margin-right: 12rpx;
+}
+
+.review-rating-num {
+  font-size: 24rpx;
+  color: #ff9a03;
+  font-weight: bold;
+}
+
+.review-content {
+  font-size: 28rpx;
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  margin-bottom: 20rpx;
+}
+
+.review-content-empty {
+  font-size: 26rpx;
+  color: var(--color-text-tertiary);
+  margin-bottom: 20rpx;
+}
+
+.review-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1rpx solid var(--color-border-base);
+  padding-top: 16rpx;
+}
+
+.review-date {
+  font-size: 22rpx;
+  color: var(--color-text-tertiary);
+}
+
+.review-delete-btn {
+  font-size: 24rpx;
+  color: #ff4d4f;
+  padding: 6rpx 16rpx;
+}

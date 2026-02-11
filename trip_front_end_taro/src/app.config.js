@@ -10,7 +10,8 @@ export default {
     'pages/favoriteList/index',
     'pages/login/index',
     'pages/register/index',
-    'pages/mine/index'
+    'pages/mine/index',
+    'pages/reviewList/index'
   ],
   window: {
     navigationBarBackgroundColor: '#1677ff',
@@ -43,5 +44,11 @@ export default {
     request: 10000,
     connectSocket: 10000
   },
+  permission: {
+    'scope.userLocation': {
+      desc: '获取您的位置信息，用于显示酒店与您的距离及地图导航'
+    }
+  },
+  requiredPrivateInfos: ['getLocation', 'chooseLocation'],
   debug: false
 }

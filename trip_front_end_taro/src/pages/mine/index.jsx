@@ -181,7 +181,7 @@ function Mine() {
 
 {/* 4.底部常用功能列表 (补充一些酒店常用入口) */}
 <View className='common-list-section'>
-<View className='list-cell-row'>
+<View className='list-cell-row' onClick={() => Taro.navigateTo({ url: '/pages/reviewList/index' })}>
 <Text className='cell-left-text'>我的评价</Text>
 <Text className='cell-arrow-right'>{'>'}</Text>
 </View>
