@@ -81,13 +81,14 @@ function RoomList({ value = [], onChange }: RoomListProps) {
         }>
             <Row gutter={16}>
                 <Col span={8}>
-                     <Input
-                        placeholder="房型名称"
-                        value={room.name}
-                        onChange={(e) => handleChange(index, 'name', e.target.value)}
-                        addonBefore="名称"
-                        style={{ marginBottom: 8 }}
-                      />
+                     <Space.Compact style={{ width: '100%', marginBottom: 8 }}>
+                        <span className="ant-input-group-addon">名称</span>
+                        <Input
+                           placeholder="房型名称"
+                           value={room.name}
+                           onChange={(e) => handleChange(index, 'name', e.target.value)}
+                        />
+                     </Space.Compact>
                 </Col>
                 <Col span={8}>
                     <InputNumber
@@ -110,12 +111,14 @@ function RoomList({ value = [], onChange }: RoomListProps) {
                     />
                 </Col>
                 <Col span={24}>
-                    <Input
-                        placeholder="房型描述（选填）"
-                        value={room.description}
-                        onChange={(e) => handleChange(index, 'description', e.target.value)}
-                        addonBefore="描述"
-                     />
+                    <Space.Compact style={{ width: '100%' }}>
+                        <span className="ant-input-group-addon">描述</span>
+                        <Input
+                            placeholder="房型描述（选填）"
+                            value={room.description}
+                            onChange={(e) => handleChange(index, 'description', e.target.value)}
+                        />
+                    </Space.Compact>
                 </Col>
             </Row>
         </Card>
