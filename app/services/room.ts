@@ -76,3 +76,11 @@ export const updateRoomAvailability = async (
   );
   return response.data;
 };
+
+/**
+ * 获取指定日期和酒店的所有房型可用性
+ */
+export const getRoomAvailabilityByDate = async (hotelId: number, date: string) => {
+  const response = await get<{ success: boolean; data: any[] }>(`/room-availability?hotelId=${hotelId}&date=${date}`);
+  return response.data;
+};
