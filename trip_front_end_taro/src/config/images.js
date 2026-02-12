@@ -4,9 +4,7 @@
  */
 
 // API服务器地址（根据环境切换）
-const API_BASE = process.env.NODE_ENV === 'production'
-  ? 'https://your-domain.com'  // 生产环境使用HTTPS
-  : 'http://localhost:3000';    // 开发环境
+const API_BASE = 'http://localhost:3000';    // 开发环境
 
 // 默认酒店图片
 export const DEFAULT_HOTEL_IMAGE = `${API_BASE}/uploads/1770189062477-9-2026-02-03185959.png`;

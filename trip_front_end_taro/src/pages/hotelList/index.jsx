@@ -4,6 +4,7 @@ import Taro, { usePullDownRefresh } from '@tarojs/taro';
 import { getHotels } from '../../services/hotel';
 import { formatStars, formatPrice } from '../../utils/format';
 import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
+import { getImageUrl } from '../../config/images';
 import FilterPanel from '../../components/FilterPanel';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
@@ -413,7 +414,7 @@ function HotelList() {
           {filteredHotels.map((hotel) => (
             <View key={hotel.id} className='hotel-card-box' onClick={() => handleHotelClick(hotel.id)}>
               <View className='hotel-card-left'>
-                <Image className='hotel-card-img' src={hotel.img} mode='aspectFill' />
+                <Image className='hotel-card-img' src={getImageUrl(hotel.img)} mode='aspectFill' />
                 <View className='play-icon-overlay'>▶</View>
               </View>
               <View className='hotel-card-right'>

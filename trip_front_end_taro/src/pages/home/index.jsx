@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, Image, Input, Button, Swiper, SwiperItem, ScrollView } from '@tarojs/components';
+import { View, Text, Image, Input, Button, Swiper, SwiperItem, ScrollView, Picker } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import Calendar from '../../components/Calendar';
 import SearchSuggestion from '../../components/SearchSuggestion';
@@ -296,20 +296,11 @@ function Home() {
   };
 
   // 城市选择处理
-  const handleCitySelect = () => {
-    if (locations.length === 0) {
-      Taro.showToast({ title: '加载中...', icon: 'none' });
-      return;
+  const handleCityChange = (e) => {
+    const index = e.detail.value;
+    if (locations[index]) {
+      setSelectedLocation(locations[index]);
     }
-
-    const itemList = locations.map(loc => loc.name);
-
-    Taro.showActionSheet({
-      itemList,
-      success: (res) => {
-        setSelectedLocation(locations[res.tapIndex]);
-      }
-    });
   };
 
   // 价格/星级筛选处理
@@ -437,12 +428,19 @@ function Home() {
 
         {/* 城市选择+搜索输入 */}
         <View className='row-section city-search-row'>
-          <View className='city-wrap-box' onClick={handleCitySelect}>
-            <Text className='city-label-text'>
-              {selectedLocation?.name || '上海'}
-            </Text>
-            <View className='triangle-down-icon'></View>
-          </View>
+          <Picker 
+            mode='selector' 
+            range={locations} 
+            rangeKey='name'
+            onChange={handleCityChange}
+          >
+            <View className='city-wrap-box'>
+              <Text className='city-label-text'>
+                {selectedLocation?.name || '上海'}
+              </Text>
+              <View className='triangle-down-icon'></View>
+            </View>
+          </Picker>
           <View className='input-wrap-box' style={{ position: 'relative' }}>
             <Input
               className='search-input-el'

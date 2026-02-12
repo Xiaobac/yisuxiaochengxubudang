@@ -6,6 +6,7 @@ import { getHotelById, getHotelRoomTypes } from '../../services/hotel';
 import { createBooking } from '../../services/booking';
 import { addFavorite, removeFavorite, checkFavorite } from '../../services/favorite';
 import { formatPrice, formatStars } from '../../utils/format';
+import { getImageUrl } from '../../config/images';
 import { storage } from '../../utils/storage';
 import Calendar from '../../components/Calendar';
 import BookingConfirm from '../../components/BookingConfirm';
@@ -459,7 +460,7 @@ function HotelDetail() {
       >
         {/* 2.媒体区域 */}
         <View className='media-box'>
-          <Image className='main-media-img' src={hotel.img} mode='aspectFill' />
+          <Image className='main-media-img' src={getImageUrl(hotel.img)} mode='aspectFill' />
           <View className='media-tags-row'>
             <Text className='media-tag'>封面</Text>
             <Text className='media-tag'>精选</Text>
@@ -562,7 +563,7 @@ function HotelDetail() {
                 </View>
 
                 <View className='room-preview-row'>
-                  <Image className='room-preview-img' src={hotel.img} mode='aspectFill' />
+                  <Image className='room-preview-img' src={getImageUrl(hotel.img)} mode='aspectFill' />
                   <View className='room-preview-details'>
                     <Text className='room-title'>{room.name}</Text>
                     <Text className='room-specs'>
