@@ -59,7 +59,9 @@ export default function DashboardPage() {
 
       // 获取所有预订数据
       const allBookings = await getMyBookings();
-      const hotels = await getMyHotels();
+      // 获取所有酒店数据用于统计（使用较大limit确保获取所有）
+      const hotelsRes = await getMyHotels({ limit: 1000 });
+      const hotels = hotelsRes.data || [];
 
       // 计算统计数据
       const today = dayjs();

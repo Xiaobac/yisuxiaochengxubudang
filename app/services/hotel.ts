@@ -28,13 +28,13 @@ export const getHotelById = (id: number) => {
 /**
  * 获取我的酒店列表（商户）
  */
-export const getMyHotels = async () => {
+export const getMyHotels = async (params?: { page?: number; limit?: number }) => {
   const user = getStoredUser();
   if (!user) {
     throw new Error('未登录');
   }
-  const response = await get<ApiResponse<Hotel[]>>(`/hotels?merchantId=${user.id}`);
-  return response.data || [];
+  const queryParams = { ...params, merchantId: user.id };
+  return get<HotelListResponse>('/hotels', { params: queryParams });
 };
 
 /**

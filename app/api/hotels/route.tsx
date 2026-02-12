@@ -26,6 +26,16 @@ import { NextRequest, NextResponse } from 'next/server';
  *         schema:
  *           type: string
  *         description: 酒店标签过滤 (逗号分隔，需同时满足所有标签)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: 页码 (默认1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: 每页数量 (默认10)
  *     responses:
  *       200:
  *         description: 成功获取酒店列表
@@ -91,6 +101,11 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const tags = searchParams.get('tags');
     const keyword = searchParams.get('keyword');
+    
+    // Pagination
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
 
     const where: any = {};
     if (locationId) where.locationId = parseInt(locationId);
@@ -107,7 +122,6 @@ export async function GET(request: NextRequest) {
 
     // 仅在没有指定status且不是商户查询自己的酒店时，才默认过滤为published
     if (status) {
-
       where.status = status;
     } else if (!merchantId) {
       // 默认只显示已发布的酒店（仅对公开查询）
@@ -130,18 +144,30 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const hotels = await prisma.hotel.findMany({
-      where,
-      include: {
-        location: true, // 包含关联的Location信息
-        merchant: { select: { id: true, name: true, email: true } }, // 包含商户的部分信息
-        hotelTags: { include: { tag: true } }, // 返回酒店的标签信息
-        roomTypes: true, // 包含关联的房型信息
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Use transaction to get count and data efficiently
+    const [total, hotels] = await prisma.$transaction([
+      prisma.hotel.count({ where }),
+      prisma.hotel.findMany({
+        where,
+        include: {
+          location: true,
+          merchant: { select: { id: true, name: true, email: true } },
+          hotelTags: { include: { tag: true } },
+          roomTypes: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+    ]);
 
-    return NextResponse.json({ success: true, data: hotels });
+    return NextResponse.json({ 
+      success: true, 
+      data: hotels,
+      total,
+      page,
+      limit
+    });
   } catch (error) {
     console.error('Fetch hotels error:', error);
     return NextResponse.json({ success: false, error: '获取酒店列表失败' }, { status: 500 });

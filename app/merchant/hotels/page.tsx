@@ -139,20 +139,32 @@ export default function HotelManagementPage() {
   const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const { message } = App.useApp();
 
   useEffect(() => {
-    fetchHotels();
+    fetchHotels(1, 10);
     fetchLocations();
     fetchTags();
   }, []);
 
-  const fetchHotels = async () => {
+  const fetchHotels = async (page = pagination.current, pageSize = pagination.pageSize) => {
     try {
       setLoading(true);
-      const res = await getMyHotels();
-      // @ts-ignore
-      setHotels(res.data || res || []);
+      const res = await getMyHotels({ page, limit: pageSize });
+      // The service now returns { success: true, data: Hotel[], total: number, ... }
+      // Or due to my change in service which returns "response" directly if `get` returns data.
+      // Wait, `get` usually returns parsed JSON body.
+      // My service change: `return get<HotelListResponse>(...)`.
+      // So `res` is `HotelListResponse`.
+      if (res.success && res.data) {
+          setHotels(res.data);
+          setPagination({
+              current: page,
+              pageSize: pageSize,
+              total: res.total || 0
+          });
+      }
     } catch (error) {
       console.error('获取酒店列表失败:', error);
       message.error('获取酒店列表失败');
@@ -160,6 +172,11 @@ export default function HotelManagementPage() {
       setLoading(false);
     }
   };
+  
+  const handleTableChange = (newPagination: any) => {
+    fetchHotels(newPagination.current, newPagination.pageSize);
+  };
+
   
   const fetchLocations = async () => {
     try {
@@ -454,7 +471,8 @@ export default function HotelManagementPage() {
         dataSource={hotels}
         rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 10 }}
+        pagination={pagination}
+        onChange={handleTableChange}
       />
 
       <Modal
