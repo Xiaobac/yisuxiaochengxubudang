@@ -51,6 +51,7 @@ export const getCurrentUser = () => {
 export const logout = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     window.location.href = '/auth/login';
   }
@@ -75,12 +76,60 @@ export const getStoredUser = (): User | null => {
 /**
  * 保存用户信息和 token
  */
-export const saveAuth = (token: string, user: User) => {
+export const saveAuth = (token: string, refreshToken: string, user: User) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('token', token);
+    localStorage.setItem('refreshToken', refreshToken);
     localStorage.setItem('user', JSON.stringify(user));
   }
 };
+
+/**
+ * 获取刷新 Token
+ */
+export const getRefreshToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('refreshToken');
+};
+
+/**
+ * 刷新 Access Token
+ */
+export const refreshAccessToken = async () => {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    throw new Error('No refresh token available');
+  }
+  
+  // Directly call axios to avoid circular dependency loop with interceptors if we used 'post' wrapper
+  // passing full url since instance baseurl might be relative or handled by interceptor
+  // Actually, we can just use fetch or a separate axios instance, or simple post but with care
+  // To keep it simple and safe, I will use fetch here to avoid interceptor complexity for the refresh call itself
+  
+  const response = await fetch('/api/auth/refresh', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ refreshToken }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Refresh failed');
+  }
+
+  const data = await response.json();
+  if (data.accessToken) {
+    // Update local storage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('token', data.accessToken);
+    }
+    return data.accessToken;
+  }
+  
+  throw new Error('No access token returned');
+};
+
 
 /**
  * 检查是否已登录

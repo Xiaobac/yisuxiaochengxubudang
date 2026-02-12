@@ -28,7 +28,7 @@ export default function LoginPage() {
       // 保存 token 和用户信息
       // 注意：API 返回的是 accessToken 而不是 token
       if (result.success && result.accessToken) {
-        saveAuth(result.accessToken, result.user);
+        saveAuth(result.accessToken, result.refreshToken, result.user);
         message.success('登录成功');
 
         // 根据角色跳转
