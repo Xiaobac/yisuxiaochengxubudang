@@ -4,7 +4,7 @@ import Taro from '@tarojs/taro';
 import { useTheme } from '../../utils/useTheme';
 import './index.css';
 
-const AiAssistant = () => {
+const AiChatWidget = () => {
   const { cssVars } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -184,4 +184,4 @@ const AiAssistant = () => {
   );
 };
 
-export default AiAssistant;
+export default AiChatWidget;

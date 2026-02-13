@@ -393,15 +393,30 @@ function HotelDetail() {
     setIsCalendarVisible(false);
   };
 
-  const filterTags = ['含早餐', '立即确认', '大床房', '双床房', '免费取消'];
+  const filterTags = ['含早餐', '大床房', '双床房','棋牌房','家庭房','免费取消'];
 
   const facilities = [
-    { icon: '🏢', text: '2020年开业' },
-    { icon: '🎋', text: '新中式风' },
+    { icon: '🏢', text: '2020开业' },
+    { icon: '📶', text: '免费WiFi' },
+    { icon: '🏖️', text: '度假胜地' },
+    { icon: '🍳', text: '含早餐' },
     { icon: '🅿️', text: '免费停车' },
-    { icon: '🌊', text: '一线江景' },
-    { icon: '🛏️', text: '江景房' },
-    { icon: '📋', text: '设施政策' }
+    { icon: '♨️', text: '温泉酒店' },
+    { icon: '🌊', text: '海景房' },
+    { icon: '🏊', text: '游泳池' },
+    { icon: '🚇', text: '靠近地铁' },
+    { icon: '🏋️', text: '健身房' },
+    { icon: '👨‍👩‍👧‍👦', text: '亲子友好' },
+    { icon: '💼', text: '商务出差' },
+    { icon: '💑', text: '情侣约会' },
+    { icon: '🚗', text: '接送机服务' },
+    { icon: '🐾', text: '宠物友好' },
+    { icon: '🕐', text: '24小时前台' },
+    { icon: '🚭', text: '无烟房' },
+    { icon: '🥂', text: '行政酒廊' },
+    { icon: '📊', text: '会议室' },
+    { icon: '🧺', text: '洗衣服务' },
+    { icon: '🧳', text: '行李寄存' }
   ];
 
   // Loading 状态
@@ -479,7 +494,6 @@ function HotelDetail() {
           </View>
 
           <View className='rank-section'>
-            <Text className='hotel-rank-tag'>优质酒店</Text>
             <Text className='rank-text'>{hotel.location}精选酒店</Text>
           </View>
 
@@ -498,18 +512,20 @@ function HotelDetail() {
           <View className='info-detail-cols'>
             <View className='col-left'>
               <View className='score-section'>
-                <Text className='score-badge'>{hotel.score}</Text>
-                <View className='score-info'>
+                <View className='score-row'>
+                  <Text className='score-badge'>{hotel.score}</Text>
                   <Text className='score-desc'>{hotel.scoreDesc}</Text>
                   <Text className='reviews-count'>{hotel.reviews.replace('点评', '条')}</Text>
                 </View>
+                <Text className='recommendation-text'>"{hotel.notice || '舒适安逸'}"</Text>
               </View>
-              <Text className='recommendation-text'>"{hotel.notice || '舒适安逸'}"</Text>
             </View>
             <View className='col-right' onClick={handleMapClick}>
-              <Text className='distance-text'>查看位置信息</Text>
-              <Text className='address-text'>{hotel.address}</Text>
-              <View className='map-section'>
+            {/* 左侧：距离信息（加粗，垂直居中） */}
+              <Text className='distance-text'>{hotel.address || '距地铁站300m'}</Text>
+            
+            {/* 右侧：图标 + 地图文字（垂直排列） */}
+              <View className='map-vertical'>
                 <View className='map-icon-small'>📍</View>
                 <Text className='map-text'>地图</Text>
               </View>
@@ -535,77 +551,103 @@ function HotelDetail() {
             <Text className='date-change-arrow'>{'>'}</Text>
           </View>
 
-          <Text className='date-note'>点击修改入住和离店日期</Text>
-
           {/* 快捷筛选条件 */}
           <View className='quick-filter-row'>
+          {/* 可滚动的标签区域 */}
+          <View className='scrollable-tags'>
             {filterTags.map(tag => (
-              <View key={tag} className='quick-filter-tag'>{tag}</View>
+          <View key={tag} className='quick-filter-tag'>{tag}</View>
             ))}
-            <Text className='more-filter'>筛选 {'>'}</Text>
+          </View>
+          {/* 固定的“筛选”按钮 */}
+          <Text className='more-filter'>筛选 {'>'}</Text>
           </View>
         </View>
 
         {/* 4.房型列表区块 */}
         <View className='room-type-section'>
-          {roomTypes.length > 0 ? (
-            roomTypes.map((room) => (
-              <View key={room.id} className='room-card'>
-                <View className='room-header'>
-                  <Text className='room-header-title'>{room.name}</Text>
-                  {room.features && room.features.length > 0 && (
-                    <View className='room-header-right-tag'>
-                      {room.features.slice(0, 2).map((feature, index) => (
-                        <Text key={index} className='room-tag-item'>{feature}</Text>
-                      ))}
-                    </View>
-                  )}
-                </View>
-
-                <View className='room-preview-row'>
-                  <Image className='room-preview-img' src={getImageUrl(hotel.img)} mode='aspectFill' />
-                  <View className='room-preview-details'>
-                    <Text className='room-title'>{room.name}</Text>
-                    <Text className='room-specs'>
-                      {room.bed} · {room.area} · {room.capacity} · {room.floor}
-                    </Text>
-                  </View>
-                </View>
-
-                <View className='room-footer'>
-                  <View className='price-section'>
-                    <View className='price-main-row'>
-                      <Text className='room-price-symbol'>¥</Text>
-                      <Text className='room-price-val'>{room.dynamicPrice ?? room.price}</Text>
-                      <Text className='room-price-unit'>/晚</Text>
-                    </View>
-                    <Text className='price-total-text'>
-                      共{getNightCount()}晚 ¥{(room.dynamicPrice ?? room.price) * getNightCount()}
-                    </Text>
-                    {room.remainingRooms !== null && (
-                      <Text className={`room-remaining ${room.remainingRooms <= 3 ? 'room-remaining-urgent' : ''}`}>
-                        {room.remainingRooms === 0 ? '已售罄' : `仅剩${room.remainingRooms}间`}
-                      </Text>
-                    )}
-                  </View>
-                  <Button
-                    className={`room-detail-btn ${selectedRoomTypeId === room.id ? 'selected' : ''} ${room.remainingRooms === 0 ? 'disabled' : ''}`}
-                    onClick={() => room.remainingRooms !== 0 && handleViewRoom(room.id)}
-                  >
-                    {room.remainingRooms === 0 ? '已售罄' : selectedRoomTypeId === room.id ? '已选择' : '选择房型'}
-                  </Button>
-                </View>
-              </View>
-            ))
-          ) : (
-            <View style={{ padding: '40rpx', textAlign: 'center' }}>
-              <Text>暂无房型信息</Text>
+  {roomTypes.length > 0 ? (
+    roomTypes.map((room) => (
+      <View key={room.id} className='room-card'>
+        {/* 房型头部标签（可保留） */}
+        <View className='room-header'>
+          {room.features && room.features.length > 0 && (
+            <View className='room-header-right-tag'>
+              {room.features.slice(0, 2).map((feature, index) => (
+                <Text key={index} className='room-tag-item'>{feature}</Text>
+              ))}
             </View>
           )}
         </View>
 
+        {/* 图片 + 详情区域 */}
+        <View className='room-preview-row'>
+          <Image
+            className='room-preview-img'
+            src={getImageUrl(hotel.img)}
+            mode='aspectFill'
+          />
+          <View className='room-preview-details'>
+            {/* 房型名称（加粗大字） */}
+            <Text className='room-title'>{room.name}</Text>
+            {/* 规格信息（小字） */}
+            <Text className='room-specs'>
+              {room.area} · {room.capacity} · {room.floor}
+            </Text>
+
+            {/* 第一行：红色价格 + 预订按钮（靠右） */}
+            <View className='price-button-group'>
+              <Text className='room-price-large'>
+                ¥{room.dynamicPrice ?? room.price}
+                <Text className='room-price-unit-small'>/晚</Text>
+              </Text>
+              <Button
+                className={`room-detail-btn ${
+                  selectedRoomTypeId === room.id ? 'selected' : ''
+                } ${room.remainingRooms === 0 ? 'disabled' : ''}`}
+                onClick={() =>
+                  room.remainingRooms !== 0 && handleViewRoom(room.id)
+                }
+              >
+                {room.remainingRooms === 0
+                  ? '已售罄'
+                  : selectedRoomTypeId === room.id
+                  ? '已选择'
+                  : '选择房型'}
+              </Button>
+            </View>
+
+            {/* 第二行：共几晚 + 总价 + 剩余房数（靠右） */}
+            <View className='price-info'>
+              <Text className='price-total'>
+                共{getNightCount()}晚 ¥
+                {(room.dynamicPrice ?? room.price) * getNightCount()}
+              </Text>
+              {room.remainingRooms !== null && (
+                <Text
+                  className={`room-remaining ${
+                    room.remainingRooms <= 3 ? 'room-remaining-urgent' : ''
+                  }`}
+                >
+                  {room.remainingRooms === 0
+                    ? '已售罄'
+                    : `仅剩${room.remainingRooms}间`}
+                </Text>
+              )}
+            </View>
+          </View>
+        </View>
+      </View>
+    ))
+  ) : (
+    <View style={{ padding: '40rpx', textAlign: 'center' }}>
+      <Text>暂无房型信息</Text>
+    </View>
+  )}
+</View>
+
         {/* 底部留白 */}
-        <View style={{ height: '130rpx' }} />
+        <View style={{ height: '50rpx' }} />
       </ScrollView>
 
       {/* 5.底部悬浮操作栏 */}

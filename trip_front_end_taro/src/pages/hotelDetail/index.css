@@ -40,6 +40,11 @@
 }
 
 .header-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%); /* 水平和垂直居中 */
+  max-width: 60%;
   font-size: 32rpx;
   font-weight: 600;
   opacity: 0;
@@ -123,7 +128,7 @@
 .tag-sq-btn { /* 口碑标签 */
   position: absolute;
   top: 30rpx;
-  right: 90rpx;
+  right: 25rpx;
   background-color: var(--color-card-bg);
   border-radius: 16rpx;
   padding: 6rpx 16rpx;
@@ -169,11 +174,16 @@
   margin-bottom: 20rpx;
 }
 
+.hotel-rank-section {
+  margin-top: 20rpx;
+}
+
 /* 设施图标行 */
 .facility-icon-row {
   display: flex;
   align-items: center;
   margin-bottom: 30rpx;
+  margin-top: 20rpx;
   overflow-x: auto;
   white-space: nowrap;
 }
@@ -215,12 +225,20 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;  /* 三个元素之间的水平间距 */
+  flex-wrap: wrap;
 }
 
 .score-badge {
   background-color: var(--color-primary);
   color: #fff;
-  font-size: 24rpx;
+  font-size: 30rpx;
   padding: 2rpx 8rpx;
   border-radius: 6rpx;
   font-weight: bold;
@@ -232,49 +250,71 @@
   margin-top: 5rpx;
 }
 
+.reviews-count {
+  font-size: 24rpx;         
+  color: var(--color-text-tertiary); 
+}
+
 .recommendation-text {
   font-size: 24rpx;
   color: var(--color-text-secondary);
   margin-top: 10rpx;
+  font-weight: bold;
 }
 
 .col-right {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  width: 40%;
+  flex-direction: row;          /* 水平排列左右两列 */
+  align-items: center;          /* 垂直居中两列内容 */
+  justify-content: space-between; /* 左右分开，左侧贴左，右侧贴右 */
+  width: 60%;
+  /* 如果之前添加了背景、圆角、内边距等，可以保留 */
+  background-color: var(--color-card-bg); /* 可选 */
+  border-radius: 16rpx;
+  padding: 20rpx;
+  box-sizing: border-box;
 }
 
 .distance-text {
-  font-size: 24rpx;
+  font-size: 28rpx;              /* 适当增大字号 */
+  font-weight: bold;             /* 加粗 */
   color: var(--color-text-primary);
-  text-align: right;
+  text-align: left;              /* 左对齐 */
+  /* 无需额外 margin，父容器已处理垂直居中 */
 }
 
-.address-text {
-  font-size: 20rpx;
-  color: var(--color-text-tertiary);
-  margin-top: 5rpx;
-  text-align: right;
+.map-vertical {
+  display: flex;
+  flex-direction: column;        /* 垂直排列 */
+  align-items: center;           /* 水平居中图标和文字 */
+  gap: 4rpx;                     /* 图标与文字间距（可选） */
 }
+
 
 .map-icon-small {
   background-color: var(--color-bg-tertiary);
   border-radius: 50%;
-  width: 30rpx;
-  height: 30rpx;
-  font-size: 18rpx;
-  text-align: center;
-  line-height: 30rpx;
-  margin-top: 10rpx;
+  width: 36rpx;                 /* 可稍微增大 */
+  height: 36rpx;
+  font-size: 22rpx;             /* 图标字体增大 */
+  display: flex;                 /* 改用 flex 更易居中（可选） */
+  align-items: center;
+  justify-content: center;
   color: var(--color-text-secondary);
+  margin-top: 0;                 /* 覆盖原有上边距 */
+  /* line-height 不再需要（如果用 flex） */
+}
+
+.map-text {
+  font-size: 20rpx;
+  color: var(--color-text-tertiary);
 }
 
 .info-card-separator {
   width: 100%;
   height: 1rpx;
   background-color: var(--color-border-base);
-  margin: 30rpx 0;
+  margin: 20rpx 0;
 }
 
 /* 日期信息行 (复用首页样式) */
@@ -337,30 +377,56 @@
 }
 
 /* 7.快捷筛选条件 */
+/* 整体行容器：水平排列，垂直居中 */
 .quick-filter-row {
   display: flex;
-  flex-wrap: wrap;
-  padding-bottom: 30rpx;
   align-items: center;
+  padding-bottom: 30rpx;        /* 保留原有底部间距 */
+  /* 移除了 flex-wrap: wrap，因为不需要换行 */
 }
 
+/* 可滚动的标签区域：占满剩余宽度，支持横向滚动 */
+.scrollable-tags {
+  flex: 1;                      /* 占据剩余空间 */
+  overflow-x: auto;              /* 横向滚动 */
+  white-space: nowrap;           /* 禁止换行 */
+  -webkit-overflow-scrolling: touch; /* iOS 流畅滚动 */
+  /* 隐藏滚动条（可选，让界面更干净） */
+  scrollbar-width: none;
+}
+.scrollable-tags::-webkit-scrollbar {
+  display: none;
+}
+
+/* 标签样式：调整为 inline-block，移除底部外边距 */
 .quick-filter-tag {
+  display: inline-block;         /* 水平排列 */
   background-color: var(--color-bg-tertiary);
   padding: 8rpx 20rpx;
   border-radius: 8rpx;
   font-size: 24rpx;
-  margin-right: 15rpx;
-  margin-bottom: 15rpx;
+  margin-right: 15rpx;           /* 标签之间的间距 */
+  /* margin-bottom: 15rpx; 删除，水平滚动不需要底部间距 */
   color: var(--color-text-primary);
+  white-space: nowrap;           /* 防止标签内文字换行 */
 }
 
+/* 最后一个标签去掉右边距（避免滚动末尾空白） */
+.quick-filter-tag:last-child {
+  margin-right: 0;
+}
+
+/* 右侧“筛选”按钮：固定，与标签区域间距 */
 .more-filter {
   font-size: 24rpx;
   color: var(--color-text-tertiary);
-  margin-left: auto;
+  margin-left: 15rpx;            /* 与标签区域的间距 */
+  flex-shrink: 0;                /* 防止被压缩 */
+  white-space: nowrap;
 }
 
 /* 4.房型列表 */
+/* ===== 房型卡片容器 ===== */
 .room-type-section {
   background-color: var(--color-card-bg);
   margin: 20rpx 24rpx 0;
@@ -369,10 +435,11 @@
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
 }
 
+/* ===== 房型头部（标签区域） ===== */
 .room-header {
   display: flex;
   justify-content: space-between;
-  padding: 30rpx 0;
+  padding: 15rpx 0 30rpx;
   border-bottom: 1rpx solid var(--color-border-base);
 }
 
@@ -386,6 +453,7 @@
   color: var(--color-text-tertiary);
 }
 
+/* ===== 图片与详情区域（水平排列） ===== */
 .room-preview-row {
   display: flex;
   padding: 30rpx;
@@ -400,18 +468,97 @@
   flex-shrink: 0;
 }
 
+/* 右侧详情容器，垂直排列并占满剩余宽度 */
+.room-preview-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* ===== 房型名称 ===== */
 .room-title {
   font-size: 30rpx;
   font-weight: bold;
   margin-bottom: 10rpx;
 }
 
+/* ===== 规格信息 ===== */
 .room-specs {
   font-size: 22rpx;
   color: var(--color-text-secondary);
   margin-top: 10rpx;
   line-height: 1.4;
 }
+
+/* ===== 红色价格 + 预订按钮（第一行，靠右） ===== */
+.price-button-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;   /* 靠右对齐 */
+  gap: 20rpx;
+  width: 100%;
+  margin-top: 20rpx;           /* 与上方规格信息的间距 */
+}
+
+/* ===== 红色大价格 ===== */
+.room-price-large {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #ff4d4f;
+  line-height: 1;
+}
+
+/* ===== 价格中的“/晚”小字 ===== */
+.room-price-unit-small {
+  font-size: 24rpx;
+  color: var(--color-text-tertiary);
+  font-weight: normal;
+  margin-left: 4rpx;
+}
+
+/* ===== 预订按钮 ===== */
+.room-detail-btn {
+  padding: 10rpx 20rpx;
+  font-size: 26rpx;
+  border-radius: 40rpx;
+  background-color: var(--color-primary);
+  color: #fff;
+  border: none;
+  line-height: 1.2;
+  min-width: 140rpx;
+  text-align: center;
+}
+
+.room-detail-btn.selected {
+  background-color: var(--color-primary);
+  opacity: 0.9;
+}
+
+.room-detail-btn.disabled {
+  background-color: var(--color-border-base);
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+}
+
+/* ===== 第二行：共几晚 + 总价 + 剩余房数（靠右，水平排列） ===== */
+.price-info {
+  display: flex;
+  justify-content: flex-end;   /* 靠右对齐 */
+  align-items: center;
+  gap: 20rpx;                  /* 各项之间的间距 */
+  width: 100%;
+  font-size: 22rpx;
+  color: var(--color-text-secondary);
+  margin-top: 10rpx;           /* 与上一行的间距 */
+}
+
+/* 剩余房数紧急提示 */
+.room-remaining-urgent {
+  color: #ff4d4f;
+}
+
+/* 注意：原 .price-action-row 样式已不再使用，可保留或删除 */
+/* .price-action-row { ... } 如需删除，可直接移除 */
 
 /* 5.底部悬浮操作栏 (Sticky Footer) */
 .sticky-footer {
@@ -440,6 +587,7 @@
 }
 
 .footer-right-group {
+  margin-right: 40rpx;
   display: flex;
   align-items: center;
   gap: 12rpx;

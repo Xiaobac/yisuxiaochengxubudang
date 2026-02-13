@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, Image, Input, Button, Swiper, SwiperItem, ScrollView, Picker } from '@tarojs/components';
+import { View, Text, Image, Input, Button, Swiper, SwiperItem, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import Calendar from '../../components/Calendar';
 import SearchSuggestion from '../../components/SearchSuggestion';
@@ -8,11 +8,12 @@ import { getLocations } from '../../services/location';
 import { getTags } from '../../services/tag';
 import { BANNER_IMAGES } from '../../config/images';
 import dayjs from 'dayjs';
-import { useTheme } from '../../utils/useTheme'
+import { useTheme } from '../../utils/useTheme';
 import './index.css';
 
 function Home() {
-  const { cssVars } = useTheme()
+  const { cssVars } = useTheme();
+
   // --- 基础状态：标签切换 ---
   const [currentTab, setCurrentTab] = useState(0);
   const tabs = ['国内', '海外', '钟点房', '民宿'];
@@ -48,7 +49,7 @@ function Home() {
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  
+
   // 实际上的今天和明天
   const today = dayjs();
   const tomorrow = today.add(1, 'day');
@@ -62,10 +63,18 @@ function Home() {
     return currentHour >= 0 && currentHour < 6;
   }, [today]);
 
+  // ---------- 辅助函数：根据标签获取城市 ID 范围 ----------
+  const getCityIdsByTab = (tabIndex) => {
+    if (tabIndex === 1) { // 海外
+      return { min: 11, max: 20 };
+    }
+    // 国内(0)、钟点房(2)、民宿(3) 都使用 1~10
+    return { min: 1, max: 10 };
+  };
+
   // 初始化默认日期（今天和明天）
   useEffect(() => {
     if (!startDate && !endDate) {
-      // 只在首次加载时设置默认日期
       const todayStr = today.format('YYYY-MM-DD');
       const tomorrowStr = tomorrow.format('YYYY-MM-DD');
       setStartDate(todayStr);
@@ -82,30 +91,69 @@ function Home() {
   // 加载初始数据（位置和标签）
   const loadInitialData = async () => {
     try {
-      // 并发加载位置和标签数据
-      const [locationsRes, tagsRes] = await Promise.all([
-        getLocations(),
-        getTags()
-      ]);
+      let locationsData = [];
+      let tagsData = [];
 
-      // 处理位置数据
-      if (locationsRes.success && locationsRes.data) {
-        setLocations(locationsRes.data);
-        // 默认选择第一个位置
-        if (locationsRes.data.length > 0) {
-          setSelectedLocation(locationsRes.data[0]);
+      // --- 获取位置列表 ---
+      try {
+        const res = await getLocations();
+        console.log('原始位置响应:', res);
+
+        if (res) {
+          if (Array.isArray(res)) {
+            locationsData = res;
+          } else if (res.data && Array.isArray(res.data)) {
+            locationsData = res.data;
+          } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
+            locationsData = res.data.data;
+          } else {
+            console.warn('未知的位置数据结构:', res);
+          }
         }
+      } catch (error) {
+        console.error('获取位置失败:', error);
       }
 
-      // 处理标签数据
-      if (tagsRes.success && tagsRes.data) {
-        // 只显示前 3 个标签
-        setTags(tagsRes.data.slice(0, 3));
+      // --- 获取标签列表 ---
+      try {
+        const res = await getTags();
+        console.log('原始标签响应:', res);
+        if (res) {
+          if (Array.isArray(res)) {
+            tagsData = res;
+          } else if (res.data && Array.isArray(res.data)) {
+            tagsData = res.data;
+          } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
+            tagsData = res.data.data;
+          }
+        }
+      } catch (error) {
+        console.error('获取标签失败:', error);
+      }
+
+      // --- 处理位置数据：保存全部城市，根据当前标签选中第一个 ---
+      if (locationsData.length > 0) {
+        setLocations(locationsData);
+        // 根据当前标签设置默认选中的城市
+        const { min, max } = getCityIdsByTab(currentTab);
+        const defaultCity = locationsData.find(city => city.id >= min && city.id <= max) || null;
+        setSelectedLocation(defaultCity);
+      } else {
+        setLocations([]);
+        setSelectedLocation(null);
+      }
+
+      // --- 处理标签数据（只取前3个）---
+      if (tagsData.length > 0) {
+        setTags(tagsData.slice(0, 3));
+      } else {
+        setTags([]);
       }
     } catch (error) {
-      console.error('❌ 加载初始数据失败:', error);
-      // 使用默认数据
-      setSelectedLocation({ id: 1, name: '上海' });
+      console.error('loadInitialData 未知错误:', error);
+      setLocations([]);
+      setSelectedLocation(null);
+      setTags([]);
     }
   };
 
@@ -125,18 +173,11 @@ function Home() {
 
     try {
       let history = Taro.getStorageSync('searchHistory') || [];
-
-      // 去重：移除已存在的相同关键词
       history = history.filter(item => item !== keyword);
-
-      // 添加到最前面
       history.unshift(keyword);
-
-      // 最多保留10条
       if (history.length > 10) {
         history = history.slice(0, 10);
       }
-
       Taro.setStorageSync('searchHistory', history);
       setSearchHistory(history);
     } catch (error) {
@@ -171,58 +212,40 @@ function Home() {
   };
 
   // ----------------------- 事件处理函数 -----------------------
-  // 1. 打开日历：点击日期行触发
   const handleOpenCalendar = () => {
     setIsCalendarVisible(true);
   };
 
-  // 2. 日历确认选择：接收日历返回日期，更新状态并关闭日历
   const handleCalendarConfirm = (start, end) => {
     console.log('日历返回:', { start, end, isHourlyRoom });
-    
     setIsCalendarVisible(false);
-    
+
     if (isHourlyRoom) {
-      // 钟点房模式：只需要一个日期
       if (start) {
         setStartDate(start);
-        setEndDate(''); // 钟点房不需要离店日期
+        setEndDate('');
       }
     } else {
-      // 其他模式：日历组件会返回两个日期
-      // 注意：日历组件在选择过程中会多次调用onSelect：
-      // 1. 第一次选择入住日期：start=日期, end=''
-      // 2. 第二次选择离店日期：start=入住日期, end=离店日期
       if (start && end) {
-        // 当两个日期都存在时，同时更新
         setStartDate(start);
         setEndDate(end);
       } else if (start) {
-        // 只传入了入住日期，说明选择了新的入住日期，需要重置离店日期
         setStartDate(start);
-        setEndDate(''); // 重置离店日期
+        setEndDate('');
       }
     }
   };
 
-  // 3. 计算晚数或显示钟点房
   const getNightCount = () => {
-    if (isHourlyRoom) {
-      return '钟点房';
-    }
-
-    // 使用当前选中的日期计算
+    if (isHourlyRoom) return '钟点房';
     const start = startDate ? dayjs(startDate) : today;
     const end = endDate ? dayjs(endDate) : tomorrow;
-
-    // 确保离店日期晚于入住，按天计算差值
     if (end.isAfter(start, 'day')) {
       return `共${end.diff(start, 'day')}晚`;
     }
     return '共1晚';
   };
 
-  // 快捷日期选择
   const handleQuickDateSelect = (type) => {
     const todayStr = today.format('YYYY-MM-DD');
     const tomorrowStr = tomorrow.format('YYYY-MM-DD');
@@ -238,8 +261,7 @@ function Home() {
         setStartDate(tomorrowStr);
         setEndDate(dayAfterTomorrowStr);
         break;
-      case 'weekend':
-        // 找到本周末（周五到周日）
+      case 'weekend': {
         const dayOfWeek = today.day();
         const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 7 - dayOfWeek + 5;
         const fridayStr = today.add(daysUntilFriday, 'day').format('YYYY-MM-DD');
@@ -247,6 +269,7 @@ function Home() {
         setStartDate(fridayStr);
         setEndDate(sundayStr);
         break;
+      }
       case 'nextweek':
         setStartDate(nextWeekStr);
         setEndDate(today.add(8, 'day').format('YYYY-MM-DD'));
@@ -254,25 +277,15 @@ function Home() {
     }
   };
 
-  // 获取显示的日期格式
   const getDisplayDate = (date, isToday = false, isTomorrow = false) => {
-    if (date) {
-      return dayjs(date).format('MM月DD日');
-    } else if (isTomorrow) {
-      return tomorrow.format('MM月DD日');
-    }
+    if (date) return dayjs(date).format('MM月DD日');
+    if (isTomorrow) return tomorrow.format('MM月DD日');
     return today.format('MM月DD日');
   };
 
-  // 获取日期描述
   const getDateDesc = (isStartDate, date) => {
-    if (isHourlyRoom) {
-      return date ? '入住日期' : '今天';
-    }
-    
-    if (date) {
-      return isStartDate ? '入住' : '离店';
-    }
+    if (isHourlyRoom) return date ? '入住日期' : '今天';
+    if (date) return isStartDate ? '入住' : '离店';
     return isStartDate ? '今天' : '明天';
   };
 
@@ -280,47 +293,39 @@ function Home() {
   const handleTabChange = (index) => {
     setCurrentTab(index);
 
-    if (index === 2) { // 切换到钟点房
-      // 如果已有开始日期，保留；否则设为今天
-      if (!startDate) {
-        setStartDate(today.format('YYYY-MM-DD'));
-      }
-      setEndDate(''); // 清空离店日期
-    } else { // 切换到其他模式
-      // 如果没有开始日期，设为今天
-      if (!startDate) {
-        setStartDate(today.format('YYYY-MM-DD'));
-      }
-      // 如果没有结束日期，设为明天
-      if (!endDate) {
-        setEndDate(tomorrow.format('YYYY-MM-DD'));
-      }
+    // 检查当前选中的城市是否在新标签范围内，若不在则选中范围内的第一个
+    const { min, max } = getCityIdsByTab(index);
+    const isValid = selectedLocation && selectedLocation.id >= min && selectedLocation.id <= max;
+    if (!isValid && locations.length > 0) {
+      const firstInRange = locations.find(loc => loc.id >= min && loc.id <= max);
+      setSelectedLocation(firstInRange || null);
+    }
+
+    // 日期逻辑
+    if (index === 2) {
+      if (!startDate) setStartDate(today.format('YYYY-MM-DD'));
+      setEndDate('');
+    } else {
+      if (!startDate) setStartDate(today.format('YYYY-MM-DD'));
+      if (!endDate) setEndDate(tomorrow.format('YYYY-MM-DD'));
     }
   };
 
-  // 城市选择处理 (自定义弹窗)
   const handleSelectCity = (location) => {
     setSelectedLocation(location);
     setIsCitySelectorVisible(false);
   };
 
-  // 价格/星级筛选处理
   const handleFilterSelect = () => {
     Taro.showActionSheet({
       itemList: ['选择价格', '选择星级'],
       success: (res) => {
-        if (res.tapIndex === 0) {
-          // 选择价格范围
-          handlePriceSelect();
-        } else {
-          // 选择星级
-          handleStarSelect();
-        }
+        if (res.tapIndex === 0) handlePriceSelect();
+        else handleStarSelect();
       }
     });
   };
 
-  // 价格选择
   const handlePriceSelect = () => {
     const priceRanges = ['不限', '0-200元', '200-400元', '400-600元', '600元以上'];
     Taro.showActionSheet({
@@ -331,7 +336,6 @@ function Home() {
     });
   };
 
-  // 星级选择
   const handleStarSelect = () => {
     const starRatings = ['不限', '三星级及以上', '四星级及以上', '五星级'];
     Taro.showActionSheet({
@@ -342,18 +346,11 @@ function Home() {
     });
   };
 
-  // 查询按钮处理
   const handleSearch = () => {
     const keyword = searchKeyword.trim();
+    if (keyword) saveSearchHistory(keyword);
 
-    // 保存搜索历史
-    if (keyword) {
-      saveSearchHistory(keyword);
-    }
-
-    // 解析价格范围
-    let minPrice = undefined;
-    let maxPrice = undefined;
+    let minPrice, maxPrice;
     if (selectedPriceRange && selectedPriceRange !== '不限') {
       if (selectedPriceRange.includes('以上')) {
         minPrice = parseInt(selectedPriceRange.replace('元以上', ''));
@@ -366,52 +363,29 @@ function Home() {
       }
     }
 
-    // 解析酒店类型
-    let type = undefined;
-    if (currentTab === 2) {
-      type = 'hourly';
-    } else if (currentTab === 3) {
-      type = 'homestay';
-    } else {
-      type = 'hotel'; // 默认为酒店 (国内/海外由位置决定，此处主要传酒店类型)
-    }
+    let type;
+    if (currentTab === 2) type = 'hourly';
+    else if (currentTab === 3) type = 'homestay';
+    else type = 'hotel';
 
-    // 构建查询参数
     const params = {
       locationId: selectedLocation?.id,
       checkIn: startDate,
       checkOut: endDate,
-      keyword: keyword,
+      keyword,
       minPrice,
       maxPrice,
       type,
       starRating: selectedStarRating
     };
 
-    // 关闭搜索建议
     setShowSearchSuggestion(false);
-
-    // 将参数保存到本地存储，以便 Tab 页面读取
     Taro.setStorageSync('hotelSearchParams', params);
-
-    // 切换到酒店列表 Tab 页
-    Taro.switchTab({
-      url: '/pages/hotelList/index'
-    });
+    Taro.switchTab({ url: '/pages/hotelList/index' });
   };
 
-  // 搜索框获得焦点
-  const handleSearchFocus = () => {
-    setShowSearchSuggestion(true);
-  };
-
-  // 搜索框失去焦点
-  const handleSearchBlur = () => {
-    // 延迟关闭，以便点击建议项能被触发
-    setTimeout(() => {
-      setShowSearchSuggestion(false);
-    }, 200);
-  };
+  const handleSearchFocus = () => setShowSearchSuggestion(true);
+  const handleSearchBlur = () => setTimeout(() => setShowSearchSuggestion(false), 200);
 
   // ----------------------- 页面渲染 -----------------------
   return (
@@ -430,12 +404,7 @@ function Home() {
         >
           {BANNER_IMAGES.map((img, index) => (
             <SwiperItem key={index}>
-              <Image
-                className='banner-img'
-                src={img}
-                mode='aspectFill'
-                lazyLoad
-              />
+              <Image className='banner-img' src={img} mode='aspectFill' lazyLoad />
             </SwiperItem>
           ))}
         </Swiper>
@@ -459,12 +428,9 @@ function Home() {
 
         {/* 城市选择+搜索输入 */}
         <View className='row-section city-search-row'>
-          <View 
-            className='city-wrap-box' 
-            onClick={() => setIsCitySelectorVisible(true)}
-          >
+          <View className='city-wrap-box' onClick={() => setIsCitySelectorVisible(true)}>
             <Text className='city-label-text'>
-              {selectedLocation?.name || '上海'}
+              {selectedLocation?.name || '选择城市'}
             </Text>
             <View className='triangle-down-icon'></View>
           </View>
@@ -492,39 +458,25 @@ function Home() {
           </View>
         </View>
 
-        {/* 日期选择行：点击打开日历 */}
+        {/* 日期选择行 */}
         <View className='row-section date-select-row' onClick={handleOpenCalendar}>
           {isHourlyRoom ? (
-            // 钟点房：只显示一个日期
             <View className='date-single-info'>
               <View className='date-item-group'>
-                <Text className='date-val-num'>
-                  {getDisplayDate(startDate, true)}
-                </Text>
-                <Text className='date-desc-text'>
-                  {getDateDesc(true, startDate)}
-                </Text>
+                <Text className='date-val-num'>{getDisplayDate(startDate, true)}</Text>
+                <Text className='date-desc-text'>{getDateDesc(true, startDate)}</Text>
               </View>
             </View>
           ) : (
-            // 其他模式：显示入住和离店日期
             <View className='date-left-info'>
               <View className='date-item-group'>
-                <Text className='date-val-num'>
-                  {getDisplayDate(startDate, true)}
-                </Text>
-                <Text className='date-desc-text'>
-                  {getDateDesc(true, startDate)}
-                </Text>
+                <Text className='date-val-num'>{getDisplayDate(startDate, true)}</Text>
+                <Text className='date-desc-text'>{getDateDesc(true, startDate)}</Text>
               </View>
               <View className='date-divider-line'></View>
               <View className='date-item-group'>
-                <Text className='date-val-num'>
-                  {getDisplayDate(endDate, false, true)}
-                </Text>
-                <Text className='date-desc-text'>
-                  {getDateDesc(false, endDate)}
-                </Text>
+                <Text className='date-val-num'>{getDisplayDate(endDate, false, true)}</Text>
+                <Text className='date-desc-text'>{getDateDesc(false, endDate)}</Text>
               </View>
             </View>
           )}
@@ -546,7 +498,7 @@ function Home() {
           </View>
         )}
 
-        {/* 凌晨提示条：只在0-6点显示 */}
+        {/* 凌晨提示条 */}
         {isEarlyMorning && (
           <View className='night-notice-bar'>
             <Text className='moon-icon-fix'>🌙</Text>
@@ -568,10 +520,7 @@ function Home() {
         <View className='quick-tags-row'>
           {tags.length > 0 ? (
             tags.map((tag) => (
-              <View
-                key={tag.id}
-                className='tag-bubble-item'
-              >
+              <View key={tag.id} className='tag-bubble-item'>
                 {tag.name}
               </View>
             ))
@@ -604,23 +553,38 @@ function Home() {
       {/* AI 助手组件 */}
       <AiChatWidget />
 
-      {/* 城市选择自定义弹窗 */}
-      <View className={`city-selector-mask ${isCitySelectorVisible ? 'visible' : ''}`} onClick={() => setIsCitySelectorVisible(false)}>
+      {/* 城市选择弹窗 */}
+      <View
+        className={`city-selector-mask ${isCitySelectorVisible ? 'visible' : ''}`}
+        onClick={() => setIsCitySelectorVisible(false)}
+      >
         <View className='city-selector-content' onClick={e => e.stopPropagation()}>
           <View className='city-selector-header'>
             选择城市
             <View className='city-selector-close' onClick={() => setIsCitySelectorVisible(false)}>×</View>
           </View>
           <ScrollView scrollY className='city-selector-scroll'>
-            {locations.map((loc) => (
-              <View 
-                key={loc.id} 
-                className={`city-select-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
-                onClick={() => handleSelectCity(loc)}
-              >
-                {loc.name}
-              </View>
-            ))}
+            {locations
+              .filter(loc => {
+                const { min, max } = getCityIdsByTab(currentTab);
+                return loc.id >= min && loc.id <= max;
+              })
+              .map((loc) => (
+                <View
+                  key={loc.id}
+                  className={`city-select-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
+                  onClick={() => handleSelectCity(loc)}
+                >
+                  {loc.name}
+                </View>
+              ))}
+            {/* 如果过滤后无城市，显示提示 */}
+            {locations.filter(loc => {
+              const { min, max } = getCityIdsByTab(currentTab);
+              return loc.id >= min && loc.id <= max;
+            }).length === 0 && (
+              <View className='empty-city-tip'>当前标签下无城市可选</View>
+            )}
           </ScrollView>
         </View>
       </View>
