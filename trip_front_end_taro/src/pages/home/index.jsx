@@ -370,6 +370,7 @@ function Home() {
 
     const params = {
       locationId: selectedLocation?.id,
+      locationName: selectedLocation?.name,
       checkIn: startDate,
       checkOut: endDate,
       keyword,

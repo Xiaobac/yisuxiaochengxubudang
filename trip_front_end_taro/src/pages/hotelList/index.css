@@ -107,9 +107,15 @@
 /* 3. 筛选标签栏 */
 .filter-tab-bar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 24rpx 30rpx;
   border-bottom: 1rpx solid var(--color-border-base);
+}
+.filter-tab-bar .filter-tab-item {
+  margin-right: 80rpx;
+}
+.filter-tab-bar .filter-tab-item:last-child {
+  margin-right: 0;
 }
 
 /* 筛选结果统计栏 */

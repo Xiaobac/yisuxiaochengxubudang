@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, Input, Map, CoverView } from '@tarojs/components';
 import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
+import dayjs from 'dayjs';
 import { getHotels } from '../../services/hotel';
 import { formatStars, formatPrice } from '../../utils/format';
 import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
@@ -176,17 +177,17 @@ function HotelList() {
     console.log('🔍 开始筛选和排序', { sortBy, filterParams, hotelListLength: hotelList.length });
     let filtered = [...hotelList];
 
-    // 关键词搜索（本地搜索）
-    if (localSearchKeyword && localSearchKeyword.trim()) {
-      const keyword = localSearchKeyword.trim().toLowerCase();
-      const beforeLength = filtered.length;
-      filtered = filtered.filter(h =>
-        h.name.toLowerCase().includes(keyword) ||
-        (h.notice && h.notice.toLowerCase().includes(keyword)) ||
-        h.tags.some(tag => tag.toLowerCase().includes(keyword))
-      );
-      console.log(`🔎 关键词搜索: ${beforeLength} -> ${filtered.length} (${keyword})`);
-    }
+    // 关键词搜索（本地搜索）- 已改为服务端搜索，此处注释掉避免重复过滤
+    // if (localSearchKeyword && localSearchKeyword.trim()) {
+    //   const keyword = localSearchKeyword.trim().toLowerCase();
+    //   const beforeLength = filtered.length;
+    //   filtered = filtered.filter(h =>
+    //     h.name.toLowerCase().includes(keyword) ||
+    //     (h.notice && h.notice.toLowerCase().includes(keyword)) ||
+    //     h.tags.some(tag => tag.toLowerCase().includes(keyword))
+    //   );
+    //   console.log(`🔎 关键词搜索: ${beforeLength} -> ${filtered.length} (${keyword})`);
+    // }
 
     // 价格筛选
     if (filterParams.priceRange) {
@@ -239,6 +240,14 @@ function HotelList() {
     setFilteredHotels(filtered);
   };
 
+  // 重新搜索
+  const handleSearch = (keyword) => {
+    const newParams = { ...searchParams, keyword };
+    console.log('🔄 触发重新搜索:', newParams);
+    setSearchParams(newParams);
+    loadHotels(newParams);
+  };
+
   // 下拉刷新
   usePullDownRefresh(async () => {
     await loadHotels(searchParams);
@@ -248,7 +257,7 @@ function HotelList() {
   // 切换排序方式
   const handleSortChange = (newSortBy) => {
     setSortBy(newSortBy);
-
+    
     // 显示排序提示
     const sortNames = {
       'recommend': '推荐排序',
@@ -257,10 +266,27 @@ function HotelList() {
       'priceDesc': '价格降序'
     };
 
-    Taro.showToast({
-      title: `已切换到${sortNames[newSortBy]}`,
-      icon: 'none',
-      duration: 1000
+    // 如果通过ActionSheet选择，通常不需要Toast提示，或者提示更简洁
+    // Taro.showToast({
+    //   title: `已切换到${sortNames[newSortBy]}`,
+    //   icon: 'none',
+    //   duration: 1000
+    // });
+  };
+
+  // 打开排序选择菜单
+  const handleOpenSortMenu = () => {
+    const itemList = ['推荐排序', '位置距离', '价格升序', '价格降序'];
+    const keys = ['recommend', 'distance', 'priceAsc', 'priceDesc'];
+    
+    Taro.showActionSheet({
+      itemList,
+      success: (res) => {
+        handleSortChange(keys[res.tapIndex]);
+      },
+      fail: (res) => {
+        console.log(res.errMsg);
+      }
     });
   };
 
@@ -295,7 +321,7 @@ function HotelList() {
   // 点击酒店卡片
   const handleHotelClick = (hotelId) => {
     Taro.navigateTo({
-      url: `/pages/hotelDetail/index?id=${hotelId}&checkIn=${searchParams.checkInDate || ''}&checkOut=${searchParams.checkOutDate || ''}`
+      url: `/pages/hotelDetail/index?id=${hotelId}&checkIn=${searchParams.checkIn || ''}&checkOut=${searchParams.checkOut || ''}`
     });
   };
 
@@ -338,10 +364,10 @@ function HotelList() {
           <View className='pill-city-info'>
             <Text className='pill-city-name'>{searchParams.locationName || '上海'}</Text>
             <View className='pill-date-box'>
-              <Text className='p-date'>住 {searchParams.checkInDate || '01-09'}</Text>
-              <Text className='p-date'>离 {searchParams.checkOutDate || '01-10'}</Text>
+              <Text className='p-date'>住 {searchParams.checkIn ? searchParams.checkIn.slice(5) : '01-09'}</Text>
+              <Text className='p-date'>离 {searchParams.checkOut ? searchParams.checkOut.slice(5) : '01-10'}</Text>
             </View>
-            <Text className='p-night'>1晚</Text>
+            <Text className='p-night'>{(searchParams.checkIn && searchParams.checkOut) ? dayjs(searchParams.checkOut).diff(dayjs(searchParams.checkIn), 'day') : 1}晚</Text>
           </View>
           <View className='pill-input-box'>
             <Input
@@ -350,6 +376,8 @@ function HotelList() {
               placeholderStyle='color:#999;font-size:26rpx;'
               value={localSearchKeyword}
               onInput={(e) => setLocalSearchKeyword(e.detail.value)}
+              onConfirm={(e) => handleSearch(e.detail.value)}
+              confirmType='search'
             />
           </View>
         </View>
@@ -362,23 +390,16 @@ function HotelList() {
       {/* 筛选栏 */}
       <View className='filter-tab-bar'>
         <View
-          className={`filter-tab-item ${sortBy === 'recommend' ? 'active' : ''}`}
-          onClick={() => handleSortChange('recommend')}
+          className='filter-tab-item active'
+          onClick={handleOpenSortMenu}
         >
-          推荐排序 <View className='s-arrow'></View>
+          {sortBy === 'recommend' && '推荐排序'}
+          {sortBy === 'distance' && '位置距离'}
+          {sortBy === 'priceAsc' && '价格升序'}
+          {sortBy === 'priceDesc' && '价格降序'}
+          <View className='s-arrow'></View>
         </View>
-        <View
-          className={`filter-tab-item ${sortBy === 'distance' ? 'active' : ''}`}
-          onClick={() => handleSortChange('distance')}
-        >
-          位置距离 <View className='s-arrow'></View>
-        </View>
-        <View
-          className={`filter-tab-item ${sortBy === 'priceAsc' || sortBy === 'priceDesc' ? 'active' : ''}`}
-          onClick={() => handleSortChange(sortBy === 'priceAsc' ? 'priceDesc' : 'priceAsc')}
-        >
-          价格 {sortBy === 'priceAsc' ? '↑' : '↓'}
-        </View>
+
         <View className='filter-tab-item' onClick={handleOpenFilter}>
           筛选 <View className='f-icon'></View>
           {(filterParams.priceRange || filterParams.starRating || filterParams.facilities.length > 0) && (
