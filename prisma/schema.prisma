@@ -45,6 +45,8 @@ model Location {
   id        Int      @id @default(autoincrement())
   name      String
   description String?
+  // 区域类型: domestic-国内, overseas-海外
+  type      String   @default("domestic")
   createdAt DateTime @default(now())
   hotels    Hotel[]
 
@@ -94,6 +96,8 @@ model Hotel {
   longitude       Float?
   // 酒店状态: pending(审核中)/published(已发布)/rejected(已驳回)/offline(已下线)
   status          String          @default("pending")
+  // 酒店类型: hotel-酒店, homestay-民宿, hourly-钟点房
+  type            String          @default("hotel")
   rejectionReason String?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt

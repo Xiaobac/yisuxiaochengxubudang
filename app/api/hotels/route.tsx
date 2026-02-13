@@ -22,6 +22,34 @@ import { NextRequest, NextResponse } from 'next/server';
  *           type: string
  *         description: 酒店状态过滤
  *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [hotel, homestay, hourly]
+ *         description: 酒店类型过滤 (hotel-酒店, homestay-民宿, hourly-钟点房)
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *         description: 最低价格
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *         description: 最高价格
+ *       - in: query
+ *         name: checkIn
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: 入住日期 (YYYY-MM-DD)
+ *       - in: query
+ *         name: checkOut
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: 退房日期 (YYYY-MM-DD)
+ *       - in: query
  *         name: tags
  *         schema:
  *           type: string
@@ -101,6 +129,11 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const tags = searchParams.get('tags');
     const keyword = searchParams.get('keyword');
+    const type = searchParams.get('type');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    const checkIn = searchParams.get('checkIn');
+    const checkOut = searchParams.get('checkOut');
     
     // Pagination
     const page = parseInt(searchParams.get('page') || '1');
@@ -110,6 +143,58 @@ export async function GET(request: NextRequest) {
     const where: any = {};
     if (locationId) where.locationId = parseInt(locationId);
     if (merchantId) where.merchantId = parseInt(merchantId);
+    if (type) where.type = type;
+
+    // Availability filter logic
+    if (checkIn && checkOut) {
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+      
+      if (!isNaN(checkInDate.getTime()) && !isNaN(checkOutDate.getTime())) {
+        // Find room types that are explicitly unavailable in the given range
+        // Since we cannot easily compare columns in Prisma where clause, we'll fetch IDs of blocked rooms
+        // For simplicity in this list view, we check for 'isClosed' status and stock.
+        // A more rigorous check would require raw SQL or iterating availability.
+        
+        where.roomTypes = {
+          some: {
+             // 1. Must have stock generally
+             stock: { gt: 0 },
+             // 2. Must not have any "closed" days in the range
+             availability: {
+               none: {
+                 date: {
+                   gte: checkInDate,
+                   lt: checkOutDate, 
+                 },
+                 isClosed: true
+               }
+             }
+          }
+        };
+
+        // If price filter also exists, merge it into the same roomTypes.some
+        if (minPrice || maxPrice) {
+          const priceFilter: any = {};
+          if (minPrice) priceFilter.gte = parseFloat(minPrice);
+          if (maxPrice) priceFilter.lte = parseFloat(maxPrice);
+          // Merge price filter
+          where.roomTypes.some.price = priceFilter;
+        }
+      } else if (minPrice || maxPrice) {
+        // Only price filter no date
+         const priceFilter: any = {};
+         if (minPrice) priceFilter.gte = parseFloat(minPrice);
+         if (maxPrice) priceFilter.lte = parseFloat(maxPrice);
+         where.roomTypes = { some: { price: priceFilter } };
+      }
+    } else if (minPrice || maxPrice) {
+       // Only price filter
+       const priceFilter: any = {};
+       if (minPrice) priceFilter.gte = parseFloat(minPrice);
+       if (maxPrice) priceFilter.lte = parseFloat(maxPrice);
+       where.roomTypes = { some: { price: priceFilter } };
+    }
 
     // Keyword search
     if (keyword) {

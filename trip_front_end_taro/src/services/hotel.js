@@ -10,7 +10,11 @@ import { get } from './request';
  * @param {number} params.locationId - 位置 ID
  * @param {string} params.tags - 标签列表（逗号分隔）
  * @param {string} params.keyword - 搜索关键词
- * @param {string} params.priceRange - 价格范围
+ * @param {string} params.type - 酒店类型('hotel' | 'homestay' | 'hourly')
+ * @param {number} params.minPrice - 最低价格
+ * @param {number} params.maxPrice - 最高价格
+ * @param {string} params.checkIn - 入住日期 (YYYY-MM-DD)
+ * @param {string} params.checkOut - 退房日期 (YYYY-MM-DD)
  * @param {string} params.starRating - 星级
  * @param {number} params.page - 页码
  * @param {number} params.pageSize - 每页数量
@@ -33,8 +37,24 @@ export const getHotels = async (params = {}) => {
       queryParams.keyword = params.keyword;
     }
 
-    if (params.priceRange) {
-      queryParams.priceRange = params.priceRange;
+    if (params.type) {
+      queryParams.type = params.type;
+    }
+
+    if (params.minPrice) {
+      queryParams.minPrice = params.minPrice;
+    }
+
+    if (params.maxPrice) {
+      queryParams.maxPrice = params.maxPrice;
+    }
+
+    if (params.checkIn) {
+      queryParams.checkIn = params.checkIn;
+    }
+
+    if (params.checkOut) {
+      queryParams.checkOut = params.checkOut;
     }
 
     if (params.starRating) {

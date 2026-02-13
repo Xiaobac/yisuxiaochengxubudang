@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, Input, Map, CoverView } from '@tarojs/components';
-import Taro, { usePullDownRefresh } from '@tarojs/taro';
+import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
 import { getHotels } from '../../services/hotel';
 import { formatStars, formatPrice } from '../../utils/format';
 import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
@@ -44,23 +44,24 @@ function HotelList() {
     longitude: 121.4737
   });
 
-  // 页面加载时获取路由参数并加载酒店数据
-  useEffect(() => {
-    const instance = Taro.getCurrentInstance();
-    const paramsStr = instance.router?.params?.params;
-
-    if (paramsStr) {
-      try {
-        const params = JSON.parse(decodeURIComponent(paramsStr));
-        setSearchParams(params);
-        loadHotels(params);
-      } catch (error) {
-        console.error('❌ 解析参数失败:', error);
-        loadHotels();
-      }
-    } else {
-      loadHotels();
+  // 页面显示时检查是否有搜索参数
+  useDidShow(() => {
+    const params = Taro.getStorageSync('hotelSearchParams');
+    if (params) {
+      console.log('📦 收到首页传递的搜索参数:', params);
+      setSearchParams(params);
+      loadHotels(params);
+      // 清除参数，避免下次进入重复加载（或者保留，取决于需求）
+      Taro.removeStorageSync('hotelSearchParams');
+    } else if (hotelList.length === 0) {
+       // 如果没有列表且没有参数，进行默认加载
+       loadHotels();
     }
+  });
+
+  // 页面加载时获取路由参数并加载酒店数据 (保留以防有非Tabbar跳转)
+  useEffect(() => {
+    // Tabbar 页面主要依靠 useDidShow 加载数据
   }, []);
 
   // 当筛选条件或排序方式改变时，重新过滤和排序
@@ -76,7 +77,11 @@ function HotelList() {
       const res = await getHotels({
         locationId: params.locationId,
         keyword: params.keyword,
-        priceRange: params.priceRange,
+        type: params.type,
+        minPrice: params.minPrice,
+        maxPrice: params.maxPrice,
+        checkIn: params.checkIn,
+        checkOut: params.checkOut,
         starRating: params.starRating,
         tags: params.tags
       });

@@ -19,7 +19,6 @@ export default {
     navigationBarTextStyle: 'white',
     backgroundTextStyle: 'light'
   },
-  // 纯文字TabBar（已删除所有图标配置，解决//报错）
   tabBar: {
     color: '#999',        // 未选中文字颜色
     selectedColor: '#1677ff', // 选中文字颜色（主色调）
@@ -28,15 +27,21 @@ export default {
     list: [
       {
         pagePath: 'pages/home/index',
-        text: '首页' // 仅保留文字，删除图标配置
+        text: '首页',
+        iconPath: 'assets/tabbar/home.png',
+        selectedIconPath: 'assets/tabbar/home-active.png'
       },
       {
         pagePath: 'pages/hotelList/index',
-        text: '酒店' // 仅保留文字，删除图标配置
+        text: '酒店',
+        iconPath: 'assets/tabbar/hotel.png',
+        selectedIconPath: 'assets/tabbar/hotel-active.png'
       },
       {
         pagePath: 'pages/mine/index',
-        text: '我的' // 仅保留文字，删除图标配置
+        text: '我的',
+        iconPath: 'assets/tabbar/mine.png',
+        selectedIconPath: 'assets/tabbar/mine-active.png'
       }
     ]
   },

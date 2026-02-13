@@ -27,6 +27,9 @@ function Home() {
   const [selectedPriceRange, setSelectedPriceRange] = useState('');
   const [selectedStarRating, setSelectedStarRating] = useState('');
 
+  // --- 城市选择弹窗状态 ---
+  const [isCitySelectorVisible, setIsCitySelectorVisible] = useState(false);
+
   // --- 搜索建议相关状态 ---
   const [showSearchSuggestion, setShowSearchSuggestion] = useState(false);
   const [searchHistory, setSearchHistory] = useState([]);
@@ -295,12 +298,10 @@ function Home() {
     }
   };
 
-  // 城市选择处理
-  const handleCityChange = (e) => {
-    const index = e.detail.value;
-    if (locations[index]) {
-      setSelectedLocation(locations[index]);
-    }
+  // 城市选择处理 (自定义弹窗)
+  const handleSelectCity = (location) => {
+    setSelectedLocation(location);
+    setIsCitySelectorVisible(false);
   };
 
   // 价格/星级筛选处理
@@ -350,22 +351,52 @@ function Home() {
       saveSearchHistory(keyword);
     }
 
+    // 解析价格范围
+    let minPrice = undefined;
+    let maxPrice = undefined;
+    if (selectedPriceRange && selectedPriceRange !== '不限') {
+      if (selectedPriceRange.includes('以上')) {
+        minPrice = parseInt(selectedPriceRange.replace('元以上', ''));
+      } else {
+        const parts = selectedPriceRange.replace('元', '').split('-');
+        if (parts.length === 2) {
+          minPrice = parseInt(parts[0]);
+          maxPrice = parseInt(parts[1]);
+        }
+      }
+    }
+
+    // 解析酒店类型
+    let type = undefined;
+    if (currentTab === 2) {
+      type = 'hourly';
+    } else if (currentTab === 3) {
+      type = 'homestay';
+    } else {
+      type = 'hotel'; // 默认为酒店 (国内/海外由位置决定，此处主要传酒店类型)
+    }
+
     // 构建查询参数
     const params = {
       locationId: selectedLocation?.id,
-      checkInDate: startDate,
-      checkOutDate: endDate,
+      checkIn: startDate,
+      checkOut: endDate,
       keyword: keyword,
-      priceRange: selectedPriceRange,
+      minPrice,
+      maxPrice,
+      type,
       starRating: selectedStarRating
     };
 
     // 关闭搜索建议
     setShowSearchSuggestion(false);
 
-    // 跳转到酒店列表页，传递参数
-    Taro.navigateTo({
-      url: `/pages/hotelList/index?params=${encodeURIComponent(JSON.stringify(params))}`
+    // 将参数保存到本地存储，以便 Tab 页面读取
+    Taro.setStorageSync('hotelSearchParams', params);
+
+    // 切换到酒店列表 Tab 页
+    Taro.switchTab({
+      url: '/pages/hotelList/index'
     });
   };
 
@@ -428,19 +459,15 @@ function Home() {
 
         {/* 城市选择+搜索输入 */}
         <View className='row-section city-search-row'>
-          <Picker 
-            mode='selector' 
-            range={locations} 
-            rangeKey='name'
-            onChange={handleCityChange}
+          <View 
+            className='city-wrap-box' 
+            onClick={() => setIsCitySelectorVisible(true)}
           >
-            <View className='city-wrap-box'>
-              <Text className='city-label-text'>
-                {selectedLocation?.name || '上海'}
-              </Text>
-              <View className='triangle-down-icon'></View>
-            </View>
-          </Picker>
+            <Text className='city-label-text'>
+              {selectedLocation?.name || '上海'}
+            </Text>
+            <View className='triangle-down-icon'></View>
+          </View>
           <View className='input-wrap-box' style={{ position: 'relative' }}>
             <Input
               className='search-input-el'
@@ -576,6 +603,27 @@ function Home() {
 
       {/* AI 助手组件 */}
       <AiChatWidget />
+
+      {/* 城市选择自定义弹窗 */}
+      <View className={`city-selector-mask ${isCitySelectorVisible ? 'visible' : ''}`} onClick={() => setIsCitySelectorVisible(false)}>
+        <View className='city-selector-content' onClick={e => e.stopPropagation()}>
+          <View className='city-selector-header'>
+            选择城市
+            <View className='city-selector-close' onClick={() => setIsCitySelectorVisible(false)}>×</View>
+          </View>
+          <ScrollView scrollY className='city-selector-scroll'>
+            {locations.map((loc) => (
+              <View 
+                key={loc.id} 
+                className={`city-select-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
+                onClick={() => handleSelectCity(loc)}
+              >
+                {loc.name}
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
     </View>
   );
 }
