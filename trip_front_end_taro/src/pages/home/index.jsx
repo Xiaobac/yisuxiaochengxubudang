@@ -379,6 +379,7 @@ function Home() {
     // 构建查询参数
     const params = {
       locationId: selectedLocation?.id,
+      locationName: selectedLocation?.name,
       checkIn: startDate,
       checkOut: endDate,
       keyword: keyword,
