@@ -84,6 +84,8 @@ export interface Hotel {
   facilities?: string[];
   openingYear?: number;
   images?: string[];
+  latitude?: number;
+  longitude?: number;
   status: HotelStatus;
   rejectionReason?: string;
   createdAt?: string;
@@ -103,6 +105,8 @@ export interface HotelFormData {
   description?: string;
   facilities?: string[];
   openingYear?: number;
+  latitude?: number;
+  longitude?: number;
   images?: string[];
   merchantId: number;
 }

@@ -350,6 +350,8 @@ export async function POST(request: NextRequest) {
         facilities: body.facilities, // 注意：facilities是Json类型
         openingYear: body.openingYear ? Number(body.openingYear) : null,
         images: body.images,
+        latitude: body.latitude ? parseFloat(body.latitude) : null,
+        longitude: body.longitude ? parseFloat(body.longitude) : null,
         merchantId,
         locationId: locationId ?? null,
         // status 使用schema中定义的默认值 "pending"

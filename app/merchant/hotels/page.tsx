@@ -42,6 +42,7 @@ import {
 import { getStoredUser } from '@/app/services/auth';
 import type { Hotel, RoomType, Location, Tag as HotelTag } from '@/app/types';
 import dayjs from 'dayjs';
+import TencentMapSelector from '@/app/components/TencentMapSelector';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -219,6 +220,8 @@ export default function HotelManagementPage() {
       // map hotelTags from [{ tag: { id, name } }] to [id, id]
       hotelTags: record.hotelTags?.map((ht: any) => ht.tagId || ht.tag?.id), 
       rooms: record.roomTypes || [],
+      latitude: record.latitude,
+      longitude: record.longitude,
     };
 
     form.setFieldsValue(formData);
@@ -287,6 +290,8 @@ export default function HotelManagementPage() {
         description: values.description,
         openingYear: values.opening_date ? values.opening_date.year() : 2020,
         images,
+        latitude: values.latitude,
+        longitude: values.longitude,
         merchantId: currentUser.id,
         // Pass nested data for creation
         tagIds: values.hotelTags, 
@@ -522,6 +527,25 @@ export default function HotelManagementPage() {
             rules={[{ required: true, message: '请输入地址' }]}
           >
             <Input placeholder="请输入详细地址" />
+          </Form.Item>
+          
+          <Form.Item noStyle shouldUpdate={(prev, curr) => prev.latitude !== curr.latitude || prev.longitude !== curr.longitude}>
+            {({ getFieldValue, setFieldsValue }) => (
+                <Form.Item label="地理位置">
+                    <TencentMapSelector 
+                        latitude={getFieldValue('latitude')} 
+                        longitude={getFieldValue('longitude')}
+                        onSelect={(loc) => {
+                            setFieldsValue({
+                                latitude: loc.latitude,
+                                longitude: loc.longitude
+                            });
+                        }}
+                    />
+                    <Form.Item name="latitude" noStyle hidden><Input /></Form.Item>
+                    <Form.Item name="longitude" noStyle hidden><Input /></Form.Item>
+                </Form.Item>
+            )}
           </Form.Item>
 
           <Form.Item

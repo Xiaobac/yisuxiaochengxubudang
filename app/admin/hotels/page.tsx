@@ -285,6 +285,9 @@ export default function HotelManagementPage() {
               <Descriptions.Item label="地址">
                 {selectedHotel.address}
               </Descriptions.Item>
+              <Descriptions.Item label="地理位置">
+                {selectedHotel.latitude && selectedHotel.longitude ? `${selectedHotel.latitude}, ${selectedHotel.longitude}` : '未设置'}
+              </Descriptions.Item>
               <Descriptions.Item label="星级">
                 {selectedHotel.starRating}星
               </Descriptions.Item>
