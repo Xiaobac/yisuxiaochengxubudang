@@ -11,7 +11,8 @@ export default {
     'pages/login/index',
     'pages/register/index',
     'pages/mine/index',
-    'pages/reviewList/index'
+    'pages/reviewList/index',
+    'pages/Coupon/index'
   ],
   window: {
     navigationBarBackgroundColor: '#1677ff',

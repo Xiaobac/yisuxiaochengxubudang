@@ -141,6 +141,8 @@ function Mine() {
 </View>
 </View>
 
+
+
 {/* 2.横向导航菜单 (收藏、订单、积分、优惠券) */}
 <View className='mine-nav-row'>
 <View className='nav-menu-item' onClick={handleMyFavorites}>
@@ -155,7 +157,7 @@ function Mine() {
 <Text className='nav-val-num'>0</Text>
 <Text className='nav-label-text'>积分</Text>
 </View>
-<View className='nav-menu-item'>
+<View className='nav-menu-item'onClick={() => Taro.navigateTo({ url: '/pages/Coupon/index' })}>
 <Text className='nav-val-num'>0</Text>
 <Text className='nav-label-text'>优惠券</Text>
 </View>

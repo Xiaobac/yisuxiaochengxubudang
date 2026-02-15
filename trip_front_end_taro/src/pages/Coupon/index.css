@@ -1,0 +1,142 @@
+/* 全局背景颜色 */
+.coupons-page-container {
+  background-color: #f7f8fa;
+  min-height: 100vh;
+  padding: 30rpx;
+  box-sizing: border-box;
+}
+
+.coupon-list-box {
+  width: 100%;
+}
+
+.hotel-coupon-card {
+  display: flex;
+  background-color: #ffffff;
+  border-radius: 20rpx;
+  min-height: 220rpx;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+/* 左侧内容区布局 */
+.coupon-content-left {
+  flex: 1;
+  padding: 24rpx 30rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* 标签行 */
+.coupon-tags-row {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.tag-item {
+  font-size: 20rpx;    /* 统一标签字体大小，可根据需要调整 */
+  padding: 2rpx 12rpx;
+  border-radius: 6rpx;
+  font-weight: bold;
+}
+
+/* 蓝色标签（神券） */
+.tag-blue {
+  background-color: #1890ff;
+  color: #ffffff;
+}
+
+/* 橙色标签（特惠等） */
+.tag-orange {
+  background-color: #ff6000;
+  color: #ffffff;
+}
+
+
+/* 米色分类标签（如酒店/民宿） */
+.tag-beige {
+  background-color: #fff5e6;
+  color: #c06c00;
+}
+
+.coupon-main-title {
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 20rpx;
+}
+
+.coupon-footer-info {
+  display: flex;
+  align-items: center;
+}
+
+.expire-date-text {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+/* 装饰性分割垂直线 */
+.coupon-divider-line {
+  width: 2rpx;
+  border-left: 2rpx solid #f0f0f0;
+  margin: 30rpx 0;
+}
+
+/* 右侧价值操作区 */
+.coupon-action-right {
+  width: 200rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0;
+  background: linear-gradient(to bottom, #ffffff, #fafafa);
+}
+
+/* 金额显示区 */
+.amount-display-box {
+  display: flex;
+  align-items: baseline;
+  color: #ff4d4f;
+}
+
+.amount-value {
+  font-size: 60rpx;
+  font-weight: bold;
+  font-family: 'DIN', sans-serif;
+}
+
+.amount-unit {
+  font-size: 24rpx;
+  margin-left: 4rpx;
+}
+
+.threshold-text {
+  font-size: 22rpx;
+  color: #999999;
+  margin-top: -6rpx;
+  margin-bottom: 16rpx;
+}
+
+/* 黄色去使用按钮 */
+.coupon-primary-btn {
+  background-color: #ffda00;
+  color: #333333;
+  width: 140rpx;
+  height: 54rpx;
+  line-height: 54rpx;
+  border-radius: 40rpx;
+  font-size: 24rpx;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 4rpx 10rpx rgba(255, 218, 0, 0.2);
+}
+
+.coupon-primary-btn:active {
+  opacity: 0.8;
+  transform: scale(0.96);
+}
