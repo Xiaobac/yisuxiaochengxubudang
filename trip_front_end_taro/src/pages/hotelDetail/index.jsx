@@ -490,7 +490,10 @@ function HotelDetail() {
         <View className='info-card'>
           <View className='info-card-header'>
             <Text className='hotel-name'>{hotel.name}</Text>
-            <Text className='hotel-stars'>{hotel.stars}</Text>
+            <View className='score-row'>
+                  <Text className='score-badge'>{hotel.score}</Text>
+                  <Text className='score-desc'>{hotel.scoreDesc}</Text>
+                </View>
           </View>
 
           <View className='rank-section'>
@@ -512,11 +515,6 @@ function HotelDetail() {
           <View className='info-detail-cols'>
             <View className='col-left'>
               <View className='score-section'>
-                <View className='score-row'>
-                  <Text className='score-badge'>{hotel.score}</Text>
-                  <Text className='score-desc'>{hotel.scoreDesc}</Text>
-                  <Text className='reviews-count'>{hotel.reviews.replace('点评', '条')}</Text>
-                </View>
                 <Text className='recommendation-text'>"{hotel.notice || '舒适安逸'}"</Text>
               </View>
             </View>
@@ -550,17 +548,67 @@ function HotelDetail() {
             <Text className='night-count-total'>{getNightCount()}晚</Text>
             <Text className='date-change-arrow'>{'>'}</Text>
           </View>
+        </View>
 
-          {/* 快捷筛选条件 */}
-          <View className='quick-filter-row'>
-          {/* 可滚动的标签区域 */}
-          <View className='scrollable-tags'>
-            {filterTags.map(tag => (
-          <View key={tag} className='quick-filter-tag'>{tag}</View>
-            ))}
-          </View>
-          {/* 固定的“筛选”按钮 */}
-          <Text className='more-filter'>筛选 {'>'}</Text>
+        {/* 评论区 */}
+        <View className='comment-section'>
+          {/* 标题：用户评论（总条数） */}
+          <View className='comment-header'>用户评论（x条）</View>
+          {/* 评论列表 */}
+          <View className='comment-list'>
+            {/* 第一条评论 */}
+            <View className='comment-item'>
+              <Image className='avatar' src='/path/to/avatar1.png' mode='aspectFill' />
+              <View className='comment-main'>
+                <View className='comment-header-row'>
+                  <Text className='username'>张三</Text>
+                  <Text className='comment-date'>2026-02-13</Text>
+                  <Text className='comment-score'>5.0</Text>
+                </View>
+                <Text className='comment-content'>
+                  这家酒店环境很好，服务态度也很棒，下次还会再来。
+                </Text>
+                {/* 点赞点踩按钮区（静态） */}
+                <View className='comment-actions'>
+                  <View className='action-btn like-btn'>
+                    <Text className='action-icon'>👍</Text>
+                    <Text className='action-count'>12</Text>
+                  </View>
+                  <View className='action-btn dislike-btn'>
+                    <Text className='action-icon'>👎</Text>
+                    <Text className='action-count'>2</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* 第二条评论 */}
+            <View className='comment-item'>
+              <Image className='avatar' src='/path/to/avatar2.png' mode='aspectFill' />
+              <View className='comment-main'>
+                <View className='comment-header-row'>
+                  <Text className='username'>李四</Text>
+                  <Text className='comment-date'>2026-02-14</Text>
+                  <Text className='comment-score'>4.5</Text>
+                </View>
+                <Text className='comment-content'>
+                  位置很方便，房间干净。
+                </Text>
+                {/* 点赞点踩按钮区（静态） */}
+                <View className='comment-actions'>
+                  <View className='action-btn like-btn'>
+                    <Text className='action-icon'>👍</Text>
+                    <Text className='action-count'>9</Text>
+                  </View>
+                  <View className='action-btn dislike-btn'>
+                    <Text className='action-icon'>👎</Text>
+                    <Text className='action-count'>1</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* 继续添加更多评论... */}
           </View>
         </View>
 

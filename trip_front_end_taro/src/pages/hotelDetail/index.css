@@ -231,29 +231,28 @@
 .score-row {
   display: flex;
   align-items: center;
-  gap: 20rpx;  /* 三个元素之间的水平间距 */
+  gap: 20rpx; 
   flex-wrap: wrap;
 }
 
 .score-badge {
-  background-color: var(--color-primary);
+  background-color:var(--color-primary);
   color: #fff;
-  font-size: 30rpx;
+  font-size: 36rpx;
   padding: 2rpx 8rpx;
   border-radius: 6rpx;
   font-weight: bold;
+  margin-right: 5rpx;
 }
 
 .score-desc {
-  font-size: 24rpx;
+  font-size: 30rpx;
   color: var(--color-primary);
   margin-top: 5rpx;
+  margin-right: 10rpx;
 }
 
-.reviews-count {
-  font-size: 24rpx;         
-  color: var(--color-text-tertiary); 
-}
+
 
 .recommendation-text {
   font-size: 24rpx;
@@ -376,54 +375,125 @@
   margin-right: 10rpx;
 }
 
-/* 7.快捷筛选条件 */
-/* 整体行容器：水平排列，垂直居中 */
-.quick-filter-row {
+/* 评论区容器 */
+.comment-section {
+  padding: 30rpx;
+  background-color:#ffffff;
+}
+
+/* 标题 */
+.comment-header {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  color: #333;
+}
+
+/* 评论列表 */
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+/* 单个评论项 */
+.comment-item {
+  display: flex;
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+}
+
+/* 头像 */
+.avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+  background-color: #eee; /* 图片加载前的占位背景 */
+}
+
+/* 右侧主内容区 */
+.comment-main {
+  flex: 1;
+  min-width: 0; /* 防止内容溢出 */
+}
+
+/* 用户信息行 */
+.comment-header-row {
   display: flex;
   align-items: center;
-  padding-bottom: 30rpx;        /* 保留原有底部间距 */
-  /* 移除了 flex-wrap: wrap，因为不需要换行 */
+  margin-bottom: 10rpx;
+  flex-wrap: wrap;
+  gap: 12rpx;
 }
 
-/* 可滚动的标签区域：占满剩余宽度，支持横向滚动 */
-.scrollable-tags {
-  flex: 1;                      /* 占据剩余空间 */
-  overflow-x: auto;              /* 横向滚动 */
-  white-space: nowrap;           /* 禁止换行 */
-  -webkit-overflow-scrolling: touch; /* iOS 流畅滚动 */
-  /* 隐藏滚动条（可选，让界面更干净） */
-  scrollbar-width: none;
-}
-.scrollable-tags::-webkit-scrollbar {
-  display: none;
+/* 用户名 */
+.username {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
 }
 
-/* 标签样式：调整为 inline-block，移除底部外边距 */
-.quick-filter-tag {
-  display: inline-block;         /* 水平排列 */
-  background-color: var(--color-bg-tertiary);
-  padding: 8rpx 20rpx;
-  border-radius: 8rpx;
+/* 日期 */
+.comment-date {
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* 评分（靠右） */
+.comment-score {
+  font-size: 36rpx;
+  color: #ff6b00;
+  font-weight: bold;
+  margin-left: auto; /* 自动右对齐 */
+}
+
+/* 评论内容 */
+.comment-content {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* 按钮容器：靠右对齐，与评论内容保持间距 */
+.comment-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 20rpx;
+  margin-top: 16rpx;
+}
+
+/* 单个按钮样式（浅灰背景、圆角） */
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 30rpx;
+  background-color: #f5f5f5;
   font-size: 24rpx;
-  margin-right: 15rpx;           /* 标签之间的间距 */
-  /* margin-bottom: 15rpx; 删除，水平滚动不需要底部间距 */
-  color: var(--color-text-primary);
-  white-space: nowrap;           /* 防止标签内文字换行 */
+  color: #666;
 }
 
-/* 最后一个标签去掉右边距（避免滚动末尾空白） */
-.quick-filter-tag:last-child {
-  margin-right: 0;
+/* 图标稍大 */
+.action-icon {
+  font-size: 28rpx;
+  line-height: 1;
 }
 
-/* 右侧“筛选”按钮：固定，与标签区域间距 */
-.more-filter {
+/* 数字样式 */
+.action-count {
   font-size: 24rpx;
-  color: var(--color-text-tertiary);
-  margin-left: 15rpx;            /* 与标签区域的间距 */
-  flex-shrink: 0;                /* 防止被压缩 */
-  white-space: nowrap;
+  color: #666;
 }
+
+/*点赞样式
+.like-btn .action-icon {*/
+
 
 /* 4.房型列表 */
 /* ===== 房型卡片容器 ===== */
