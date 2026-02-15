@@ -60,7 +60,16 @@ import { checkPermission } from '@/app/api/utils/permissions';
 
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const name = searchParams.get('name');
+
+    const where: any = {};
+    if (name) {
+      where.name = { contains: name };
+    }
+
     const tags = await prisma.tag.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
     });
     return NextResponse.json({ success: true, data: tags });

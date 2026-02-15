@@ -64,7 +64,20 @@ import { checkPermission } from '@/app/api/utils/permissions';
 
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const name = searchParams.get('name');
+    const type = searchParams.get('type');
+
+    const where: any = {};
+    if (name) {
+      where.name = { contains: name };
+    }
+    if (type) {
+      where.type = type;
+    }
+
     const locations = await prisma.location.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
     });
     return NextResponse.json({ success: true, data: locations });
@@ -91,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     // 3. 处理请求
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, type } = body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return NextResponse.json({ success: false, error: '位置名称不能为空' }, { status: 400 });
@@ -101,6 +114,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: name.trim(),
         description: description?.trim(),
+        type: type || 'domestic',
       },
     });
 

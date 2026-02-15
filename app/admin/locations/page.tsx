@@ -8,14 +8,19 @@ import {
   Modal,
   Form,
   Input,
+  Select,
   Popconfirm,
-  App
+  App,
+  Card,
+  Row,
+  Col
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import { getLocations, createLocation, updateLocation, deleteLocation } from '@/app/services/admin';
 import type { Location } from '@/app/types';
@@ -26,6 +31,7 @@ export default function LocationManagementPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [form] = Form.useForm();
+  const [searchForm] = Form.useForm();
   const { message } = App.useApp();
 
   useEffect(() => {
@@ -37,18 +43,20 @@ export default function LocationManagementPage() {
       if (editingLocation) {
         form.setFieldsValue({
             name: editingLocation.name,
-            description: editingLocation.description
+            description: editingLocation.description,
+            type: editingLocation.type
         });
       } else {
         form.resetFields();
+        form.setFieldValue('type', 'domestic');
       }
     }
   }, [modalVisible, editingLocation, form]);
 
-  const fetchLocations = async () => {
+  const fetchLocations = async (params: { name?: string; type?: string } = {}) => {
     try {
       setLoading(true);
-      const res = await getLocations();
+      const res = await getLocations(params);
       setLocations(res.data || []);
     } catch (error) {
       console.error('Fetch locations error:', error);
@@ -56,6 +64,16 @@ export default function LocationManagementPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = async () => {
+    const values = await searchForm.validateFields();
+    fetchLocations(values);
+  };
+
+  const handleReset = () => {
+    searchForm.resetFields();
+    fetchLocations();
   };
 
   const handleAdd = () => {
@@ -83,10 +101,10 @@ export default function LocationManagementPage() {
     try {
         const values = await form.validateFields();
         if (editingLocation) {
-            await updateLocation(editingLocation.id, values.name, values.description);
+            await updateLocation(editingLocation.id, values.name, values.description, values.type);
             message.success('更新成功');
         } else {
-            await createLocation(values.name, values.description);
+            await createLocation(values.name, values.description, values.type);
             message.success('创建成功');
         }
         setModalVisible(false);
@@ -118,6 +136,13 @@ export default function LocationManagementPage() {
         ellipsis: true,
     },
     {
+      title: '区域类型',
+      dataIndex: 'type',
+      key: 'type',
+      width: 120,
+      render: (type: string) => type === 'overseas' ? '海外' : '国内',
+    },
+    {
       title: '操作',
       key: 'action',
       width: 200,
@@ -147,11 +172,35 @@ export default function LocationManagementPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <h2 className="text-xl font-bold">城市位置管理</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          新增位置
-        </Button>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h2 className="text-xl font-bold">城市位置管理</h2>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            新增位置
+          </Button>
+        </div>
+
+        <Card size="small" style={{ marginBottom: 16 }}>
+          <Form form={searchForm} layout="inline" onFinish={handleSearch}>
+            <Form.Item name="name" label="城市名称">
+              <Input placeholder="请输入城市名称" allowClear />
+            </Form.Item>
+            <Form.Item name="type" label="区域类型">
+              <Select placeholder="请选择区域类型" allowClear style={{ width: 120 }}>
+                <Select.Option value="domestic">国内</Select.Option>
+                <Select.Option value="overseas">海外</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
+                  搜索
+                </Button>
+                <Button onClick={handleReset}>重置</Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Card>
       </div>
 
       <Table
@@ -176,6 +225,16 @@ export default function LocationManagementPage() {
                 rules={[{ required: true, message: '请输入位置名称' }]}
             >
                 <Input placeholder="例如：北京" />
+            </Form.Item>
+            <Form.Item
+                name="type"
+                label="区域类型"
+                rules={[{ required: true, message: '请选择区域类型' }]}
+            >
+                <Select>
+                    <Select.Option value="domestic">国内</Select.Option>
+                    <Select.Option value="overseas">海外</Select.Option>
+                </Select>
             </Form.Item>
             <Form.Item 
                 name="description" 

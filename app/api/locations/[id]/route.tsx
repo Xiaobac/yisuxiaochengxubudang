@@ -68,7 +68,7 @@ export async function PUT(
 
     const id = parseInt(params.id);
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, type } = body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return NextResponse.json({ success: false, error: '位置名称不能为空' }, { status: 400 });
@@ -79,6 +79,7 @@ export async function PUT(
       data: {
         name: name.trim(),
         description: description?.trim(),
+        type: type || undefined,
       },
     });
 

@@ -9,13 +9,15 @@ import {
   Form,
   Input,
   Popconfirm,
-  App
+  App,
+  Card
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import { getTags, createTag, updateTag, deleteTag } from '@/app/services/admin';
 import type { Tag } from '@/app/types';
@@ -26,6 +28,7 @@ export default function TagManagementPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [form] = Form.useForm();
+  const [searchForm] = Form.useForm();
   const { message } = App.useApp();
 
   useEffect(() => {
@@ -42,10 +45,10 @@ export default function TagManagementPage() {
     }
   }, [modalVisible, editingTag, form]);
 
-  const fetchTags = async () => {
+  const fetchTags = async (name?: string) => {
     try {
       setLoading(true);
-      const res = await getTags();
+      const res = await getTags(name);
       setTags(res.data || []);
     } catch (error) {
       console.error('Fetch tags error:', error);
@@ -53,6 +56,16 @@ export default function TagManagementPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = async () => {
+    const values = await searchForm.validateFields();
+    fetchTags(values.name);
+  };
+
+  const handleReset = () => {
+    searchForm.resetFields();
+    fetchTags();
   };
 
   const handleAdd = () => {
@@ -137,11 +150,29 @@ export default function TagManagementPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <h2 className="text-xl font-bold">酒店标签管理</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          新增标签
-        </Button>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h2 className="text-xl font-bold">酒店标签管理</h2>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            新增标签
+          </Button>
+        </div>
+
+        <Card size="small" style={{ marginBottom: 16 }}>
+          <Form form={searchForm} layout="inline" onFinish={handleSearch}>
+            <Form.Item name="name" label="标签名称">
+              <Input placeholder="请输入标签名称" allowClear />
+            </Form.Item>
+            <Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
+                  搜索
+                </Button>
+                <Button onClick={handleReset}>重置</Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Card>
       </div>
 
       <Table

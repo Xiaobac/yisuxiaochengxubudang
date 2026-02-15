@@ -61,10 +61,12 @@ export default function CalendarPage() {
   const fetchHotels = async () => {
     try {
       setLoading(true);
-      const data = await getMyHotels();
-      setHotels(data);
-      if (data.length > 0) {
-        setSelectedHotel(data[0].id!);
+      const res = await getMyHotels();
+      if (res.success && res.data) {
+        setHotels(res.data);
+        if (res.data.length > 0) {
+          setSelectedHotel(res.data[0].id!);
+        }
       }
     } catch (error) {
       console.error('获取酒店列表失败:', error);

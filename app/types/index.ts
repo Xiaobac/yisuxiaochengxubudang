@@ -42,6 +42,7 @@ export interface Location {
   id: number;
   name: string;
   description?: string;
+  type?: string;
 }
 
 export interface Tag {
@@ -175,6 +176,27 @@ export interface HotelAuditLog {
 export interface ReviewActionData {
   status: 'published' | 'rejected';
   rejectionReason?: string;
+}
+
+export interface Coupon {
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  discount: number;
+  minSpend: number;
+  validFrom: string;
+  validTo: string;
+}
+
+export interface Comment {
+  id: number;
+  content: string;
+  createdAt: string;
+  user: {
+    id: number;
+    name: string | null;
+  };
 }
 
 // API 响应通用类型

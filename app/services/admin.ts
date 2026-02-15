@@ -3,8 +3,8 @@ import type { ApiResponse, Tag, Location } from '@/app/types';
 
 // --- Tags ---
 
-export const getTags = () => {
-  return get<ApiResponse<Tag[]>>('/tags');
+export const getTags = (name?: string) => {
+  return get<ApiResponse<Tag[]>>('/tags', { params: { name } });
 };
 
 export const createTag = (name: string) => {
@@ -21,16 +21,16 @@ export const deleteTag = (id: number) => {
 
 // --- Locations ---
 
-export const getLocations = () => {
-  return get<ApiResponse<Location[]>>('/locations');
+export const getLocations = (params?: { name?: string; type?: string }) => {
+  return get<ApiResponse<Location[]>>('/locations', { params });
 };
 
-export const createLocation = (name: string, description?: string) => {
-  return post<ApiResponse<Location>>('/locations', { name, description });
+export const createLocation = (name: string, description?: string, type?: string) => {
+  return post<ApiResponse<Location>>('/locations', { name, description, type });
 };
 
-export const updateLocation = (id: number, name: string, description?: string) => {
-  return put<ApiResponse<Location>>(`/locations/${id}`, { name, description });
+export const updateLocation = (id: number, name: string, description?: string, type?: string) => {
+  return put<ApiResponse<Location>>(`/locations/${id}`, { name, description, type });
 };
 
 export const deleteLocation = (id: number) => {

@@ -13,7 +13,9 @@ import {
   Form,
   Drawer,
   Descriptions,
-  Image
+  Image,
+  List,
+  Avatar
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
@@ -22,12 +24,15 @@ import {
   ReloadOutlined,
   EyeOutlined,
   StopOutlined,
-  CheckOutlined
+  CheckOutlined,
+  CommentOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
 import { getHotels } from '@/app/services/hotel';
+import { getCommentsByHotelId, deleteComment } from '@/app/services/comment';
 import { updateHotelStatus } from '@/app/services/review';
 import { getLocations } from '@/app/services/admin';
-import type { Hotel, Location } from '@/app/types';
+import type { Hotel, Location, Comment, ApiResponse } from '@/app/types';
 
 export default function HotelManagementPage() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
@@ -42,6 +47,12 @@ export default function HotelManagementPage() {
   // Drawer states
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+
+  // Comments states
+  const [commentsVisible, setCommentsVisible] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [currentHotelId, setCurrentHotelId] = useState<number | null>(null);
 
   const { message } = App.useApp();
 
@@ -95,6 +106,40 @@ export default function HotelManagementPage() {
   const handleView = (record: Hotel) => {
     setSelectedHotel(record);
     setDrawerVisible(true);
+  };
+  
+  const handleViewComments = async (hotelId: number) => {
+    setCurrentHotelId(hotelId);
+    setCommentsVisible(true);
+    setCommentsLoading(true);
+    try {
+      const res = await getCommentsByHotelId(hotelId);
+      if (res.success && res.data) {
+        setComments(res.data);
+      } else {
+        message.error(res.message || '获取评论失败');
+      }
+    } catch (error) {
+      console.error('Fetch comments error:', error);
+      message.error('获取评论失败');
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    try {
+      const res = await deleteComment(commentId);
+      if (res.success) {
+        message.success('删除评论成功');
+        setComments(comments.filter(c => c.id !== commentId));
+      } else {
+        message.error(res.message || '删除评论失败');
+      }
+    } catch (error) {
+      console.error('Delete comment error:', error);
+      message.error('删除评论失败');
+    }
   };
 
   const handleStatusChange = async (hotelId: number, newStatus: string) => {
@@ -166,6 +211,7 @@ export default function HotelManagementPage() {
       render: (_, record) => (
         <Space>
            <Button icon={<EyeOutlined />} type="link" onClick={() => handleView(record)}>查看</Button>
+           <Button icon={<CommentOutlined />} type="link" onClick={() => handleViewComments(record.id)}>评论</Button>
            {record.status === 'published' && (
             <>
               <Popconfirm
@@ -343,6 +389,47 @@ export default function HotelManagementPage() {
               </div>
             )}
           </>
+        )}
+      </Drawer>
+
+      <Drawer
+        title="酒店评论"
+        placement="right"
+        size={500}
+        onClose={() => setCommentsVisible(false)}
+        open={commentsVisible}
+      >
+        {commentsLoading ? (
+          <div style={{ textAlign: 'center', padding: 20 }}>加载中...</div>
+        ) : comments.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 20, color: '#999' }}>暂无评论</div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {comments.map((item) => (
+              <div key={item.id} className="border-b last:border-0 pb-4 flex gap-3">
+                <Avatar>{item.user.name?.[0] || 'U'}</Avatar>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-medium">{item.user.name || '匿名用户'}</div>
+                      <div className="text-gray-400 text-xs mt-1">{new Date(item.createdAt).toLocaleString()}</div>
+                    </div>
+                    <Popconfirm
+                      title="确定删除这条评论吗？"
+                      onConfirm={() => handleDeleteComment(item.id)}
+                      okText="确定"
+                      cancelText="取消"
+                    >
+                      <Button type="link" danger size="small" icon={<DeleteOutlined />}>删除</Button>
+                    </Popconfirm>
+                  </div>
+                  <div className="mt-2 text-gray-600">
+                    {item.content}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </Drawer>
     </div>
