@@ -10,6 +10,7 @@ import {
   ShopOutlined,
   TagsOutlined,
   EnvironmentOutlined,
+  MoneyCollectOutlined,
 } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -75,6 +76,12 @@ export default function AdminLayout({
       icon: <TagsOutlined />,
       label: '标签管理',
       onClick: () => router.push('/admin/tags'),
+    },
+    {
+      key: '/admin/coupons',
+      icon: <MoneyCollectOutlined />,
+      label: '优惠券管理',
+      onClick: () => router.push('/admin/coupons'),
     },
   ];
 
