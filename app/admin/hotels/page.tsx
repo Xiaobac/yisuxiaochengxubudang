@@ -177,10 +177,10 @@ export default function HotelManagementPage() {
       render: (_, record) => record.location?.name || '未知',
     },
     {
-      title: '星级',
-      dataIndex: 'starRating',
-      key: 'starRating',
-      render: (rating) => rating ? `${rating}星` : '未评级',
+      title: '评分',
+      dataIndex: 'score',
+      key: 'score',
+      render: (score) => score ? `${score.toFixed(1)}分` : '暂无评分',
     },
     {
       title: '商户',
@@ -412,7 +412,10 @@ export default function HotelManagementPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="font-medium">{item.user.name || '匿名用户'}</div>
-                      <div className="text-gray-400 text-xs mt-1">{new Date(item.createdAt).toLocaleString()}</div>
+                      <div className="text-gray-400 text-xs mt-1">
+                          {new Date(item.createdAt).toLocaleString()}
+                          {item.score && <span className="ml-2 text-yellow-500">{item.score.toFixed(1)}分</span>}
+                      </div>
                     </div>
                     <Popconfirm
                       title="确定删除这条评论吗？"

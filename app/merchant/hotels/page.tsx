@@ -415,7 +415,7 @@ export default function HotelManagementPage() {
                 <div style={{ fontWeight: 'bold', fontSize: 15 }}>{record.nameZh}</div>
                 {record.nameEn && <div style={{ fontSize: 12, color: '#666' }}>{record.nameEn}</div>}
                 <div style={{ fontSize: 12, marginTop: 4 }}>
-                   <span style={{ color: '#faad14' }}>{record.starRating}星级</span> 
+                   <span style={{ color: '#faad14' }}>{record.score ? `${record.score.toFixed(1)}分` : '暂无评分'}</span> 
                    <span style={{ margin: '0 4px', color: '#ddd' }}>|</span>
                    {record.openingYear ? `${record.openingYear}年开业` : '开业年份未知'}
                 </div>
