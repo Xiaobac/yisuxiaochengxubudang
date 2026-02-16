@@ -8,6 +8,7 @@ const API_BASE = 'http://localhost:3000';    // 开发环境
 
 // 默认酒店图片
 export const DEFAULT_HOTEL_IMAGE = `${API_BASE}/uploads/1770189062477-9-2026-02-03185959.png`;
+export const DEFAULT_AVATAR = 'https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png'; // Adding a default avatar
 
 // Banner轮播图
 export const BANNER_IMAGES = [

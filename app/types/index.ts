@@ -88,6 +88,7 @@ export interface Hotel {
   latitude?: number;
   longitude?: number;
   status: HotelStatus;
+  score?: number | null;
   rejectionReason?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -192,6 +193,9 @@ export interface Coupon {
 export interface Comment {
   id: number;
   content: string;
+  score: number | null;
+  userId?: number;
+  hotelId?: number;
   createdAt: string;
   user: {
     id: number;

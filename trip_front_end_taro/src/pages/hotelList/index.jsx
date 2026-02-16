@@ -101,10 +101,8 @@ function HotelList() {
           return {
             id: hotel.id,
             name: hotel.nameZh || hotel.name,
-            stars: formatStars(hotel.starRating),
-            starRating: hotel.starRating || 3,
-            score: hotel.rating || '4.5',
-            scoreDesc: hotel.rating >= 4.8 ? '超棒' : hotel.rating >= 4.5 ? '很好' : '不错',
+            score: (hotel.score !== null && hotel.score !== undefined) ? Number(hotel.score).toFixed(1) : '暂无评分',
+            scoreDesc: hotel.score >= 4.8 ? '超棒' : hotel.score >= 4.5 ? '很好' : hotel.score >= 4.0 ? '不错' : '',
             reviews: `${hotel.reviewCount || 0}点评`,
             collects: `${((hotel.favoriteCount || 0) / 10000).toFixed(1)}万收藏`,
             tags: hotel.location?.name ? [hotel.location.name] : [],
@@ -197,12 +195,12 @@ function HotelList() {
       console.log(`💰 价格筛选: ${beforeLength} -> ${filtered.length} (${min}-${max}元)`);
     }
 
-    // 星级筛选
-    if (filterParams.starRating) {
+    // 星级筛选 (已移除)
+    /* if (filterParams.starRating) {
       const beforeLength = filtered.length;
       filtered = filtered.filter(h => h.starRating === filterParams.starRating);
       console.log(`⭐ 星级筛选: ${beforeLength} -> ${filtered.length} (${filterParams.starRating}星)`);
-    }
+    } */
 
     // 设施筛选
     if (filterParams.facilities && filterParams.facilities.length > 0) {
@@ -446,7 +444,7 @@ function HotelList() {
               <View className='hotel-card-right'>
                 <View className='h-name-row'>
                   <Text className='h-name-text'>{hotel.name}</Text>
-                  <Text className='h-stars-text'>{hotel.stars}</Text>
+                  {/* <Text className='h-stars-text'>{hotel.stars}</Text> Remove stars display */}
                 </View>
 
                 <View className='h-score-row'>
@@ -513,7 +511,6 @@ function HotelList() {
                   <Text className='card-name'>{selectedHotel.name}</Text>
                   <View className='card-rating'>
                     <Text className='rating-score'>{selectedHotel.score}分</Text>
-                    <Text className='rating-stars'>{selectedHotel.stars}</Text>
                   </View>
                   <Text className='card-address'>{selectedHotel.address}</Text>
                   <View className='card-price-row'>

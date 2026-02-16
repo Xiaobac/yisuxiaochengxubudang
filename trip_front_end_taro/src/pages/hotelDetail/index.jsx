@@ -3,10 +3,11 @@ import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import dayjs from 'dayjs';
 import { getHotelById, getHotelRoomTypes } from '../../services/hotel';
+import { getComments } from '../../services/comment';
 import { createBooking } from '../../services/booking';
 import { addFavorite, removeFavorite, checkFavorite } from '../../services/favorite';
 import { formatPrice, formatStars } from '../../utils/format';
-import { getImageUrl } from '../../config/images';
+import { getImageUrl, DEFAULT_AVATAR } from '../../config/images';
 import { storage } from '../../utils/storage';
 import Calendar from '../../components/Calendar';
 import BookingConfirm from '../../components/BookingConfirm';
@@ -36,11 +37,14 @@ function HotelDetail() {
   const [selectedRoomTypeId, setSelectedRoomTypeId] = useState(null);
   const [showBookingConfirm, setShowBookingConfirm] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [comments, setComments] = useState([]);
+  
   // 加载酒店详情和房型数据
   useEffect(() => {
     if (hotelId) {
       loadHotelDetail();
       checkHotelFavorite();
+      loadComments();
     }
   }, [hotelId]);
 
@@ -67,6 +71,17 @@ function HotelDetail() {
       }
     } catch (error) {
       console.error('刷新房型库存失败:', error);
+    }
+  };
+
+  const loadComments = async () => {
+    try {
+      const res = await getComments({ hotelId });
+      if (res.success && res.data) {
+        setComments(res.data);
+      }
+    } catch (error) {
+      console.error('加载评论失败:', error);
     }
   };
 
@@ -114,11 +129,10 @@ function HotelDetail() {
         const hotelData = {
           id: rawData.id,
           name: rawData.nameZh || rawData.name || '未知酒店',
-          stars: formatStars(rawData.starRating || 3),
-          score: '4.8',
-          scoreDesc: '超棒',
-          reviews: '4695点评',
-          collects: '6.3万收藏',
+          score: (rawData.score !== null && rawData.score !== undefined) ? Number(rawData.score).toFixed(1) : '暂无评分',
+          scoreDesc: rawData.score >= 4.8 ? '超棒' : rawData.score >= 4.5 ? '很好' : rawData.score >= 4.0 ? '不错' : '',
+          reviews: `${rawData.reviewCount || 0}点评`,
+          collects: `${Number((rawData.favoriteCount || 0) / 10000).toFixed(1)}万收藏`,
           tags: rawData.hotelTags?.map(t => t.tag?.name).filter(Boolean) || [rawData.location?.name || '市中心'],
           notice: rawData.description || '优质酒店，环境舒适，服务周到',
           services: facilitiesList,
@@ -553,62 +567,28 @@ function HotelDetail() {
         {/* 评论区 */}
         <View className='comment-section'>
           {/* 标题：用户评论（总条数） */}
-          <View className='comment-header'>用户评论（x条）</View>
+          <View className='comment-header'>用户评论（{comments.length}条）</View>
           {/* 评论列表 */}
           <View className='comment-list'>
-            {/* 第一条评论 */}
-            <View className='comment-item'>
-              <Image className='avatar' src='/path/to/avatar1.png' mode='aspectFill' />
-              <View className='comment-main'>
-                <View className='comment-header-row'>
-                  <Text className='username'>张三</Text>
-                  <Text className='comment-date'>2026-02-13</Text>
-                  <Text className='comment-score'>5.0</Text>
+            {comments.length > 0 ? (
+              comments.map((comment) => (
+                <View key={comment.id} className='comment-item'>
+                  <Image className='avatar' src={comment.user?.avatar || DEFAULT_AVATAR} mode='aspectFill' />
+                  <View className='comment-main'>
+                   <View className='comment-header-row'>
+                      <Text className='username'>{comment.user?.name || '匿名用户'}</Text>
+                      <Text className='comment-date'>{dayjs(comment.createdAt).format('YYYY-MM-DD')}</Text>
+                      {(comment.score !== null && comment.score !== undefined) && <Text className='comment-score'>{Number(comment.score).toFixed(1)}</Text>}
+                   </View>
+                   <Text className='comment-content'>{comment.content}</Text>
+                 </View>
+               </View>
+              ))
+            ) : (
+                <View className='no-comments'>
+                  <Text>暂无评论</Text>
                 </View>
-                <Text className='comment-content'>
-                  这家酒店环境很好，服务态度也很棒，下次还会再来。
-                </Text>
-                {/* 点赞点踩按钮区（静态） */}
-                <View className='comment-actions'>
-                  <View className='action-btn like-btn'>
-                    <Text className='action-icon'>👍</Text>
-                    <Text className='action-count'>12</Text>
-                  </View>
-                  <View className='action-btn dislike-btn'>
-                    <Text className='action-icon'>👎</Text>
-                    <Text className='action-count'>2</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* 第二条评论 */}
-            <View className='comment-item'>
-              <Image className='avatar' src='/path/to/avatar2.png' mode='aspectFill' />
-              <View className='comment-main'>
-                <View className='comment-header-row'>
-                  <Text className='username'>李四</Text>
-                  <Text className='comment-date'>2026-02-14</Text>
-                  <Text className='comment-score'>4.5</Text>
-                </View>
-                <Text className='comment-content'>
-                  位置很方便，房间干净。
-                </Text>
-                {/* 点赞点踩按钮区（静态） */}
-                <View className='comment-actions'>
-                  <View className='action-btn like-btn'>
-                    <Text className='action-icon'>👍</Text>
-                    <Text className='action-count'>9</Text>
-                  </View>
-                  <View className='action-btn dislike-btn'>
-                    <Text className='action-icon'>👎</Text>
-                    <Text className='action-count'>1</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* 继续添加更多评论... */}
+            )}
           </View>
         </View>
 

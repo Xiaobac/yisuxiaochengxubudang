@@ -1,6 +1,7 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+import { updateHotelScore } from '@/app/api/utils/updateHotelScore';
 
 // GET /api/comments - 获取评论列表
 // 可通过 query 参数筛选：hotelId, userId
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { hotelId, content } = body;
+    const { hotelId, content, score } = body;
 
     if (!hotelId || !content) {
       return NextResponse.json({ success: false, message: '参数不完整' }, { status: 400 });
@@ -63,8 +64,11 @@ export async function POST(req: NextRequest) {
         userId: auth.user.userId,
         hotelId: parseInt(hotelId),
         content,
+        score: score ? parseFloat(score) : null,
       },
     });
+
+    await updateHotelScore(parseInt(hotelId));
 
     return NextResponse.json({ success: true, data: comment });
   } catch (error) {

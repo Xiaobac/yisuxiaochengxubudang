@@ -19,6 +19,7 @@ import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
 import { useTheme } from '../../utils/useTheme'
+import { getImageUrl } from '../../config/images';
 import './index.css';
 import AiChatWidget from '../../components/AiChatWidget';
 
@@ -73,9 +74,7 @@ function FavoriteList() {
             id: fav.id,
             hotelId: hotel.id,
             name: hotel.nameZh || hotel.name,
-            stars: formatStars(hotel.starRating),
-            starRating: hotel.starRating || 3,
-            score: hotel.rating || '4.5',
+            score: (hotel.score !== null && hotel.score !== undefined) ? Number(hotel.score).toFixed(1) : '暂无评分',
             address: hotel.address || '',
             price: formatPrice(hotel.minPrice),
             priceNum: hotel.minPrice || 0,
@@ -337,12 +336,11 @@ function FavoriteList() {
               </View>
             )}
 
-            <Image className='hotel-image' src={hotel.img} mode='aspectFill' />
+            <Image className='hotel-image' src={getImageUrl(hotel.img)} mode='aspectFill' />
 
             <View className='hotel-info'>
               <View className='name-row'>
                 <Text className='hotel-name'>{hotel.name}</Text>
-                <Text className='hotel-stars'>{hotel.stars}</Text>
               </View>
 
               <View className='score-row'>

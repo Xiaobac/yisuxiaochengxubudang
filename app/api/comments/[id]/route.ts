@@ -1,6 +1,7 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+import { updateHotelScore } from '@/app/api/utils/updateHotelScore';
 
 // GET /api/comments/[id] - 获取单条评论详情
 export async function GET(
@@ -60,12 +61,17 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { content } = body;
+    const { content, score } = body;
 
     const updatedComment = await prisma.comment.update({
       where: { id },
-      data: { content },
+      data: { 
+         content,
+         score: score !== undefined ? (score ? parseFloat(score) : null) : undefined
+       },
     });
+
+    await updateHotelScore(comment.hotelId);
 
     return NextResponse.json({ success: true, data: updatedComment });
   } catch (error) {
@@ -104,6 +110,8 @@ export async function DELETE(
     await prisma.comment.delete({
       where: { id },
     });
+
+    await updateHotelScore(comment.hotelId);
 
     return NextResponse.json({ success: true, message: '评论已删除' });
   } catch (error) {
