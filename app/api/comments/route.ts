@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             name: true,
-            email: true, // 根据隐私需求可能需要隐藏
+            avatar: true,
           },
         },
         hotel: {

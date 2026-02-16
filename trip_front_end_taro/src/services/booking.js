@@ -27,6 +27,9 @@ export const createBooking = async (data) => {
       totalPrice: data.totalPrice,
       guestInfo: {
         specialRequests: data.specialRequests || '',
+        guestName: data.guestName || '',
+        guestPhone: data.guestPhone || '',
+        arrivalTime: data.arrivalTime || '',
       },
     });
 

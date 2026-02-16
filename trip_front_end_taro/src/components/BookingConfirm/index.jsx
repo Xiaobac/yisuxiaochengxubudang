@@ -188,7 +188,7 @@ function BookingConfirm({
           <View className='price-detail'>
             <View className='price-row'>
               <Text className='price-label'>房费 × {nights}晚</Text>
-              <Text className='price-value'>¥{room?.price * nights}</Text>
+              <Text className='price-value'>¥{totalPrice}</Text>
             </View>
             <View className='price-row total'>
               <Text className='price-label'>总计</Text>

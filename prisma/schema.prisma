@@ -69,6 +69,7 @@ model User {
   password      String
   roleId        Int?
   name          String?
+  avatar        String?
   createdAt     DateTime        @default(now())
   role          Role?           @relation(fields: [roleId], references: [id], onDelete: SetNull)
   hotels        Hotel[]         @relation("HotelMerchant")

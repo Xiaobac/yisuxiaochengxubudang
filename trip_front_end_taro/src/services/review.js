@@ -10,6 +10,16 @@ export const getMyReviews = async () => {
   }
 };
 
+export const getReviewsByHotelId = async (hotelId) => {
+  try {
+    const res = await get('/reviews', { hotelId });
+    return res;
+  } catch (error) {
+    console.error('获取酒店评价失败:', error);
+    throw error;
+  }
+};
+
 export const createReview = async (bookingId, rating, content) => {
   try {
     const res = await post('/reviews', { bookingId, rating, content });

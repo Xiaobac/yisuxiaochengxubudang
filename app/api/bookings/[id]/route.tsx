@@ -57,6 +57,58 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *         description: 删除成功
  */
 
+export async function GET(
+  request: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
+  try {
+    const params = await props.params;
+    const bookingId = parseInt(params.id);
+    const authResult = verifyAuth(request);
+    if (!authResult.success) {
+      return NextResponse.json({ success: false, error: authResult.error }, { status: authResult.status });
+    }
+    const userId = authResult.user.userId;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        hotel: {
+          select: {
+            id: true,
+            nameZh: true,
+            address: true,
+            images: true,
+            merchantId: true,
+            latitude: true,
+            longitude: true,
+          }
+        },
+        roomType: {
+          select: { id: true, name: true }
+        },
+        review: true
+      }
+    });
+
+    if (!booking) {
+      return NextResponse.json({ success: false, error: '订单不存在' }, { status: 404 });
+    }
+
+    const isUser = booking.userId === userId;
+    const isMerchant = (booking as any).hotel?.merchantId === userId;
+
+    if (!isUser && !isMerchant) {
+      return NextResponse.json({ success: false, error: '无权查看此订单' }, { status: 403 });
+    }
+
+    return NextResponse.json({ success: true, data: booking });
+  } catch (error) {
+    console.error('Get booking error:', error);
+    return NextResponse.json({ success: false, error: '获取订单详情失败' }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   props: { params: Promise<{ id: string }> }

@@ -95,7 +95,7 @@
 
 .media-tags-row {
   position: absolute;
-  top: 20rpx;
+  bottom: 20rpx;
   left: 20rpx;
   display: flex;
 }
@@ -141,7 +141,7 @@
 /* 3.核心信息卡片 (白卡) */
 .info-card {
   position: relative;
-  margin-top: -60rpx; /* 浮动效果 */
+  margin-top: 0;
   margin-left: 24rpx;
   margin-right: 24rpx;
   background-color: var(--color-card-bg);
@@ -161,6 +161,7 @@
 .hotel-name {
   font-size: 36rpx;
   font-weight: bold;
+  color: var(--color-text-primary);
 }
 
 .hotel-stars {
@@ -176,6 +177,22 @@
 
 .hotel-rank-section {
   margin-top: 20rpx;
+}
+
+.rank-section {
+  margin-bottom: 10rpx;
+}
+
+.rank-text {
+  font-size: 24rpx;
+  color: var(--color-text-secondary);
+}
+
+.no-comments {
+  padding: 30rpx 0;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 26rpx;
 }
 
 /* 设施图标行 */
@@ -238,7 +255,7 @@
 .score-badge {
   background-color:var(--color-primary);
   color: #fff;
-  font-size: 36rpx;
+  font-size: 26rpx;
   padding: 2rpx 8rpx;
   border-radius: 6rpx;
   font-weight: bold;
@@ -246,7 +263,7 @@
 }
 
 .score-desc {
-  font-size: 30rpx;
+  font-size: 24rpx;
   color: var(--color-primary);
   margin-top: 5rpx;
   margin-right: 10rpx;
@@ -378,7 +395,10 @@
 /* 评论区容器 */
 .comment-section {
   padding: 30rpx;
-  background-color:#ffffff;
+  background-color: var(--color-card-bg);
+  margin: 20rpx 24rpx 0;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
 }
 
 /* 标题 */
@@ -386,7 +406,7 @@
   font-size: 32rpx;
   font-weight: bold;
   margin-bottom: 20rpx;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 /* 评论列表 */
@@ -399,7 +419,7 @@
 /* 单个评论项 */
 .comment-item {
   display: flex;
-  background-color: #ffffff;
+  background-color: var(--color-bg-secondary);
   border-radius: 16rpx;
   padding: 20rpx;
 }
@@ -411,7 +431,7 @@
   border-radius: 50%;
   margin-right: 20rpx;
   flex-shrink: 0;
-  background-color: #eee; /* 图片加载前的占位背景 */
+  background-color: var(--color-bg-tertiary);
 }
 
 /* 右侧主内容区 */
@@ -433,27 +453,50 @@
 .username {
   font-size: 28rpx;
   font-weight: bold;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 /* 日期 */
 .comment-date {
   font-size: 22rpx;
-  color: #999;
+  color: var(--color-text-tertiary);
 }
 
 /* 评分（靠右） */
 .comment-score {
-  font-size: 36rpx;
+  font-size: 26rpx;
   color: #ff6b00;
   font-weight: bold;
-  margin-left: auto; /* 自动右对齐 */
+  margin-left: auto;
+}
+
+/* 加载更多按钮 */
+.load-more-btn {
+  display: flex;
+  justify-content: center;
+  padding: 24rpx 0 8rpx;
+}
+
+.load-more-text {
+  font-size: 26rpx;
+  color: #0066FF;
+}
+
+/* 房型标签 */
+.comment-room-type {
+  font-size: 22rpx;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-secondary);
+  border-radius: 6rpx;
+  padding: 2rpx 10rpx;
+  display: inline-block;
+  margin-bottom: 8rpx;
 }
 
 /* 评论内容 */
 .comment-content {
   font-size: 26rpx;
-  color: #666;
+  color: var(--color-text-secondary);
   line-height: 1.5;
   word-break: break-word;
 }
@@ -474,9 +517,9 @@
   gap: 6rpx;
   padding: 6rpx 16rpx;
   border-radius: 30rpx;
-  background-color: #f5f5f5;
+  background-color: var(--color-bg-tertiary);
   font-size: 24rpx;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 /* 图标稍大 */
@@ -488,7 +531,7 @@
 /* 数字样式 */
 .action-count {
   font-size: 24rpx;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 /*点赞样式
@@ -496,6 +539,36 @@
 
 
 /* 4.房型列表 */
+/* ===== 单张房型卡片 ===== */
+.room-card {
+  border-bottom: 1rpx solid var(--color-border-base);
+}
+
+.room-card:last-child {
+  border-bottom: none;
+}
+
+/* ===== 房型标签组 ===== */
+.room-header-right-tag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.room-tag-item {
+  font-size: 20rpx;
+  color: var(--color-primary);
+  background-color: var(--color-bg-tertiary);
+  padding: 2rpx 10rpx;
+  border-radius: 4rpx;
+}
+
+/* ===== 总价文字 ===== */
+.price-total {
+  font-size: 22rpx;
+  color: var(--color-text-secondary);
+}
+
 /* ===== 房型卡片容器 ===== */
 .room-type-section {
   background-color: var(--color-card-bg);
@@ -516,6 +589,7 @@
 .room-header-title {
   font-size: 30rpx;
   font-weight: bold;
+  color: var(--color-text-primary);
 }
 
 .collapse-icon {
@@ -550,6 +624,7 @@
   font-size: 30rpx;
   font-weight: bold;
   margin-bottom: 10rpx;
+  color: var(--color-text-primary);
 }
 
 /* ===== 规格信息 ===== */
@@ -747,7 +822,7 @@
 /* 剩余房间数 */
 .room-remaining {
   font-size: 20rpx;
-  color: #52c41a;
+  color: #52c41a; /* 绿色保留，深浅模式均可辨认 */
   margin-left: 8rpx;
   font-weight: 500;
 }
@@ -757,8 +832,8 @@
 }
 
 .room-detail-btn.disabled {
-  background: #d9d9d9;
-  color: #999;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
   pointer-events: none;
 }
 
@@ -770,7 +845,7 @@
 
 .price-total-text {
   font-size: 20rpx;
-  color: #999;
+  color: var(--color-text-tertiary);
   margin-top: 4rpx;
   display: block;
 }

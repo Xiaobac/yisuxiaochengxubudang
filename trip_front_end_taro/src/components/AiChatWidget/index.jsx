@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Textarea, Button } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { useTheme } from '../../utils/useTheme';
+import { post } from '../../services/request';
 import './index.css';
 
 const AiChatWidget = () => {
   const { cssVars } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { id: 'msg_0', role: '', content: '您好！我是您的旅行助手。请问您想去哪里旅行，或者对酒店有什么要求？' }
+    { id: 'msg_0', role: 'assistant', content: '您好！我是您的旅行助手。请问您想去哪里旅行，或者对酒店有什么要求？' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -68,7 +69,7 @@ const AiChatWidget = () => {
 
     const userMsg = {
       id: `msg_${messages.length}`,
-      role: '',
+      role: 'user',
       content: input
     };
 
@@ -77,28 +78,20 @@ const AiChatWidget = () => {
     setLoading(true);
 
     try {
-      const response = await Taro.request({
-        url: 'http://localhost:3000/api/ai/recommend',
-        method: 'POST',
-        data: {
-          messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content }))
-        }
+      const data = await post('/ai/recommend', {
+        messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content }))
       });
 
-      if (response.statusCode === 200) {
-        const assistantMsg = {
-          id: `msg_${messages.length + 1}`,
-          role: '',
-          content: response.data.content || '我收到您的消息了！'
-        };
-        setMessages(prev => [...prev, assistantMsg]);
-      } else {
-        throw new Error('请求失败');
-      }
+      const assistantMsg = {
+        id: `msg_${messages.length + 1}`,
+        role: 'assistant',
+        content: data.content || '我收到您的消息了！'
+      };
+      setMessages(prev => [...prev, assistantMsg]);
     } catch (error) {
       setMessages(prev => [...prev, {
         id: `err_${Date.now()}`,
-        role: '',
+        role: 'assistant',
         content: '抱歉，服务暂时不可用，请稍后再试。'
       }]);
     } finally {
@@ -144,7 +137,7 @@ const AiChatWidget = () => {
               <View
                 key={item.id}
                 id={`msg_${index}`}
-                className={`message-row ${item.role === '' ? 'user-row' : 'bot-row'}`}
+                className={`message-row ${item.role === 'user' ? 'user-row' : 'bot-row'}`}
               >
                 <View className='message-bubble'>
                   <Text className='message-text'>{item.content}</Text>

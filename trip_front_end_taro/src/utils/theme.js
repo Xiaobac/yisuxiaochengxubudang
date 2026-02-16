@@ -107,7 +107,7 @@ export function applyNativeTheme(resolvedTheme) {
 
   Taro.setNavigationBarColor({
     frontColor: '#ffffff',
-    backgroundColor: isDark ? '#0d1117' : '#1677ff',
+    backgroundColor: TOKENS[resolvedTheme]['--color-header-bg'],
     animation: { duration: 200, timingFunc: 'linear' },
   });
 

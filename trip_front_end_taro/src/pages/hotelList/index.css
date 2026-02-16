@@ -26,7 +26,7 @@
 
 .search-pill-box {
   flex: 1;
-  background-color: #f2f3f5;
+  background-color: var(--color-bg-secondary);
   height: 72rpx;
   border-radius: 36rpx;
   display: flex;
@@ -174,7 +174,7 @@
 }
 
 .quick-tag-pill {
-  background-color: #f5f7f9;
+  background-color: var(--color-bg-secondary);
   padding: 8rpx 20rpx;
   border-radius: 6rpx;
   font-size: 24rpx;
@@ -287,7 +287,7 @@
 }
 
 .h-boss-notice {
-  background-color: #f0f7ff;
+  background-color: var(--color-bg-secondary);
   padding: 6rpx 12rpx;
   border-radius: 4rpx;
   margin-top: 10rpx;
@@ -307,7 +307,7 @@
 
 /* 服务标签 - 修正边框语法 */
 .h-service-pill {
-  border: 1rpx solid #e0e0e0;
+  border: 1rpx solid var(--color-border-base);
   color: var(--color-text-tertiary);
   font-size: 20rpx;
   padding: 2rpx 8rpx;

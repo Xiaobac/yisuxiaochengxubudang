@@ -57,25 +57,28 @@ function OrderDetail() {
           setReviewed(true);
         }
 
+        const guestInfo = rawData.guestInfo || {};
         const orderData = {
           id: rawData.id,
           orderNo: `ORD${String(rawData.id).padStart(8, '0')}`,
           hotelName: rawData.hotel?.nameZh || rawData.hotel?.name || '未知酒店',
           hotelAddress: rawData.hotel?.address || '地址未知',
+          hotelLatitude: rawData.hotel?.latitude || null,
+          hotelLongitude: rawData.hotel?.longitude || null,
           hotelImage: hotelImage,
-          roomType: rawData.roomType?.name || '未知房型',
+          roomType: rawData.roomType?.nameZh || rawData.roomType?.name || '未知房型',
           checkInDate: formatDate(rawData.checkInDate, 'YYYY-MM-DD'),
           checkOutDate: formatDate(rawData.checkOutDate, 'YYYY-MM-DD'),
           guestCount: rawData.guestCount || 1,
-          guestName: rawData.guestName || '-',
-          guestPhone: rawData.guestPhone || '-',
-          specialRequests: rawData.specialRequests || '无',
+          guestName: rawData.guestName || guestInfo.guestName || '-',
+          guestPhone: rawData.guestPhone || guestInfo.guestPhone || '-',
+          specialRequests: rawData.specialRequests || guestInfo.specialRequests || '无',
           totalPrice: formatPrice(rawData.totalPrice || 0),
           status: rawData.status || 'pending',
           statusText: getStatusText(rawData.status),
           statusColor: getStatusColor(rawData.status),
           createdAt: formatDate(rawData.createdAt, 'YYYY-MM-DD HH:mm:ss'),
-          arrivalTime: rawData.arrivalTime || '14:00-18:00'
+          arrivalTime: rawData.arrivalTime || guestInfo.arrivalTime || '14:00-18:00'
         };
 
         setOrder(orderData);
@@ -173,12 +176,17 @@ function OrderDetail() {
   };
 
   const handleNavigateToHotel = () => {
-    if (order && order.hotelAddress) {
-      Taro.showToast({
-        title: `地址: ${order.hotelAddress}`,
-        icon: 'none',
-        duration: 3000
+    if (!order) return;
+    if (order.hotelLatitude && order.hotelLongitude) {
+      Taro.openLocation({
+        latitude: order.hotelLatitude,
+        longitude: order.hotelLongitude,
+        name: order.hotelName,
+        address: order.hotelAddress,
+        scale: 16,
       });
+    } else {
+      Taro.showToast({ title: `地址: ${order.hotelAddress}`, icon: 'none', duration: 3000 });
     }
   };
 

@@ -4,7 +4,7 @@ import { verifyAuth } from '@/app/api/utils/auth';
 
 // DELETE /api/reviews/[id] - 删除评价
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await verifyAuth(req);
+  const auth = verifyAuth(req);
   if (!auth.success) {
     return NextResponse.json({ success: false, message: '未授权' }, { status: 401 });
   }
@@ -13,7 +13,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const reviewId = parseInt(id);
 
   const review = await prisma.review.findFirst({
-    where: { id: reviewId, userId: auth.userId },
+    where: { id: reviewId, userId: auth.user.userId },
   });
 
   if (!review) {

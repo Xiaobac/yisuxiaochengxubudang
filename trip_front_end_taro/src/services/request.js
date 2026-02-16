@@ -8,7 +8,7 @@ import Taro from '@tarojs/taro';
 const BASE_URL = 'http://localhost:3000/api';
 
 // 开发环境标识
-const isDevelopment = true;
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 /**
  * 统一请求方法
@@ -57,8 +57,8 @@ function request(url, options = {}) {
         console.log('✅ API Response:', res.data);
       }
 
-      // 成功响应
-      if (res.statusCode === 200) {
+      // 成功响应（200 OK / 201 Created / 204 No Content）
+      if (res.statusCode >= 200 && res.statusCode < 300) {
         return res.data;
       }
 

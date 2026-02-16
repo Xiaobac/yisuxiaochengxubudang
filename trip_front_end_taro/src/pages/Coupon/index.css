@@ -1,6 +1,6 @@
 /* 全局背景颜色 */
 .coupons-page-container {
-  background-color: #f7f8fa;
+  background-color: var(--color-bg-secondary);
   min-height: 100vh;
   padding: 30rpx;
   box-sizing: border-box;
@@ -12,7 +12,7 @@
 
 .hotel-coupon-card {
   display: flex;
-  background-color: #ffffff;
+  background-color: var(--color-card-bg);
   border-radius: 20rpx;
   min-height: 220rpx;
   position: relative;
@@ -58,14 +58,14 @@
 
 /* 米色分类标签（如酒店/民宿） */
 .tag-beige {
-  background-color: #fff5e6;
-  color: #c06c00;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
 }
 
 .coupon-main-title {
   font-size: 34rpx;
   font-weight: bold;
-  color: #333333;
+  color: var(--color-text-primary);
   margin-bottom: 20rpx;
 }
 
@@ -76,13 +76,13 @@
 
 .expire-date-text {
   font-size: 24rpx;
-  color: #999999;
+  color: var(--color-text-tertiary);
 }
 
 /* 装饰性分割垂直线 */
 .coupon-divider-line {
   width: 2rpx;
-  border-left: 2rpx solid #f0f0f0;
+  border-left: 2rpx solid var(--color-border-base);
   margin: 30rpx 0;
 }
 
@@ -94,7 +94,7 @@
   align-items: center;
   justify-content: center;
   padding: 20rpx 0;
-  background: linear-gradient(to bottom, #ffffff, #fafafa);
+  background-color: var(--color-card-bg);
 }
 
 /* 金额显示区 */
@@ -117,7 +117,7 @@
 
 .threshold-text {
   font-size: 22rpx;
-  color: #999999;
+  color: var(--color-text-tertiary);
   margin-top: -6rpx;
   margin-bottom: 16rpx;
 }

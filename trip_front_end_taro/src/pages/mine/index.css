@@ -21,8 +21,8 @@
 .avatar-placeholder-circle {
   width: 120rpx;
   height: 120rpx;
-  background-color: #e0e0e0;
-  border: 4rpx solid #ffffff;
+  background-color: rgba(255, 255, 255, 0.3);
+  border: 4rpx solid rgba(255, 255, 255, 0.8);
   border-radius: 60rpx;
   display: block;
 }

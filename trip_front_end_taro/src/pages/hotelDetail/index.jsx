@@ -4,6 +4,7 @@ import Taro, { useRouter } from '@tarojs/taro';
 import dayjs from 'dayjs';
 import { getHotelById, getHotelRoomTypes } from '../../services/hotel';
 import { getComments } from '../../services/comment';
+import { getReviewsByHotelId } from '../../services/review';
 import { createBooking } from '../../services/booking';
 import { addFavorite, removeFavorite, checkFavorite } from '../../services/favorite';
 import { formatPrice, formatStars } from '../../utils/format';
@@ -38,6 +39,8 @@ function HotelDetail() {
   const [showBookingConfirm, setShowBookingConfirm] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [comments, setComments] = useState([]);
+  const [showAllComments, setShowAllComments] = useState(false);
+  const COMMENT_PREVIEW_COUNT = 3;
   
   // 加载酒店详情和房型数据
   useEffect(() => {
@@ -76,10 +79,44 @@ function HotelDetail() {
 
   const loadComments = async () => {
     try {
-      const res = await getComments({ hotelId });
-      if (res.success && res.data) {
-        setComments(res.data);
-      }
+      console.log('🔍 loadComments start, hotelId:', hotelId);
+      const [commentsRes, reviewsRes] = await Promise.allSettled([
+        getComments({ hotelId }),
+        getReviewsByHotelId(hotelId),
+      ]);
+
+      const commentList = commentsRes.status === 'fulfilled' && commentsRes.value?.success
+        ? commentsRes.value.data.map(c => ({
+            id: `c_${c.id}`,
+            user: c.user,
+            score: c.score,
+            content: c.content,
+            createdAt: c.createdAt,
+            roomType: null,
+          }))
+        : [];
+
+      const reviewList = reviewsRes.status === 'fulfilled' && reviewsRes.value?.success
+        ? reviewsRes.value.data
+            .filter(r => r.content)
+            .map(r => ({
+              id: `r_${r.id}`,
+              user: r.user,
+              score: r.rating,
+              content: r.content,
+              createdAt: r.createdAt,
+              roomType: r.booking?.roomType?.name || null,
+            }))
+        : [];
+
+      const merged = [...commentList, ...reviewList].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      console.log('🔍 commentsRes:', commentsRes.status, commentsRes.value);
+      console.log('🔍 reviewsRes:', reviewsRes.status, reviewsRes.value);
+      console.log('🔍 merged:', merged.length, '条');
+      setComments(merged);
     } catch (error) {
       console.error('加载评论失败:', error);
     }
@@ -566,12 +603,10 @@ function HotelDetail() {
 
         {/* 评论区 */}
         <View className='comment-section'>
-          {/* 标题：用户评论（总条数） */}
           <View className='comment-header'>用户评论（{comments.length}条）</View>
-          {/* 评论列表 */}
           <View className='comment-list'>
             {comments.length > 0 ? (
-              comments.map((comment) => (
+              (showAllComments ? comments : comments.slice(0, COMMENT_PREVIEW_COUNT)).map((comment) => (
                 <View key={comment.id} className='comment-item'>
                   <Image className='avatar' src={comment.user?.avatar || DEFAULT_AVATAR} mode='aspectFill' />
                   <View className='comment-main'>
@@ -580,6 +615,7 @@ function HotelDetail() {
                       <Text className='comment-date'>{dayjs(comment.createdAt).format('YYYY-MM-DD')}</Text>
                       {(comment.score !== null && comment.score !== undefined) && <Text className='comment-score'>{Number(comment.score).toFixed(1)}</Text>}
                    </View>
+                   {comment.roomType && <Text className='comment-room-type'>{comment.roomType}</Text>}
                    <Text className='comment-content'>{comment.content}</Text>
                  </View>
                </View>
@@ -588,6 +624,11 @@ function HotelDetail() {
                 <View className='no-comments'>
                   <Text>暂无评论</Text>
                 </View>
+            )}
+            {!showAllComments && comments.length > COMMENT_PREVIEW_COUNT && (
+              <View className='load-more-btn' onClick={() => setShowAllComments(true)}>
+                <Text className='load-more-text'>查看全部 {comments.length} 条评论</Text>
+              </View>
             )}
           </View>
         </View>
