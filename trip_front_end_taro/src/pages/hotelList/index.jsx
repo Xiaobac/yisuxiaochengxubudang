@@ -27,7 +27,7 @@ function HotelList() {
   const [filterParams, setFilterParams] = useState({
     sortBy: 'recommend',
     priceRange: null,
-    starRating: null,
+    minScore: null,
     facilities: []
   });
   const [showFilter, setShowFilter] = useState(false);
@@ -251,6 +251,13 @@ function HotelList() {
       const [min, max] = filterParams.priceRange;
       filtered = filtered.filter(h => h.priceNum >= min && h.priceNum <= max);
     }
+
+    // 评分筛选
+    if (filterParams.minScore) {
+      filtered = filtered.filter(h => parseFloat(h.score) >= filterParams.minScore);
+    }
+
+    // 设施筛选
     if (filterParams.facilities && filterParams.facilities.length > 0) {
       filtered = filtered.filter(h =>
         filterParams.facilities.every(f => h.facilities.includes(f))
@@ -299,7 +306,22 @@ function HotelList() {
   const handleConfirmFilter = (filters) => {
     setFilterParams(filters);
     setShowFilter(false);
-    Taro.showToast({ title: '筛选已应用', icon: 'success', duration: 2000 });
+
+    // 构建筛选信息提示
+    let filterInfo = [];
+    if (filters.priceRange) {
+      const [min, max] = filters.priceRange;
+      filterInfo.push(`价格${min}-${max}元`);
+    }
+    if (filters.minScore) {
+      filterInfo.push(`${filters.minScore}分以上`);
+    }
+    if (filters.facilities && filters.facilities.length > 0) {
+      filterInfo.push(`${filters.facilities.length}个设施`);
+    }
+
+    const message = filterInfo.length > 0 ? `已应用: ${filterInfo.join(', ')}` : '筛选已应用';
+    Taro.showToast({ title: message, icon: 'success', duration: 2000 });
   };
 
   const handleHotelClick = (hotelId) => {
@@ -395,7 +417,7 @@ function HotelList() {
         </View>
         <View className='filter-tab-item' onClick={handleOpenFilter}>
           筛选 <View className='f-icon'></View>
-          {(filterParams.priceRange || filterParams.starRating || filterParams.facilities.length > 0) && (
+          {(filterParams.priceRange || filterParams.minScore || filterParams.facilities.length > 0) && (
             <View className='filter-badge'></View>
           )}
         </View>
@@ -405,6 +427,12 @@ function HotelList() {
       {!loading && (
         <View className='result-stats-bar'>
           <Text className='stats-text'>找到 {filteredHotels.length} 家酒店</Text>
+          {searchParams.priceRange && (
+            <Text className='stats-filter-tag'>{searchParams.priceRange}</Text>
+          )}
+          {searchParams.tags && searchParams.tags.length > 0 && (
+            <Text className='stats-filter-tag'>{searchParams.tags.length}个标签</Text>
+          )}
         </View>
       )}
 
@@ -425,7 +453,6 @@ function HotelList() {
             <View key={hotel.id} className='hotel-card-box' onClick={() => handleHotelClick(hotel.id)}>
               <View className='hotel-card-left'>
                 <Image className='hotel-card-img' src={getImageUrl(hotel.img)} mode='aspectFill' />
-                <View className='play-icon-overlay'>▶</View>
               </View>
               <View className='hotel-card-right'>
                 <View className='h-name-row'>

@@ -261,7 +261,6 @@ export default function HotelManagementPage() {
       ...record,
       name: record.nameZh,
       name_en: record.nameEn,
-      star_rating: record.starRating,
       opening_date: record.openingYear ? dayjs(`${record.openingYear}-01-01`) : null,
       locationId: record.locationId,
       // map hotelTags from [{ tag: { id, name } }] to [id, id]
@@ -333,7 +332,6 @@ export default function HotelManagementPage() {
         nameEn: values.name_en,
         address: values.address,
         locationId: values.locationId,
-        starRating: values.star_rating,
         description: values.description,
         openingYear: values.opening_date ? values.opening_date.year() : 2020,
         images,
@@ -583,37 +581,30 @@ export default function HotelManagementPage() {
             <Input placeholder="请输入详细地址" />
           </Form.Item>
           
-          <Form.Item noStyle shouldUpdate={(prev, curr) => prev.latitude !== curr.latitude || prev.longitude !== curr.longitude}>
-            {({ getFieldValue, setFieldsValue }) => (
-                <Form.Item label="地理位置">
-                    <TencentMapSelector 
-                        latitude={getFieldValue('latitude')} 
-                        longitude={getFieldValue('longitude')}
-                        onSelect={(loc) => {
-                            setFieldsValue({
-                                latitude: loc.latitude,
-                                longitude: loc.longitude
-                            });
-                        }}
-                    />
-                    <Form.Item name="latitude" noStyle hidden><Input /></Form.Item>
-                    <Form.Item name="longitude" noStyle hidden><Input /></Form.Item>
-                </Form.Item>
-            )}
-          </Form.Item>
-
-          <Form.Item
-            label="星级"
-            name="star_rating"
-            rules={[{ required: true, message: '请选择星级' }]}
-          >
-            <Select>
-              {[1, 2, 3, 4, 5].map((num) => (
-                <Option key={num} value={num}>
-                  {num}星
-                </Option>
-              ))}
-            </Select>
+          <Form.Item label="地理位置" required style={{ marginBottom: 0 }}>
+             <Form.Item noStyle shouldUpdate={(prev, curr) => prev.latitude !== curr.latitude || prev.longitude !== curr.longitude}>
+                {({ getFieldValue, setFieldsValue }) => (
+                    <>
+                        <TencentMapSelector 
+                            latitude={getFieldValue('latitude')} 
+                            longitude={getFieldValue('longitude')}
+                            onSelect={(loc) => {
+                                console.log("Map Selected:", loc);
+                                setFieldsValue({
+                                    latitude: loc.latitude,
+                                    longitude: loc.longitude
+                                });
+                            }}
+                        />
+                        <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+                           <span>当前坐标：</span>
+                           <span>Lat: {getFieldValue('latitude') || '未设置'}, Lng: {getFieldValue('longitude') || '未设置'}</span>
+                        </div>
+                    </>
+                )}
+             </Form.Item>
+             <Form.Item name="latitude" hidden><Input /></Form.Item>
+             <Form.Item name="longitude" hidden><Input /></Form.Item>
           </Form.Item>
 
           <Form.Item

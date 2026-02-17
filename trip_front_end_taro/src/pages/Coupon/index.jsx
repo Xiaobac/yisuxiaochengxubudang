@@ -1,75 +1,154 @@
+import React, { useState, useEffect } from 'react';
 import { View, Text } from '@tarojs/components';
+import Taro from '@tarojs/taro';
+import { getCoupons, getUserCoupons, claimCoupon } from '../../services/coupon';
+import dayjs from 'dayjs';
 import './index.css';
 
 function Coupons() {
-  // 定义不同卡片的配置数据
-  const couponListData = [
-    {
-      id: 1,
-      title: '酒店神券',
-      amount: 10,
-      unit: '元',
-      thresholdText: '满减券',
-      expireDate: '2026-02-20',
-      tagText: '神券',
-      tagColorClass: 'tag-blue'
-    },
-    {
-      id: 2,
-      title: '民宿特惠',
-      amount: 20,
-      unit: '元',
-      thresholdText: '满199可用',
-      expireDate: '2026-03-15',
-      tagText: '特惠',
-      tagColorClass: 'tag-orange'
-    },
-    {
-      id: 3,
-      title: '打车券',
-      amount: 5,
-      unit: '元',
-      thresholdText: '无门槛',
-      expireDate: '2026-02-28',
-      tagText: '神券',
-      tagColorClass: 'tag-blue'
+  const [couponList, setCouponList] = useState([]);
+  const [claimedIds, setClaimedIds] = useState(new Set());
+  const [loading, setLoading] = useState(true);
+  const [claimingId, setClaimingId] = useState(null);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      // 并行请求优惠券列表和已领取列表
+      const [allRes, claimedRes] = await Promise.allSettled([
+        getCoupons(),
+        getUserCoupons(),
+      ]);
+
+      // 处理优惠券列表
+      let allData = [];
+      if (allRes.status === 'fulfilled' && allRes.value) {
+        const res = allRes.value;
+        if (Array.isArray(res)) allData = res;
+        else if (res.data && Array.isArray(res.data)) allData = res.data;
+      }
+      setCouponList(allData);
+
+      // 处理已领取 ID 集合
+      let claimed = new Set();
+      if (claimedRes.status === 'fulfilled' && claimedRes.value) {
+        const res = claimedRes.value;
+        let claimedData = [];
+        if (Array.isArray(res)) claimedData = res;
+        else if (res.data && Array.isArray(res.data)) claimedData = res.data;
+        claimed = new Set(claimedData.map(uc => uc.couponId));
+      }
+      setClaimedIds(claimed);
+    } catch (error) {
+      console.error('加载优惠券数据失败:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  // 内部函数：根据数据渲染单张卡片（不导出为组件，仅内部使用）
-  const renderCouponCard = (data) => (
-    <View className='hotel-coupon-card' key={data.id}>
-      {/* 左侧内容区 */}
-      <View className='coupon-content-left'>
-        <View className='coupon-tags-row'>
-          <View className={`tag-item ${data.tagColorClass}`}>{data.tagText}</View>
+  const handleClaim = async (couponId) => {
+    if (claimingId) return;
+    setClaimingId(couponId);
+    try {
+      const res = await claimCoupon(couponId);
+      if (res && (res.success !== false)) {
+        setClaimedIds(prev => new Set([...prev, couponId]));
+        Taro.showToast({ title: '领取成功', icon: 'success', duration: 1500 });
+      } else {
+        Taro.showToast({ title: res?.message || '领取失败', icon: 'none', duration: 2000 });
+      }
+    } catch (error) {
+      // 未登录时跳转登录
+      if (error?.statusCode === 401) {
+        Taro.showToast({ title: '请先登录', icon: 'none', duration: 1500 });
+      } else {
+        Taro.showToast({ title: '领取失败，请重试', icon: 'none', duration: 2000 });
+      }
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
+  const getThresholdText = (minSpend) => {
+    if (!minSpend || minSpend <= 0) return '无门槛';
+    return `满${minSpend}可用`;
+  };
+
+  const isExpired = (validTo) => {
+    return validTo && dayjs(validTo).isBefore(dayjs());
+  };
+
+  const renderCouponCard = (item) => {
+    const claimed = claimedIds.has(item.id);
+    const expired = isExpired(item.validTo);
+    const isClaiming = claimingId === item.id;
+
+    return (
+      <View className={`hotel-coupon-card ${expired ? 'coupon-card-expired' : ''}`} key={item.id}>
+        {/* 左侧内容区 */}
+        <View className='coupon-content-left'>
+          <View className='coupon-tags-row'>
+            <View className='tag-item tag-blue'>优惠券</View>
+            {expired && <View className='tag-item tag-gray'>已过期</View>}
+          </View>
+          <View className='coupon-main-title'>{item.name}</View>
+          {item.description ? (
+            <View className='coupon-desc-text'>{item.description}</View>
+          ) : null}
+          <View className='coupon-footer-info'>
+            <Text className='expire-date-text'>
+              {item.validTo ? `${dayjs(item.validTo).format('YYYY-MM-DD')} 到期` : ''}
+            </Text>
+          </View>
         </View>
-        <View className='coupon-main-title'>{data.title}</View>
-        <View className='coupon-footer-info'>
-          <Text className='expire-date-text'>{data.expireDate} 到期</Text>
+
+        {/* 装饰分割线 */}
+        <View className='coupon-divider-line'></View>
+
+        {/* 右侧操作区 */}
+        <View className='coupon-action-right'>
+          <View className='amount-display-box'>
+            <Text className='amount-value'>{item.discount}</Text>
+            <Text className='amount-unit'>元</Text>
+          </View>
+          <View className='threshold-text'>{getThresholdText(item.minSpend)}</View>
+
+          {expired ? (
+            <View className='coupon-btn-disabled'>已过期</View>
+          ) : claimed ? (
+            <View className='coupon-btn-claimed'>已领取</View>
+          ) : (
+            <View
+              className={`coupon-primary-btn ${isClaiming ? 'coupon-btn-loading' : ''}`}
+              onClick={() => handleClaim(item.id)}
+            >
+              {isClaiming ? '领取中' : '立即领取'}
+            </View>
+          )}
         </View>
       </View>
+    );
+  };
 
-      {/* 装饰分割线 */}
-      <View className='coupon-divider-line'></View>
-
-      {/* 右侧操作区 */}
-      <View className='coupon-action-right'>
-        <View className='amount-display-box'>
-          <Text className='amount-value'>{data.amount}</Text>
-          <Text className='amount-unit'>{data.unit}</Text>
-        </View>
-        <View className='threshold-text'>{data.thresholdText}</View>
-        <View className='coupon-primary-btn'>去使用</View>
+  if (loading) {
+    return (
+      <View className='coupons-page-container'>
+        <View className='coupon-loading-tip'>加载中...</View>
       </View>
-    </View>
-  );
+    );
+  }
 
   return (
     <View className='coupons-page-container'>
       <View className='coupon-list-box'>
-        {/* 通过 map 循环渲染多张卡片 */}
-        {couponListData.map(item => renderCouponCard(item))}
+        {couponList.length > 0 ? (
+          couponList.map(item => renderCouponCard(item))
+        ) : (
+          <View className='coupon-empty-tip'>暂无可用优惠券</View>
+        )}
       </View>
     </View>
   );

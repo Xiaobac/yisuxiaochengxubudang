@@ -25,8 +25,56 @@ function Home() {
   const [searchKeyword, setSearchKeyword] = useState('');
 
   // --- 筛选条件 ---
-  const [selectedPriceRange, setSelectedPriceRange] = useState('');
-  const [selectedStarRating, setSelectedStarRating] = useState('');
+  const [minPriceInput, setMinPriceInput] = useState('');
+  const [maxPriceInput, setMaxPriceInput] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [isTagSelectorVisible, setIsTagSelectorVisible] = useState(false);
+
+  // --- 价格面板 ---
+  const PRICE_MIN = 0;
+  const PRICE_MAX = 4500;
+const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
+  const [sliderMin, setSliderMin] = useState(PRICE_MIN);
+  const [sliderMax, setSliderMax] = useState(PRICE_MAX);
+  const [panelMinInput, setPanelMinInput] = useState('');
+  const [panelMaxInput, setPanelMaxInput] = useState('');
+
+
+  const handlePanelMinInput = (e) => {
+    const val = e.detail.value;
+    setPanelMinInput(val);
+    const num = parseInt(val);
+    if (!isNaN(num) && num >= PRICE_MIN && num < sliderMax) setSliderMin(num);
+    else if (val === '') setSliderMin(PRICE_MIN);
+  };
+
+  const handlePanelMaxInput = (e) => {
+    const val = e.detail.value;
+    setPanelMaxInput(val);
+    const num = parseInt(val);
+    if (!isNaN(num) && num > sliderMin && num <= PRICE_MAX) setSliderMax(num);
+    else if (val === '') setSliderMax(PRICE_MAX);
+  };
+
+  const handlePriceReset = () => {
+    setSliderMin(PRICE_MIN);
+    setSliderMax(PRICE_MAX);
+    setPanelMinInput('');
+    setPanelMaxInput('');
+  };
+
+  const handlePriceConfirm = () => {
+    setMinPriceInput(sliderMin === PRICE_MIN ? '' : String(sliderMin));
+    setMaxPriceInput(sliderMax === PRICE_MAX ? '' : String(sliderMax));
+    setIsPricePanelVisible(false);
+  };
+
+  const getPriceLabel = () => {
+    if (!minPriceInput && !maxPriceInput) return '价格区间';
+    if (!maxPriceInput) return `¥${minPriceInput}以上`;
+    if (!minPriceInput) return `¥0-${maxPriceInput}`;
+    return `¥${minPriceInput}-${maxPriceInput}`;
+  };
 
   // --- 城市选择弹窗状态 ---
   const [isCitySelectorVisible, setIsCitySelectorVisible] = useState(false);
@@ -63,13 +111,14 @@ function Home() {
     return currentHour >= 0 && currentHour < 6;
   }, [today]);
 
-  // ---------- 辅助函数：根据标签获取城市 ID 范围 ----------
-  const getCityIdsByTab = (tabIndex) => {
-    if (tabIndex === 1) { // 海外
-      return { min: 11, max: 20 };
-    }
-    // 国内(0)、钟点房(2)、民宿(3) 都使用 1~10
-    return { min: 1, max: 10 };
+  // ---------- 辅助函数：根据标签过滤城市列表 ----------
+  const getLocationType = (tabIndex) => {
+    return tabIndex === 1 ? 'overseas' : 'domestic';
+  };
+
+  const filterCitiesByTab = (tabIndex, locationList) => {
+    const locationType = getLocationType(tabIndex);
+    return locationList.filter(loc => loc.type === locationType);
   };
 
   // 初始化默认日期（今天和明天）
@@ -135,20 +184,15 @@ function Home() {
       if (locationsData.length > 0) {
         setLocations(locationsData);
         // 根据当前标签设置默认选中的城市
-        const { min, max } = getCityIdsByTab(currentTab);
-        const defaultCity = locationsData.find(city => city.id >= min && city.id <= max) || null;
+        const defaultCity = filterCitiesByTab(currentTab, locationsData)[0] || null;
         setSelectedLocation(defaultCity);
       } else {
         setLocations([]);
         setSelectedLocation(null);
       }
 
-      // --- 处理标签数据（只取前3个）---
-      if (tagsData.length > 0) {
-        setTags(tagsData.slice(0, 3));
-      } else {
-        setTags([]);
-      }
+      // --- 处理标签数据（保存全量标签）---
+      setTags(tagsData);
     } catch (error) {
       console.error('loadInitialData 未知错误:', error);
       setLocations([]);
@@ -294,11 +338,10 @@ function Home() {
     setCurrentTab(index);
 
     // 检查当前选中的城市是否在新标签范围内，若不在则选中范围内的第一个
-    const { min, max } = getCityIdsByTab(index);
-    const isValid = selectedLocation && selectedLocation.id >= min && selectedLocation.id <= max;
-    if (!isValid && locations.length > 0) {
-      const firstInRange = locations.find(loc => loc.id >= min && loc.id <= max);
-      setSelectedLocation(firstInRange || null);
+    const citiesForTab = filterCitiesByTab(index, locations);
+    const isValid = selectedLocation && citiesForTab.some(loc => loc.id === selectedLocation.id);
+    if (!isValid) {
+      setSelectedLocation(citiesForTab[0] || null);
     }
 
     // 日期逻辑
@@ -316,33 +359,12 @@ function Home() {
     setIsCitySelectorVisible(false);
   };
 
-  const handleFilterSelect = () => {
-    Taro.showActionSheet({
-      itemList: ['选择价格', '选择星级'],
-      success: (res) => {
-        if (res.tapIndex === 0) handlePriceSelect();
-        else handleStarSelect();
-      }
-    });
-  };
 
-  const handlePriceSelect = () => {
-    const priceRanges = ['不限', '0-200元', '200-400元', '400-600元', '600元以上'];
-    Taro.showActionSheet({
-      itemList: priceRanges,
-      success: (res) => {
-        setSelectedPriceRange(priceRanges[res.tapIndex] === '不限' ? '' : priceRanges[res.tapIndex]);
-      }
-    });
-  };
-
-  const handleStarSelect = () => {
-    const starRatings = ['不限', '三星级及以上', '四星级及以上', '五星级'];
-    Taro.showActionSheet({
-      itemList: starRatings,
-      success: (res) => {
-        setSelectedStarRating(starRatings[res.tapIndex] === '不限' ? '' : starRatings[res.tapIndex]);
-      }
+  const handleToggleTag = (tag) => {
+    setSelectedTags(prev => {
+      const exists = prev.some(t => t.id === tag.id);
+      if (exists) return prev.filter(t => t.id !== tag.id);
+      return [...prev, tag];
     });
   };
 
@@ -350,18 +372,8 @@ function Home() {
     const keyword = searchKeyword.trim();
     if (keyword) saveSearchHistory(keyword);
 
-    let minPrice, maxPrice;
-    if (selectedPriceRange && selectedPriceRange !== '不限') {
-      if (selectedPriceRange.includes('以上')) {
-        minPrice = parseInt(selectedPriceRange.replace('元以上', ''));
-      } else {
-        const parts = selectedPriceRange.replace('元', '').split('-');
-        if (parts.length === 2) {
-          minPrice = parseInt(parts[0]);
-          maxPrice = parseInt(parts[1]);
-        }
-      }
-    }
+    const minPrice = minPriceInput !== '' ? parseInt(minPriceInput) : undefined;
+    const maxPrice = maxPriceInput !== '' ? parseInt(maxPriceInput) : undefined;
 
     let type;
     if (currentTab === 2) type = 'hourly';
@@ -377,7 +389,7 @@ function Home() {
       minPrice,
       maxPrice,
       type,
-      starRating: selectedStarRating
+      tags: selectedTags.map(t => t.id)
     };
 
     setShowSearchSuggestion(false);
@@ -509,35 +521,49 @@ function Home() {
           </View>
         )}
 
-        {/* 价格/星级筛选 */}
-        <View className='row-section price-filter-row' onClick={handleFilterSelect}>
-          <Text className={selectedPriceRange || selectedStarRating ? 'filter-active-text' : 'placeholder-light-text'}>
-            {selectedPriceRange || selectedStarRating || '价格/星级'}
+        {/* 价格区间筛选入口 */}
+        <View className='row-section price-filter-row' onClick={() => setIsPricePanelVisible(true)}>
+          <Text className={minPriceInput || maxPriceInput ? 'filter-active-text' : 'placeholder-light-text'}>
+            {getPriceLabel()}
           </Text>
           <View className='filter-arrow-icon'></View>
         </View>
 
-        {/* 快速标签 */}
-        <View className='quick-tags-row'>
-          {tags.length > 0 ? (
-            tags.map((tag) => (
-              <View key={tag.id} className='tag-bubble-item'>
-                {tag.name}
+        {/* 标签选择器入口 */}
+        <View className='row-section tag-filter-row' onClick={() => setIsTagSelectorVisible(true)}>
+          <View className='tag-filter-content'>
+            {selectedTags.length > 0 ? (
+              <View className='selected-tags-preview'>
+                {selectedTags.map(tag => (
+                  <Text key={tag.id} className='selected-tag-chip'>{tag.name}</Text>
+                ))}
               </View>
-            ))
-          ) : (
-            <>
-              <View className='tag-bubble-item'>免费停车场</View>
-              <View className='tag-bubble-item'>上海浦东国际机场</View>
-              <View className='tag-bubble-item'>上海虹桥...</View>
-            </>
-          )}
+            ) : (
+              <Text className='placeholder-light-text'>标签筛选</Text>
+            )}
+          </View>
+          <View className='filter-arrow-icon'></View>
         </View>
 
         {/* 查询按钮 */}
         <Button className='submit-search-btn' onClick={handleSearch}>
           查询
         </Button>
+
+        {/* 优惠券入口 */}
+        <View
+          className='coupon-entry-card'
+          onClick={() => Taro.navigateTo({ url: '/pages/Coupon/index' })}
+        >
+          <View className='coupon-entry-left'>
+            <Text className='coupon-entry-icon'>🎫</Text>
+            <View>
+              <Text className='coupon-entry-title'>领取优惠券</Text>
+              <Text className='coupon-entry-desc'>精选酒店红包，限时领取</Text>
+            </View>
+          </View>
+          <Text className='coupon-entry-arrow'>›</Text>
+        </View>
       </View>
 
       {/* 日历组件 */}
@@ -554,6 +580,172 @@ function Home() {
       {/* AI 助手组件 */}
       <AiChatWidget />
 
+      {/* 标签选择弹窗 */}
+      <View
+        className={`city-selector-mask ${isTagSelectorVisible ? 'visible' : ''}`}
+        onClick={() => setIsTagSelectorVisible(false)}
+      >
+        <View className='city-selector-content' onClick={e => e.stopPropagation()}>
+          <View className='city-selector-header'>
+            选择标签
+            <View className='city-selector-close' onClick={() => setIsTagSelectorVisible(false)}>×</View>
+          </View>
+          <ScrollView scrollY className='city-selector-scroll'>
+            <View className='tag-selector-grid'>
+              {tags.map((tag) => {
+                const isSelected = selectedTags.some(t => t.id === tag.id);
+                return (
+                  <View
+                    key={tag.id}
+                    className={isSelected ? 'tag-bubble-item tag-active' : 'tag-bubble-item'}
+                    onClick={() => handleToggleTag(tag)}
+                  >
+                    {tag.name}
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
+          <View className='city-selector-header' style={{ borderTop: '1rpx solid var(--color-border-base)', borderBottom: 'none' }}>
+            <View
+              className='tag-selector-reset'
+              onClick={() => setSelectedTags([])}
+            >
+              重置
+            </View>
+            <View
+              className='tag-selector-confirm'
+              onClick={() => setIsTagSelectorVisible(false)}
+            >
+              确定
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* 价格区间面板 */}
+      <View
+        className={`city-selector-mask ${isPricePanelVisible ? 'visible' : ''}`}
+        onClick={() => setIsPricePanelVisible(false)}
+      >
+        <View className='city-selector-content price-panel-content' onClick={e => e.stopPropagation()}>
+          <View className='city-selector-header'>
+            价格区间
+            <View className='city-selector-close' onClick={() => setIsPricePanelVisible(false)}>×</View>
+          </View>
+
+          {/* 输入框区域 */}
+          <View className='price-panel-inputs'>
+            <Input
+              className='price-panel-input'
+              type='number'
+              placeholder='最低价'
+              placeholderStyle='color:#ccc;'
+              value={panelMinInput}
+              onInput={handlePanelMinInput}
+            />
+            <Text className='price-panel-sep'>-</Text>
+            <Input
+              className='price-panel-input'
+              type='number'
+              placeholder='最高价'
+              placeholderStyle='color:#ccc;'
+              value={panelMaxInput}
+              onInput={handlePanelMaxInput}
+            />
+            <Text className='price-panel-unit'>元</Text>
+          </View>
+
+          {/* 双滑块轨道 */}
+          <View className='price-slider-wrap'>
+            <View className='price-slider-track'>
+              <View
+                className='price-slider-fill'
+                style={{
+                  left: `${(sliderMin / PRICE_MAX) * 100}%`,
+                  width: `${((sliderMax - sliderMin) / PRICE_MAX) * 100}%`
+                }}
+              />
+            </View>
+            {/* 左滑块 */}
+            <View
+              className='price-thumb price-thumb-min'
+              style={{ left: `calc(${(sliderMin / PRICE_MAX) * 100}% - 20rpx)` }}
+              catchMove
+              onTouchMove={(e) => {
+                const touch = e.touches[0];
+                Taro.createSelectorQuery()
+                  .select('.price-slider-track')
+                  .boundingClientRect((rect) => {
+                    if (!rect) return;
+                    const ratio = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+                    const price = Math.round(ratio * PRICE_MAX / 50) * 50;
+                    if (price < sliderMax) {
+                      setSliderMin(price);
+                      setPanelMinInput(price === PRICE_MIN ? '' : String(price));
+                    }
+                  })
+                  .exec();
+              }}
+            />
+            {/* 右滑块 */}
+            <View
+              className='price-thumb price-thumb-max'
+              style={{ left: `calc(${(sliderMax / PRICE_MAX) * 100}% - 20rpx)` }}
+              catchMove
+              onTouchMove={(e) => {
+                const touch = e.touches[0];
+                Taro.createSelectorQuery()
+                  .select('.price-slider-track')
+                  .boundingClientRect((rect) => {
+                    if (!rect) return;
+                    const ratio = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+                    const price = Math.round(ratio * PRICE_MAX / 50) * 50;
+                    if (price > sliderMin) {
+                      setSliderMax(price);
+                      setPanelMaxInput(price === PRICE_MAX ? '' : String(price));
+                    }
+                  })
+                  .exec();
+              }}
+            />
+          </View>
+
+          {/* 刻度标注 */}
+          <View className='price-slider-labels'>
+            <Text className='price-slider-label-text'>¥0</Text>
+            <Text className='price-slider-label-text'>¥4500+</Text>
+          </View>
+
+          {/* 快捷价格标签 */}
+          <View className='price-quick-tags'>
+            {[['不限', 0, PRICE_MAX], ['200以下', 0, 200], ['200-500', 200, 500], ['500-1000', 500, 1000], ['1000-2000', 1000, 2000], ['2000以上', 2000, PRICE_MAX]].map(([label, min, max]) => {
+              const isActive = sliderMin === min && sliderMax === max;
+              return (
+                <View
+                  key={label}
+                  className={`price-quick-tag ${isActive ? 'active' : ''}`}
+                  onClick={() => {
+                    setSliderMin(min);
+                    setSliderMax(max);
+                    setPanelMinInput(min === PRICE_MIN ? '' : String(min));
+                    setPanelMaxInput(max === PRICE_MAX ? '' : String(max));
+                  }}
+                >
+                  {label}
+                </View>
+              );
+            })}
+          </View>
+
+          {/* 底部按钮 */}
+          <View className='city-selector-header' style={{ borderTop: '1rpx solid var(--color-border-base)', borderBottom: 'none', display: 'flex', justifyContent: 'space-between' }}>
+            <View className='tag-selector-reset' onClick={handlePriceReset}>重置</View>
+            <View className='tag-selector-confirm' onClick={handlePriceConfirm}>确定</View>
+          </View>
+        </View>
+      </View>
+
       {/* 城市选择弹窗 */}
       <View
         className={`city-selector-mask ${isCitySelectorVisible ? 'visible' : ''}`}
@@ -565,25 +757,17 @@ function Home() {
             <View className='city-selector-close' onClick={() => setIsCitySelectorVisible(false)}>×</View>
           </View>
           <ScrollView scrollY className='city-selector-scroll'>
-            {locations
-              .filter(loc => {
-                const { min, max } = getCityIdsByTab(currentTab);
-                return loc.id >= min && loc.id <= max;
-              })
-              .map((loc) => (
-                <View
-                  key={loc.id}
-                  className={`city-select-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
-                  onClick={() => handleSelectCity(loc)}
-                >
-                  {loc.name}
-                </View>
-              ))}
+            {filterCitiesByTab(currentTab, locations).map((loc) => (
+              <View
+                key={loc.id}
+                className={`city-select-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
+                onClick={() => handleSelectCity(loc)}
+              >
+                {loc.name}
+              </View>
+            ))}
             {/* 如果过滤后无城市，显示提示 */}
-            {locations.filter(loc => {
-              const { min, max } = getCityIdsByTab(currentTab);
-              return loc.id >= min && loc.id <= max;
-            }).length === 0 && (
+            {filterCitiesByTab(currentTab, locations).length === 0 && (
               <View className='empty-city-tip'>当前标签下无城市可选</View>
             )}
           </ScrollView>

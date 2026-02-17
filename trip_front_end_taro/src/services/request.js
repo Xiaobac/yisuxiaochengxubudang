@@ -64,7 +64,7 @@ function request(url, options = {}) {
 
       // 401 未授权 - 清除 token 并跳转登录
       if (res.statusCode === 401) {
-        console.warn('🔒 未授权，跳转登录页');
+        console.warn(' 未授权，跳转登录页');
         Taro.removeStorageSync('token');
         Taro.removeStorageSync('user');
 
