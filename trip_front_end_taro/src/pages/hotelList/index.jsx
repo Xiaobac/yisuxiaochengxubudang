@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, Input, Map, CoverView } from '@tarojs/components';
+import { View, Text, Image, Input, Map, ScrollView } from '@tarojs/components';
 import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
 import dayjs from 'dayjs';
 import { getHotels } from '../../services/hotel';
+import { getLocations } from '../../services/location';
+import { getHotelMinPrice } from '../../services/hotel';
 import { formatStars, formatPrice } from '../../utils/format';
 import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
 import { getImageUrl } from '../../config/images';
@@ -10,70 +12,134 @@ import FilterPanel from '../../components/FilterPanel';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
 import AiChatWidget from '../../components/AiChatWidget';
-import { useTheme } from '../../utils/useTheme'
+import Calendar from '../../components/Calendar';
+import { useTheme } from '../../utils/useTheme';
 import './index.css';
 
 function HotelList() {
-  const { cssVars } = useTheme()
-  // 酒店列表数据
+  const { cssVars } = useTheme();
+
+  // ---------- 原有酒店列表状态 ----------
   const [hotelList, setHotelList] = useState([]);
   const [filteredHotels, setFilteredHotels] = useState([]);
-  // 搜索参数
   const [searchParams, setSearchParams] = useState({});
-  // 加载状态
   const [loading, setLoading] = useState(true);
-  // 筛选参数
   const [filterParams, setFilterParams] = useState({
     sortBy: 'recommend',
     priceRange: null,
     starRating: null,
     facilities: []
   });
-  // 显示筛选面板
   const [showFilter, setShowFilter] = useState(false);
-  // 排序方式
-  const [sortBy, setSortBy] = useState('recommend'); // recommend, distance, priceAsc, priceDesc
-  // 搜索关键词（用于列表页实时搜索）
+  const [sortBy, setSortBy] = useState('recommend');
   const [localSearchKeyword, setLocalSearchKeyword] = useState('');
-  // 视图模式：list 或 map
   const [viewMode, setViewMode] = useState('list');
-  // 地图相关
   const [markers, setMarkers] = useState([]);
   const [selectedHotel, setSelectedHotel] = useState(null);
-  const [mapCenter, setMapCenter] = useState({
-    latitude: 31.2304,
-    longitude: 121.4737
-  });
+  const [mapCenter, setMapCenter] = useState({ latitude: 31.2304, longitude: 121.4737 });
 
-  // 页面显示时检查是否有搜索参数
-  useDidShow(() => {
-    const params = Taro.getStorageSync('hotelSearchParams');
-    if (params) {
-      console.log('📦 收到首页传递的搜索参数:', params);
-      setSearchParams(params);
-      loadHotels(params);
-      // 清除参数，避免下次进入重复加载（或者保留，取决于需求）
-      Taro.removeStorageSync('hotelSearchParams');
-    } else if (hotelList.length === 0) {
-       // 如果没有列表且没有参数，进行默认加载
-       loadHotels();
+  // ---------- 新增：城市选择状态 ----------
+  const [locations, setLocations] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [isCitySelectorVisible, setIsCitySelectorVisible] = useState(false);
+
+  // ---------- 新增：日期选择状态 ----------
+  const [isCalendarVisible, setIsCalendarVisible] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // 辅助：今天/明天
+  const today = dayjs();
+  const tomorrow = today.add(1, 'day');
+
+  // ---------- 辅助函数：根据type获取城市ID范围（与Home保持一致）----------
+  const getCityIdsByType = (type) => {
+    if (type === 'hotel') return { min: 1, max: 10 };
+    if (type === 'homestay') return { min: 1, max: 10 };
+    if (type === 'hourly') return { min: 1, max: 10 };
+    return { min: 1, max: 10 };
+  };
+
+  // ---------- 新增：加载城市列表 ----------
+  const loadLocations = async () => {
+    try {
+      const res = await getLocations();
+      console.log('原始位置响应:', res);
+      let locationsData = [];
+      if (res) {
+        if (Array.isArray(res)) {
+          locationsData = res;
+        } else if (res.data && Array.isArray(res.data)) {
+          locationsData = res.data;
+        } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
+          locationsData = res.data.data;
+        }
+      }
+      setLocations(locationsData);
+
+      if (searchParams.locationId) {
+        const found = locationsData.find(loc => loc.id === searchParams.locationId);
+        setSelectedLocation(found || null);
+      } else if (locationsData.length > 0) {
+        const { min, max } = getCityIdsByType(searchParams.type);
+        const defaultCity = locationsData.find(loc => loc.id >= min && loc.id <= max) || locationsData[0];
+        setSelectedLocation(defaultCity);
+      }
+    } catch (error) {
+      console.error('获取位置失败:', error);
+      setLocations([]);
     }
-  });
+  };
 
-  // 页面加载时获取路由参数并加载酒店数据 (保留以防有非Tabbar跳转)
-  useEffect(() => {
-    // Tabbar 页面主要依靠 useDidShow 加载数据
-  }, []);
+  // ---------- 新增：城市选择处理 ----------
+  const handleSelectCity = (location) => {
+    setSelectedLocation(location);
+    setIsCitySelectorVisible(false);
+    const newParams = { ...searchParams, locationId: location.id, locationName: location.name };
+    setSearchParams(newParams);
+    loadHotels(newParams);
+  };
 
-  // 当筛选条件或排序方式改变时，重新过滤和排序
-  useEffect(() => {
-    filterAndSortHotels();
-  }, [hotelList, filterParams, sortBy, localSearchKeyword]);
+  // ---------- 新增：日期选择处理 ----------
+  const handleOpenCalendar = () => {
+    setIsCalendarVisible(true);
+  };
 
-  // 加载酒店列表
+  const handleCalendarConfirm = (start, end) => {
+    console.log('日历返回:', { start, end });
+    setIsCalendarVisible(false);
+    if (start) setStartDate(start);
+    if (end) setEndDate(end);
+    if (start && end) {
+      const newParams = { ...searchParams, checkIn: start, checkOut: end };
+      setSearchParams(newParams);
+      loadHotels(newParams);
+    } else if (start) {
+      const newParams = { ...searchParams, checkIn: start, checkOut: '' };
+      setSearchParams(newParams);
+      loadHotels(newParams);
+    }
+  };
+
+  // ---------- 辅助函数：日期显示 ----------
+  const getDisplayDate = (date, isToday = false, isTomorrow = false) => {
+    if (date) return dayjs(date).format('MM月DD日');
+    if (isTomorrow) return tomorrow.format('MM月DD日');
+    return today.format('MM月DD日');
+  };
+
+  const getNightCount = () => {
+    const start = startDate ? dayjs(startDate) : today;
+    const end = endDate ? dayjs(endDate) : tomorrow;
+    if (end.isAfter(start, 'day')) {
+      return `共${end.diff(start, 'day')}晚`;
+    }
+    return '共1晚';
+  };
+
+  // ---------- 修改：加载酒店列表，并获取每个酒店的最低价格 ----------
   const loadHotels = async (params = {}) => {
     setLoading(true);
-
     try {
       const res = await getHotels({
         locationId: params.locationId,
@@ -88,16 +154,14 @@ function HotelList() {
       });
 
       if (res.success && res.data && res.data.length > 0) {
-        // 转换后端数据格式
-        const formattedHotels = res.data.map(hotel => {
+        // 第一步：基础格式化
+        const baseHotels = res.data.map(hotel => {
           const images = hotel.images && hotel.images.length > 0
             ? (typeof hotel.images === 'string' ? JSON.parse(hotel.images) : hotel.images)
             : [];
-
           const facilities = hotel.facilities
             ? (typeof hotel.facilities === 'string' ? JSON.parse(hotel.facilities) : hotel.facilities)
             : [];
-
           return {
             id: hotel.id,
             name: hotel.nameZh || hotel.name,
@@ -108,8 +172,9 @@ function HotelList() {
             tags: hotel.location?.name ? [hotel.location.name] : [],
             notice: hotel.description || '',
             services: Array.isArray(facilities) ? facilities.slice(0, 4) : [],
-            price: hotel.minPrice || '0',
-            priceNum: parseInt(hotel.minPrice) || 0,
+            // 价格字段暂为0，稍后获取
+            price: '0',
+            priceNum: 0,
             img: images[0] || DEFAULT_HOTEL_IMAGE,
             facilities: Array.isArray(facilities) ? facilities : [],
             latitude: hotel.latitude,
@@ -118,10 +183,25 @@ function HotelList() {
           };
         });
 
-        setHotelList(formattedHotels);
+        // 第二步：并发获取每个酒店的最低价格
+        const hotelsWithPrice = await Promise.all(
+          baseHotels.map(async (hotel) => {
+            try {
+              const minPrice = await getHotelMinPrice(hotel.id);
+              return {
+                ...hotel,
+                price: minPrice.toString(),
+                priceNum: minPrice
+              };
+            } catch (error) {
+              console.warn(`获取酒店 ${hotel.id} 最低价格失败`, error);
+              return hotel; // 价格保持0
+            }
+          })
+        );
 
-        // 生成地图标记
-        generateMapMarkers(formattedHotels);
+        setHotelList(hotelsWithPrice);
+        generateMapMarkers(hotelsWithPrice);
       } else {
         setHotelList([]);
         setMarkers([]);
@@ -135,10 +215,10 @@ function HotelList() {
     }
   };
 
-  // 生成地图标记
+  // ---------- 原有：生成地图标记 ----------
   const generateMapMarkers = (hotels) => {
     const mapMarkers = hotels
-      .filter(hotel => hotel.latitude && hotel.longitude) // 只显示有坐标的酒店
+      .filter(hotel => hotel.latitude && hotel.longitude)
       .map((hotel) => ({
         id: hotel.id,
         latitude: hotel.latitude,
@@ -158,200 +238,119 @@ function HotelList() {
           textAlign: 'center'
         }
       }));
-
     setMarkers(mapMarkers);
-
-    // 设置地图中心为第一个酒店位置
     if (mapMarkers.length > 0) {
-      setMapCenter({
-        latitude: mapMarkers[0].latitude,
-        longitude: mapMarkers[0].longitude
-      });
+      setMapCenter({ latitude: mapMarkers[0].latitude, longitude: mapMarkers[0].longitude });
     }
   };
 
-  // 筛选和排序酒店
+  // ---------- 原有：筛选和排序 ----------
   const filterAndSortHotels = () => {
-    console.log('🔍 开始筛选和排序', { sortBy, filterParams, hotelListLength: hotelList.length });
     let filtered = [...hotelList];
-
-    // 关键词搜索（本地搜索）- 已改为服务端搜索，此处注释掉避免重复过滤
-    // if (localSearchKeyword && localSearchKeyword.trim()) {
-    //   const keyword = localSearchKeyword.trim().toLowerCase();
-    //   const beforeLength = filtered.length;
-    //   filtered = filtered.filter(h =>
-    //     h.name.toLowerCase().includes(keyword) ||
-    //     (h.notice && h.notice.toLowerCase().includes(keyword)) ||
-    //     h.tags.some(tag => tag.toLowerCase().includes(keyword))
-    //   );
-    //   console.log(`🔎 关键词搜索: ${beforeLength} -> ${filtered.length} (${keyword})`);
-    // }
-
-    // 价格筛选
     if (filterParams.priceRange) {
       const [min, max] = filterParams.priceRange;
-      const beforeLength = filtered.length;
       filtered = filtered.filter(h => h.priceNum >= min && h.priceNum <= max);
-      console.log(`💰 价格筛选: ${beforeLength} -> ${filtered.length} (${min}-${max}元)`);
     }
-
-    // 星级筛选 (已移除)
-    /* if (filterParams.starRating) {
-      const beforeLength = filtered.length;
-      filtered = filtered.filter(h => h.starRating === filterParams.starRating);
-      console.log(`⭐ 星级筛选: ${beforeLength} -> ${filtered.length} (${filterParams.starRating}星)`);
-    } */
-
-    // 设施筛选
     if (filterParams.facilities && filterParams.facilities.length > 0) {
-      const beforeLength = filtered.length;
       filtered = filtered.filter(h =>
         filterParams.facilities.every(f => h.facilities.includes(f))
       );
-      console.log(`🏊 设施筛选: ${beforeLength} -> ${filtered.length} (${filterParams.facilities.join(', ')})`);
     }
-
-    // 排序
     switch (sortBy) {
       case 'priceAsc':
         filtered.sort((a, b) => a.priceNum - b.priceNum);
-        console.log('📊 排序: 价格升序', filtered.map(h => `${h.name}:¥${h.priceNum}`));
         break;
       case 'priceDesc':
         filtered.sort((a, b) => b.priceNum - a.priceNum);
-        console.log('📊 排序: 价格降序', filtered.map(h => `${h.name}:¥${h.priceNum}`));
         break;
       case 'distance':
-        // 距离排序（这里暂时使用价格模拟）
         filtered.sort((a, b) => a.priceNum - b.priceNum);
-        console.log('📊 排序: 位置距离（用价格模拟）', filtered.map(h => `${h.name}:¥${h.priceNum}`));
         break;
       case 'recommend':
       default:
-        // 推荐排序（使用评分）
         filtered.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
-        console.log('📊 排序: 推荐排序（评分）', filtered.map(h => `${h.name}:${h.score}分`));
         break;
     }
-
-    console.log(`✅ 筛选排序完成: 共${filtered.length}个酒店`);
     setFilteredHotels(filtered);
   };
 
-  // 重新搜索
+  // ---------- 原有：其他处理函数 ----------
   const handleSearch = (keyword) => {
     const newParams = { ...searchParams, keyword };
-    console.log('🔄 触发重新搜索:', newParams);
     setSearchParams(newParams);
     loadHotels(newParams);
   };
 
-  // 下拉刷新
-  usePullDownRefresh(async () => {
-    await loadHotels(searchParams);
-    Taro.stopPullDownRefresh();
-  });
-
-  // 切换排序方式
   const handleSortChange = (newSortBy) => {
     setSortBy(newSortBy);
-    
-    // 显示排序提示
-    const sortNames = {
-      'recommend': '推荐排序',
-      'distance': '位置距离',
-      'priceAsc': '价格升序',
-      'priceDesc': '价格降序'
-    };
-
-    // 如果通过ActionSheet选择，通常不需要Toast提示，或者提示更简洁
-    // Taro.showToast({
-    //   title: `已切换到${sortNames[newSortBy]}`,
-    //   icon: 'none',
-    //   duration: 1000
-    // });
   };
 
-  // 打开排序选择菜单
   const handleOpenSortMenu = () => {
     const itemList = ['推荐排序', '位置距离', '价格升序', '价格降序'];
     const keys = ['recommend', 'distance', 'priceAsc', 'priceDesc'];
-    
     Taro.showActionSheet({
       itemList,
-      success: (res) => {
-        handleSortChange(keys[res.tapIndex]);
-      },
-      fail: (res) => {
-        console.log(res.errMsg);
-      }
+      success: (res) => handleSortChange(keys[res.tapIndex])
     });
   };
 
-  // 打开筛选面板
-  const handleOpenFilter = () => {
-    setShowFilter(true);
-  };
+  const handleOpenFilter = () => setShowFilter(true);
 
-  // 确认筛选
   const handleConfirmFilter = (filters) => {
-    console.log('✅ 酒店列表页接收到筛选参数:', filters);
     setFilterParams(filters);
     setShowFilter(false);
-
-    // 构建筛选信息提示
-    let filterInfo = [];
-    if (filters.priceRange) {
-      const [min, max] = filters.priceRange;
-      filterInfo.push(`价格${min}-${max}元`);
-    }
-    if (filters.starRating) {
-      filterInfo.push(`${filters.starRating}星级`);
-    }
-    if (filters.facilities && filters.facilities.length > 0) {
-      filterInfo.push(`${filters.facilities.length}个设施`);
-    }
-
-    const message = filterInfo.length > 0 ? `已应用: ${filterInfo.join(', ')}` : '筛选已应用';
-    Taro.showToast({ title: message, icon: 'success', duration: 2000 });
+    Taro.showToast({ title: '筛选已应用', icon: 'success', duration: 2000 });
   };
 
-  // 点击酒店卡片
   const handleHotelClick = (hotelId) => {
     Taro.navigateTo({
       url: `/pages/hotelDetail/index?id=${hotelId}&checkIn=${searchParams.checkIn || ''}&checkOut=${searchParams.checkOut || ''}`
     });
   };
 
-  // 返回上一页
-  const handleBack = () => {
-    Taro.navigateBack();
-  };
+  const handleBack = () => Taro.navigateBack();
 
-  // 切换视图模式
   const toggleViewMode = () => {
     const newMode = viewMode === 'list' ? 'map' : 'list';
     setViewMode(newMode);
-
-    if (newMode === 'map') {
-      // 切换到地图视图时，更新地图标记
-      generateMapMarkers(filteredHotels);
-    }
+    if (newMode === 'map') generateMapMarkers(filteredHotels);
   };
 
-  // 点击地图标记
   const handleMarkerTap = (e) => {
     const markerId = e.detail.markerId;
     const hotel = filteredHotels.find(h => h.id === markerId);
-    if (hotel) {
-      setSelectedHotel(hotel);
-    }
+    if (hotel) setSelectedHotel(hotel);
   };
 
-  // 关闭酒店卡片
-  const handleCloseCard = () => {
-    setSelectedHotel(null);
-  };
+  const handleCloseCard = () => setSelectedHotel(null);
+
+  // ---------- 生命周期 ----------
+  useDidShow(() => {
+    const params = Taro.getStorageSync('hotelSearchParams');
+    if (params) {
+      console.log('📦 收到首页传递的搜索参数:', params);
+      setSearchParams(params);
+      if (params.checkIn) setStartDate(params.checkIn);
+      if (params.checkOut) setEndDate(params.checkOut);
+      loadHotels(params);
+      Taro.removeStorageSync('hotelSearchParams');
+    } else if (hotelList.length === 0) {
+      loadHotels();
+    }
+  });
+
+  useEffect(() => {
+    loadLocations();
+  }, []);
+
+  useEffect(() => {
+    filterAndSortHotels();
+  }, [hotelList, filterParams, sortBy, localSearchKeyword]);
+
+  usePullDownRefresh(async () => {
+    await loadHotels(searchParams);
+    Taro.stopPullDownRefresh();
+  });
 
   return (
     <View className='list-page-container' style={cssVars}>
@@ -359,13 +358,13 @@ function HotelList() {
       <View className='header-nav-section'>
         <View className='back-arrow-icon' onClick={handleBack}>{'<'}</View>
         <View className='search-pill-box'>
-          <View className='pill-city-info'>
-            <Text className='pill-city-name'>{searchParams.locationName || '上海'}</Text>
-            <View className='pill-date-box'>
-              <Text className='p-date'>住 {searchParams.checkIn ? searchParams.checkIn.slice(5) : '01-09'}</Text>
-              <Text className='p-date'>离 {searchParams.checkOut ? searchParams.checkOut.slice(5) : '01-10'}</Text>
+          <View className='pill-city-info' onClick={() => setIsCitySelectorVisible(true)}>
+            <Text className='pill-city-name'>{selectedLocation?.name || searchParams.locationName || '上海'}</Text>
+            <View className='pill-date-box' onClick={(e) => { e.stopPropagation(); handleOpenCalendar(); }}>
+              <Text className='p-date'>住 {getDisplayDate(startDate, true).replace('月', '-').replace('日', '')}</Text>
+              <Text className='p-date'>离 {getDisplayDate(endDate, false, true).replace('月', '-').replace('日', '')}</Text>
             </View>
-            <Text className='p-night'>{(searchParams.checkIn && searchParams.checkOut) ? dayjs(searchParams.checkOut).diff(dayjs(searchParams.checkIn), 'day') : 1}晚</Text>
+            <Text className='p-night' onClick={(e) => { e.stopPropagation(); handleOpenCalendar(); }}>{getNightCount()}</Text>
           </View>
           <View className='pill-input-box'>
             <Input
@@ -387,17 +386,13 @@ function HotelList() {
 
       {/* 筛选栏 */}
       <View className='filter-tab-bar'>
-        <View
-          className='filter-tab-item active'
-          onClick={handleOpenSortMenu}
-        >
+        <View className='filter-tab-item active' onClick={handleOpenSortMenu}>
           {sortBy === 'recommend' && '推荐排序'}
           {sortBy === 'distance' && '位置距离'}
           {sortBy === 'priceAsc' && '价格升序'}
           {sortBy === 'priceDesc' && '价格降序'}
           <View className='s-arrow'></View>
         </View>
-
         <View className='filter-tab-item' onClick={handleOpenFilter}>
           筛选 <View className='f-icon'></View>
           {(filterParams.priceRange || filterParams.starRating || filterParams.facilities.length > 0) && (
@@ -410,15 +405,6 @@ function HotelList() {
       {!loading && (
         <View className='result-stats-bar'>
           <Text className='stats-text'>找到 {filteredHotels.length} 家酒店</Text>
-          {searchParams.priceRange && (
-            <Text className='stats-filter-tag'>{searchParams.priceRange}</Text>
-          )}
-          {searchParams.starRating && (
-            <Text className='stats-filter-tag'>{searchParams.starRating}</Text>
-          )}
-          {searchParams.tags && (
-            <Text className='stats-filter-tag'>{searchParams.tags.replace(/,/g, ' · ')}</Text>
-          )}
         </View>
       )}
 
@@ -444,37 +430,27 @@ function HotelList() {
               <View className='hotel-card-right'>
                 <View className='h-name-row'>
                   <Text className='h-name-text'>{hotel.name}</Text>
-                  {/* <Text className='h-stars-text'>{hotel.stars}</Text> Remove stars display */}
                 </View>
-
                 <View className='h-score-row'>
                   <View className='h-score-badge'>{hotel.score}</View>
                   <Text className='h-score-title'>{hotel.scoreDesc}</Text>
                   <Text className='h-reviews-text'>{hotel.reviews} · {hotel.collects}</Text>
                 </View>
-
                 {hotel.tags.length > 0 && (
                   <View className='h-location-row'>
-                    {hotel.tags.map((t) => (
-                      <Text key={t} className='h-loc-tag'>{t}</Text>
-                    ))}
+                    {hotel.tags.map(t => <Text key={t} className='h-loc-tag'>{t}</Text>)}
                   </View>
                 )}
-
                 {hotel.notice && (
                   <View className='h-boss-notice'>
                     <Text className='h-notice-content'>{hotel.notice}</Text>
                   </View>
                 )}
-
                 {hotel.services.length > 0 && (
                   <View className='h-service-row'>
-                    {hotel.services.map((s, idx) => (
-                      <Text key={`${s}-${idx}`} className='h-service-pill'>{s}</Text>
-                    ))}
+                    {hotel.services.map((s, idx) => <Text key={idx} className='h-service-pill'>{s}</Text>)}
                   </View>
                 )}
-
                 <View className='h-price-row'>
                   <View className='h-price-left'>
                     <Text className='h-diamond-price'>钻石贵宾价 {'>'}</Text>
@@ -500,8 +476,6 @@ function HotelList() {
             onMarkerTap={handleMarkerTap}
             showLocation
           />
-
-          {/* 选中酒店的详情卡片 */}
           {selectedHotel && (
             <View className='hotel-card-popup'>
               <View className='card-close' onClick={handleCloseCard}>✕</View>
@@ -533,7 +507,52 @@ function HotelList() {
         onConfirm={handleConfirmFilter}
       />
 
-      {/* AI 助手悬浮按钮 */}
+      {/* 城市选择器弹窗 */}
+      {isCitySelectorVisible && (
+        <View className='city-selector-mask visible' onClick={() => setIsCitySelectorVisible(false)}>
+          <View className='city-selector-content' onClick={e => e.stopPropagation()}>
+            <View className='city-selector-header'>
+              选择城市
+              <View className='city-selector-close' onClick={() => setIsCitySelectorVisible(false)}>×</View>
+            </View>
+            <ScrollView scrollY className='city-selector-scroll'>
+              {locations
+                .filter(loc => {
+                  const { min, max } = getCityIdsByType(searchParams.type);
+                  return loc.id >= min && loc.id <= max;
+                })
+                .map((loc) => (
+                  <View
+                    key={loc.id}
+                    className={`city-select-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
+                    onClick={() => handleSelectCity(loc)}
+                  >
+                    {loc.name}
+                  </View>
+                ))}
+              {locations.filter(loc => {
+                const { min, max } = getCityIdsByType(searchParams.type);
+                return loc.id >= min && loc.id <= max;
+              }).length === 0 && (
+                <View className='empty-city-tip'>当前无城市可选</View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      )}
+
+      {/* 日历组件 */}
+      <Calendar
+        visible={isCalendarVisible}
+        onSelect={handleCalendarConfirm}
+        onClose={() => setIsCalendarVisible(false)}
+        startDate={startDate}
+        endDate={endDate}
+        today={today}
+        mode={searchParams.type === 'hourly' ? 'single' : 'range'}
+      />
+
+      {/* AI 助手 */}
       <AiChatWidget />
     </View>
   );

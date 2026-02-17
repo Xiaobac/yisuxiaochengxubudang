@@ -165,6 +165,21 @@ export const searchHotels = async (keyword, filters = {}) => {
   }
 };
 
+export const getHotelMinPrice = async (hotelId) => {
+  try {
+    const res = await getHotelRoomTypes(hotelId);
+    // 假设返回格式为 { success: boolean, data: RoomType[] }
+    if (res.success && Array.isArray(res.data)) {
+      const prices = res.data.map(rt => rt.price).filter(p => p && p > 0);
+      return prices.length > 0 ? Math.min(...prices) : 0;
+    }
+    return 0;
+  } catch (error) {
+    console.error(`获取酒店 ${hotelId} 最低价格失败:`, error);
+    return 0;
+  }
+};
+
 export default {
   getHotels,
   getHotelById,

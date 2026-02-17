@@ -84,3 +84,4 @@ export const getRoomAvailabilityByDate = async (hotelId: number, date: string) =
   const response = await get<{ success: boolean; data: any[] }>(`/room-availability?hotelId=${hotelId}&date=${date}`);
   return response.data;
 };
+

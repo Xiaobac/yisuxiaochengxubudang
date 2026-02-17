@@ -2,7 +2,7 @@
 .ai-float-btn {
   position: fixed;
   z-index: 999;
-  background: linear-gradient(135deg, #1677ff, #0958d9);
+  background: #00b7ff;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -10,10 +10,11 @@
   box-shadow: 0 4rpx 16rpx rgba(22, 119, 255, 0.4);
 }
 
-.ai-btn-text {
-  font-size: 24rpx;
-  color: #fff;
-  font-weight: bold;
+/* ai助手 */
+.ai-btn-icon {
+  width: 60%;
+  height: 60%;
+  object-fit: contain;
 }
 
 /* 聊天窗口 */

@@ -10,6 +10,84 @@
 }
 
 /* 2. 顶部查询导航条 */
+
+/* 城市选择器自定义弹窗 */
+.city-selector-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.3s;
+}
+
+.city-selector-mask.visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+.city-selector-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--color-card-bg);
+  border-radius: 24rpx 24rpx 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  transform: translateY(100%);
+  transition: transform 0.3s;
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+}
+
+.city-selector-mask.visible .city-selector-content {
+  transform: translateY(0);
+}
+
+.city-selector-header {
+  padding: 30rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: var(--color-text-primary);
+  border-bottom: 1rpx solid var(--color-border-base);
+  position: relative;
+}
+
+.city-selector-close {
+  position: absolute;
+  right: 30rpx;
+  top: 30rpx;
+  color: var(--color-text-tertiary);
+  font-size: 40rpx;
+  line-height: 40rpx;
+  font-weight: normal;
+}
+
+.city-selector-scroll {
+  width: 100%;
+  height: 600rpx;
+}
+
+.city-select-item {
+  padding: 30rpx;
+  text-align: center;
+  border-bottom: 1rpx solid var(--color-border-base);
+  font-size: 30rpx;
+  color: var(--color-text-primary);
+}
+
+.city-select-item.active {
+  color: var(--color-primary);
+  font-weight: bold;
+  background-color: var(--color-bg-tertiary);
+}
+
 .header-nav-section {
   display: flex;
   align-items: center;
