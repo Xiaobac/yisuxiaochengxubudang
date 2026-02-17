@@ -38,6 +38,12 @@ function HotelList() {
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [mapCenter, setMapCenter] = useState({ latitude: 31.2304, longitude: 121.4737 });
 
+  // ---------- 分页状态 ----------
+  const PAGE_SIZE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   // ---------- 新增：城市选择状态 ----------
   const [locations, setLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -137,9 +143,52 @@ function HotelList() {
     return '共1晚';
   };
 
-  // ---------- 修改：加载酒店列表，并获取每个酒店的最低价格 ----------
+  // ---------- 辅助：将接口返回的原始酒店数据格式化并获取最低价格 ----------
+  const formatHotelsWithPrice = async (rawList) => {
+    const baseHotels = rawList.map(hotel => {
+      const images = hotel.images && hotel.images.length > 0
+        ? (typeof hotel.images === 'string' ? JSON.parse(hotel.images) : hotel.images)
+        : [];
+      const facilities = hotel.facilities
+        ? (typeof hotel.facilities === 'string' ? JSON.parse(hotel.facilities) : hotel.facilities)
+        : [];
+      return {
+        id: hotel.id,
+        name: hotel.nameZh || hotel.name,
+        score: (hotel.score !== null && hotel.score !== undefined) ? Number(hotel.score).toFixed(1) : '暂无评分',
+        scoreDesc: hotel.score >= 4.8 ? '超棒' : hotel.score >= 4.5 ? '很好' : hotel.score >= 4.0 ? '不错' : '',
+        reviews: `${hotel.reviewCount || 0}点评`,
+        collects: `${((hotel.favoriteCount || 0) / 10000).toFixed(1)}万收藏`,
+        tags: hotel.location?.name ? [hotel.location.name] : [],
+        notice: hotel.description || '',
+        services: Array.isArray(facilities) ? facilities.slice(0, 4) : [],
+        price: '0',
+        priceNum: 0,
+        img: images[0] || DEFAULT_HOTEL_IMAGE,
+        facilities: Array.isArray(facilities) ? facilities : [],
+        latitude: hotel.latitude,
+        longitude: hotel.longitude,
+        address: hotel.address || ''
+      };
+    });
+
+    return Promise.all(
+      baseHotels.map(async (hotel) => {
+        try {
+          const minPrice = await getHotelMinPrice(hotel.id);
+          return { ...hotel, price: minPrice.toString(), priceNum: minPrice };
+        } catch {
+          return hotel;
+        }
+      })
+    );
+  };
+
+  // ---------- 修改：加载酒店列表（首次/重置），并获取每个酒店的最低价格 ----------
   const loadHotels = async (params = {}) => {
     setLoading(true);
+    setCurrentPage(1);
+    setHasMore(true);
     try {
       const res = await getHotels({
         locationId: params.locationId,
@@ -150,68 +199,70 @@ function HotelList() {
         checkIn: params.checkIn,
         checkOut: params.checkOut,
         starRating: params.starRating,
-        tags: params.tags
+        tags: params.tags,
+        page: 1,
+        limit: PAGE_SIZE,
       });
 
       if (res.success && res.data && res.data.length > 0) {
-        // 第一步：基础格式化
-        const baseHotels = res.data.map(hotel => {
-          const images = hotel.images && hotel.images.length > 0
-            ? (typeof hotel.images === 'string' ? JSON.parse(hotel.images) : hotel.images)
-            : [];
-          const facilities = hotel.facilities
-            ? (typeof hotel.facilities === 'string' ? JSON.parse(hotel.facilities) : hotel.facilities)
-            : [];
-          return {
-            id: hotel.id,
-            name: hotel.nameZh || hotel.name,
-            score: (hotel.score !== null && hotel.score !== undefined) ? Number(hotel.score).toFixed(1) : '暂无评分',
-            scoreDesc: hotel.score >= 4.8 ? '超棒' : hotel.score >= 4.5 ? '很好' : hotel.score >= 4.0 ? '不错' : '',
-            reviews: `${hotel.reviewCount || 0}点评`,
-            collects: `${((hotel.favoriteCount || 0) / 10000).toFixed(1)}万收藏`,
-            tags: hotel.location?.name ? [hotel.location.name] : [],
-            notice: hotel.description || '',
-            services: Array.isArray(facilities) ? facilities.slice(0, 4) : [],
-            // 价格字段暂为0，稍后获取
-            price: '0',
-            priceNum: 0,
-            img: images[0] || DEFAULT_HOTEL_IMAGE,
-            facilities: Array.isArray(facilities) ? facilities : [],
-            latitude: hotel.latitude,
-            longitude: hotel.longitude,
-            address: hotel.address || ''
-          };
-        });
-
-        // 第二步：并发获取每个酒店的最低价格
-        const hotelsWithPrice = await Promise.all(
-          baseHotels.map(async (hotel) => {
-            try {
-              const minPrice = await getHotelMinPrice(hotel.id);
-              return {
-                ...hotel,
-                price: minPrice.toString(),
-                priceNum: minPrice
-              };
-            } catch (error) {
-              console.warn(`获取酒店 ${hotel.id} 最低价格失败`, error);
-              return hotel; // 价格保持0
-            }
-          })
-        );
-
+        const hotelsWithPrice = await formatHotelsWithPrice(res.data);
         setHotelList(hotelsWithPrice);
         generateMapMarkers(hotelsWithPrice);
+        // 判断是否还有更多
+        const total = res.total ?? res.data.length;
+        setHasMore(hotelsWithPrice.length < total);
       } else {
         setHotelList([]);
         setMarkers([]);
+        setHasMore(false);
       }
     } catch (error) {
       console.error('❌ 加载酒店列表失败:', error);
       Taro.showToast({ title: '加载失败，请重试', icon: 'none' });
       setHotelList([]);
+      setHasMore(false);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ---------- 新增：上滑加载下一页 ----------
+  const loadMoreHotels = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const nextPage = currentPage + 1;
+    try {
+      const res = await getHotels({
+        locationId: searchParams.locationId,
+        keyword: searchParams.keyword,
+        type: searchParams.type,
+        minPrice: searchParams.minPrice,
+        maxPrice: searchParams.maxPrice,
+        checkIn: searchParams.checkIn,
+        checkOut: searchParams.checkOut,
+        starRating: searchParams.starRating,
+        tags: searchParams.tags,
+        page: nextPage,
+        limit: PAGE_SIZE,
+      });
+
+      if (res.success && res.data && res.data.length > 0) {
+        const newHotels = await formatHotelsWithPrice(res.data);
+        setHotelList(prev => {
+          const updated = [...prev, ...newHotels];
+          generateMapMarkers(updated);
+          return updated;
+        });
+        setCurrentPage(nextPage);
+        const total = res.total ?? (currentPage * PAGE_SIZE + res.data.length);
+        setHasMore(nextPage * PAGE_SIZE < total);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('❌ 加载更多失败:', error);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -448,7 +499,12 @@ function HotelList() {
           onButtonClick={() => loadHotels(searchParams)}
         />
       ) : viewMode === 'list' ? (
-        <View className='hotel-list-body'>
+        <ScrollView
+          className='hotel-list-body'
+          scrollY
+          onScrollToLower={loadMoreHotels}
+          lowerThreshold={100}
+        >
           {filteredHotels.map((hotel) => (
             <View key={hotel.id} className='hotel-card-box' onClick={() => handleHotelClick(hotel.id)}>
               <View className='hotel-card-left'>
@@ -491,7 +547,13 @@ function HotelList() {
               </View>
             </View>
           ))}
-        </View>
+          {loadingMore && (
+            <View className='load-more-tip'><Text>加载更多...</Text></View>
+          )}
+          {!hasMore && filteredHotels.length > 0 && (
+            <View className='load-more-tip'><Text>— 已加载全部酒店 —</Text></View>
+          )}
+        </ScrollView>
       ) : (
         <View className='hotel-map-container'>
           <Map

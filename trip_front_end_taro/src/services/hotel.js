@@ -66,7 +66,10 @@ export const getHotels = async (params = {}) => {
     }
 
     if (params.pageSize) {
-      queryParams.pageSize = params.pageSize;
+      queryParams.limit = params.pageSize;
+    }
+    if (params.limit) {
+      queryParams.limit = params.limit;
     }
 
     const res = await get('/hotels', queryParams);
