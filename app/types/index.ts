@@ -12,6 +12,7 @@ export interface User {
   name?: string;
   roleId?: number;
   role?: Role;
+  points?: number;
   createdAt?: string;
 }
 

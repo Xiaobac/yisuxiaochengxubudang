@@ -79,6 +79,7 @@ model User {
   reviews       Review[]
   comments      Comment[]
   userCoupons   UserCoupon[]
+  points        Int             @default(0) // 用户积分
 
   @@map("users")
 }

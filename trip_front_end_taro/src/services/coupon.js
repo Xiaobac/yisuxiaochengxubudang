@@ -8,7 +8,7 @@ export const getCoupons = async () => {
 
 // 获取当前用户已领取的优惠券列表
 export const getUserCoupons = async () => {
-  const res = await get('/user/coupons');
+  const res = await get('/users/coupons');
   return res;
 };
 

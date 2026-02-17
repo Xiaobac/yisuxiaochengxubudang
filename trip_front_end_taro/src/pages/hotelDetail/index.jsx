@@ -11,9 +11,9 @@ import { addFavorite, removeFavorite, checkFavorite } from '../../services/favor
 import { formatPrice, formatStars } from '../../utils/format';
 import { getImageUrl, DEFAULT_AVATAR } from '../../config/images';
 import { storage } from '../../utils/storage';
-import Calendar from '../../components/Calendar';
 import BookingConfirm from '../../components/BookingConfirm';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import Calendar from '../../components/Calendar';
 import { useTheme } from '../../utils/useTheme'
 import './index.css';
 import AiChatWidget from '../../components/AiChatWidget';

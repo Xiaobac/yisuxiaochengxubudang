@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
                 description: true
             }
         },
-        // 可以根据需要添加更多字段，例如 favorites, recent bookings 等
+        points: true,
       },
     });
 

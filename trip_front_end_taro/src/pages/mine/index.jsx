@@ -4,6 +4,7 @@ import Taro, { useDidShow } from '@tarojs/taro';
 import { logout } from '../../services/auth';
 import { getMyFavorites } from '../../services/favorite';
 import { getMyBookings } from '../../services/booking';
+import { getUserProfile } from '../../services/user';
 import { storage } from '../../utils/storage';
 import { useTheme } from '../../utils/useTheme';
 import { getSavedTheme, saveTheme, resolveTheme, applyNativeTheme, THEME } from '../../utils/theme';
@@ -32,6 +33,7 @@ function Mine() {
   // 统计数据
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
+  const [points, setPoints] = useState(0);
 
   // 检查登录状态（首次加载）
   useEffect(() => {
@@ -56,16 +58,17 @@ function Mine() {
       setUser(userInfo);
     } else {
       setFavoriteCount(0);
-      setOrderCount(0);
+      setPoints(0);
     }
   };
 
   // 加载用户统计数据
   const loadUserStats = async () => {
     try {
-      const [favoritesRes, bookingsRes] = await Promise.all([
+      const [favoritesRes, bookingsRes, profileRes] = await Promise.all([
         getMyFavorites(),
-        getMyBookings()
+        getMyBookings(),
+        getUserProfile()
       ]);
 
       if (favoritesRes.success && favoritesRes.data) {
@@ -74,6 +77,10 @@ function Mine() {
 
       if (bookingsRes.success && bookingsRes.data) {
         setOrderCount(bookingsRes.data.length);
+      }
+
+      if (profileRes.success && profileRes.data) {
+        setPoints(profileRes.data.points || 0);
       }
     } catch (error) {
       console.error('❌ 加载用户统计数据失败:', error);
@@ -174,7 +181,7 @@ function Mine() {
 <Text className='nav-label-text'>我的订单</Text>
 </View>
 <View className='nav-menu-item'>
-<Text className='nav-val-num'>0</Text>
+<Text className='nav-val-num'>{points}</Text>
 <Text className='nav-label-text'>积分</Text>
 </View>
 <View className='nav-menu-item'onClick={() => Taro.navigateTo({ url: '/pages/Coupon/index' })}>

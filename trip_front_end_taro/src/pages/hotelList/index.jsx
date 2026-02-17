@@ -11,9 +11,9 @@ import { getImageUrl } from '../../config/images';
 import FilterPanel from '../../components/FilterPanel';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
-import AiChatWidget from '../../components/AiChatWidget';
 import Calendar from '../../components/Calendar';
 import { useTheme } from '../../utils/useTheme';
+import AiChatWidget from '../../components/AiChatWidget';
 import './index.css';
 
 function HotelList() {

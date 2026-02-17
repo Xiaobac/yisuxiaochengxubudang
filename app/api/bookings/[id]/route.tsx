@@ -217,6 +217,28 @@ export async function PUT(
     if (guestInfo) updateData.guestInfo = guestInfo;
     if (status) updateData.status = status;
 
+    // 如果订单状态变更为 completed，增加用户积分
+    if (status === 'completed' && booking.status !== 'completed' && booking.userId) {
+        const pointsToAdd = Math.floor(Number(booking.totalPrice) / 10);
+        
+        await prisma.$transaction([
+            prisma.booking.update({
+                where: { id: bookingId },
+                data: updateData
+            }),
+            prisma.user.update({
+                where: { id: booking.userId },
+                data: {
+                    points: { increment: pointsToAdd }
+                }
+            })
+        ]);
+        
+        // 重新获取更新后的 booking 以便返回 consistent 的数据
+        const updatedBooking = await prisma.booking.findUnique({ where: { id: bookingId } });
+        return NextResponse.json({ success: true, data: updatedBooking });
+    }
+
     const updatedBooking = await prisma.booking.update({
         where: { id: bookingId },
         data: updateData

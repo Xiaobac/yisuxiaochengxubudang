@@ -2,7 +2,7 @@ import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
 
-// GET /api/user/coupons - 获取当前用户已领取的优惠券列表
+// GET /api/users/coupons - 获取当前用户已领取的优惠券列表
 export async function GET(req: NextRequest) {
   const authResult = verifyAuth(req);
   if (!authResult.success) {
