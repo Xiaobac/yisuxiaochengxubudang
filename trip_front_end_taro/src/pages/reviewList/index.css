@@ -98,3 +98,38 @@
   color: #ff4d4f;
   padding: 6rpx 16rpx;
 }
+
+.review-edit-btn {
+  font-size: 24rpx;
+  color: #1976d2;
+  padding: 6rpx 16rpx;
+  margin-right: 16rpx;
+}
+
+.footer-btns {
+  display: flex;
+  align-items: center;
+}
+
+.edit-box {
+  padding: 20rpx;
+  background-color: var(--color-bg-tertiary);
+  border-radius: 12rpx;
+  margin-top: 20rpx;
+}
+
+.edit-input, .edit-textarea {
+  background: white;
+  border: 1rpx solid #ddd;
+  margin: 10rpx 0 20rpx;
+  padding: 10rpx;
+  width: 100%;
+  border-radius: 8rpx;
+  box-sizing: border-box;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 10rpx;
+}

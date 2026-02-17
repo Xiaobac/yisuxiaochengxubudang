@@ -130,6 +130,26 @@ function Mine() {
     Taro.navigateTo({ url: '/pages/orderList/index' });
   };
 
+  // 处理意见反馈
+  const handleFeedback = () => {
+    Taro.showModal({
+      title: '意见反馈',
+      content: '感谢您对该软件的支持！如有反馈意见请联系邮箱：support@trip.com',
+      showCancel: false,
+      confirmText: '我知道了'
+    });
+  };
+
+  // 处理关于系统
+  const handleAbout = () => {
+    Taro.showModal({
+      title: '关于系统',
+      content: '当前版本：1.0.0\n本系统由 Trip Team 开发，旨在为您提供优质的酒店预订服务。',
+      showCancel: false,
+      confirmText: '好的'
+    });
+  };
+
   return (
 <View className='mine-container' style={cssVars}>
 {/* 1.顶部用户信息区域 */}
@@ -187,11 +207,11 @@ function Mine() {
 <Text className='cell-left-text'>我的评价</Text>
 <Text className='cell-arrow-right'>{'>'}</Text>
 </View>
-<View className='list-cell-row'>
+<View className='list-cell-row' onClick={handleFeedback}>
 <Text className='cell-left-text'>意见反馈</Text>
 <Text className='cell-arrow-right'>{'>'}</Text>
 </View>
-<View className='list-cell-row'>
+<View className='list-cell-row' onClick={handleAbout}>
 <Text className='cell-left-text'>关于系统</Text>
 <Text className='cell-arrow-right'>{'>'}</Text>
 </View>

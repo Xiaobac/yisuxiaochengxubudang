@@ -12,6 +12,7 @@ export default {
     'pages/register/index',
     'pages/mine/index',
     'pages/reviewList/index',
+    'pages/submitReview/index',
     'pages/Coupon/index'
   ],
   window: {

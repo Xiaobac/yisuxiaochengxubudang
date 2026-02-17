@@ -74,7 +74,7 @@ export async function GET(
       where: { id: bookingId },
       include: {
         user: {
-          select: { id: true, name: true, email: true, phone: true, avatar: true }
+          select: { id: true, name: true, email: true, phone: true }
         },
         hotel: {
           select: {

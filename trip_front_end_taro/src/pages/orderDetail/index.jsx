@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, Button, Textarea } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { getBookingById, cancelBooking } from '../../services/booking';
-import { createReview } from '../../services/review';
+import { createReview } from '../../services/comments';
 import { formatDate, formatPrice } from '../../utils/format';
-import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
+import { getImageUrl, DEFAULT_HOTEL_IMAGE } from '../../config/images';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useTheme } from '../../utils/useTheme'
 import './index.css';
@@ -61,6 +61,7 @@ function OrderDetail() {
         const orderData = {
           id: rawData.id,
           orderNo: `ORD${String(rawData.id).padStart(8, '0')}`,
+          hotelId: rawData.hotel?.id,
           hotelName: rawData.hotel?.nameZh || rawData.hotel?.name || '未知酒店',
           hotelAddress: rawData.hotel?.address || '地址未知',
           hotelLatitude: rawData.hotel?.latitude || null,
@@ -162,7 +163,7 @@ function OrderDetail() {
     if (submittingReview) return;
     try {
       setSubmittingReview(true);
-      const res = await createReview(order.id, reviewRating, reviewContent);
+      const res = await createReview(order.hotelId, reviewRating, reviewContent);
       if (res.success) {
         setReviewed(true);
         setShowReviewModal(false);
@@ -225,7 +226,7 @@ function OrderDetail() {
           <Text className='section-title'>酒店信息</Text>
         </View>
         <View className='hotel-content'>
-          <Image className='hotel-image' src={order.hotelImage} mode='aspectFill' />
+          <Image className='hotel-image' src={getImageUrl(order.hotelImage)} mode='aspectFill' />
           <View className='hotel-info'>
             <Text className='hotel-name'>{order.hotelName}</Text>
             <Text className='hotel-address'>{order.hotelAddress}</Text>
@@ -330,17 +331,15 @@ function OrderDetail() {
         </View>
       )}
 
-      {(order.status === 'completed' || order.status === 'checked_out') && (
-        <View className='footer-actions'>
-          <Button
-            className={`footer-btn ${reviewed ? 'reviewed-btn' : 'review-btn'}`}
-            onClick={() => !reviewed && setShowReviewModal(true)}
-            disabled={reviewed}
-          >
-            {reviewed ? '已评价' : '去评价'}
-          </Button>
-        </View>
-      )}
+      <View className='footer-actions'>
+        <Button
+          className={`footer-btn ${reviewed ? 'reviewed-btn' : 'review-btn'}`}
+          onClick={() => !reviewed && setShowReviewModal(true)}
+          disabled={reviewed}
+        >
+          {reviewed ? '已评价' : '去评价'}
+        </Button>
+      </View>
 
       {/* 评价弹窗 */}
       {showReviewModal && (

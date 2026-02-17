@@ -21,8 +21,7 @@ export async function GET(req: NextRequest) {
         user: {
           select: {
             id: true,
-            name: true,
-            avatar: true,
+            name: true
           },
         },
         hotel: {

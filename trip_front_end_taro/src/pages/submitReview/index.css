@@ -1,0 +1,64 @@
+.submit-review-container {
+  min-height: 100vh;
+  background-color: var(--color-bg-secondary);
+  padding: 20px;
+}
+
+.header {
+  margin-bottom: 20px;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.form-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #333;
+}
+
+.rating-input-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.star-icon {
+  font-size: 32px;
+  color: #ccc;
+  margin-right: 5px;
+}
+
+.star-icon.active {
+  color: #ff9800;
+}
+
+.rating-val {
+  margin-left: 10px;
+  color: #ff9800;
+  font-weight: bold;
+}
+
+.content-input {
+  width: 100%;
+  height: 150px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 10px;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+}
+
+.submit-btn {
+  background-color: var(--color-primary);
+  color: white;
+}

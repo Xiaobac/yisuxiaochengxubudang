@@ -3,8 +3,9 @@ import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import dayjs from 'dayjs';
 import { getHotelById, getHotelRoomTypes } from '../../services/hotel';
-import { getComments } from '../../services/comment';
-import { getReviewsByHotelId } from '../../services/review';
+// import { getComments } from '../../services/comment';
+import { getHotelCommentsCombined } from '../../services/comments';
+// import { getReviewsByHotelId } from '../../services/review';
 import { createBooking } from '../../services/booking';
 import { addFavorite, removeFavorite, checkFavorite } from '../../services/favorite';
 import { formatPrice, formatStars } from '../../utils/format';
@@ -80,41 +81,8 @@ function HotelDetail() {
   const loadComments = async () => {
     try {
       console.log('🔍 loadComments start, hotelId:', hotelId);
-      const [commentsRes, reviewsRes] = await Promise.allSettled([
-        getComments({ hotelId }),
-        getReviewsByHotelId(hotelId),
-      ]);
-
-      const commentList = commentsRes.status === 'fulfilled' && commentsRes.value?.success
-        ? commentsRes.value.data.map(c => ({
-            id: `c_${c.id}`,
-            user: c.user,
-            score: c.score,
-            content: c.content,
-            createdAt: c.createdAt,
-            roomType: null,
-          }))
-        : [];
-
-      const reviewList = reviewsRes.status === 'fulfilled' && reviewsRes.value?.success
-        ? reviewsRes.value.data
-            .filter(r => r.content)
-            .map(r => ({
-              id: `r_${r.id}`,
-              user: r.user,
-              score: r.rating,
-              content: r.content,
-              createdAt: r.createdAt,
-              roomType: r.booking?.roomType?.name || null,
-            }))
-        : [];
-
-      const merged = [...commentList, ...reviewList].sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
-
-      console.log('🔍 commentsRes:', commentsRes.status, commentsRes.value);
-      console.log('🔍 reviewsRes:', reviewsRes.status, reviewsRes.value);
+      const merged = await getHotelCommentsCombined(hotelId);
+      
       console.log('🔍 merged:', merged.length, '条');
       setComments(merged);
     } catch (error) {
@@ -601,6 +569,90 @@ function HotelDetail() {
           </View>
         </View>
 
+        
+
+        {/* 4.房型列表区块 */}
+        <View className='room-type-section'>
+          {roomTypes.length > 0 ? (
+            roomTypes.map((room) => (
+              <View key={room.id} className='room-card'>
+                {/* 房型头部标签（可保留） */}
+                <View className='room-header'>
+                  {room.features && room.features.length > 0 && (
+                    <View className='room-header-right-tag'>
+                      {room.features.slice(0, 2).map((feature, index) => (
+                        <Text key={index} className='room-tag-item'>{feature}</Text>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                {/* 图片 + 详情区域 */}
+                <View className='room-preview-row'>
+                  <Image
+                    className='room-preview-img'
+                    src={getImageUrl(hotel.img)}
+                    mode='aspectFill'
+                  />
+                  <View className='room-preview-details'>
+                    {/* 房型名称（加粗大字） */}
+                    <Text className='room-title'>{room.name}</Text>
+                    {/* 规格信息（小字） */}
+                    <Text className='room-specs'>
+                      {room.area} · {room.capacity} · {room.floor}
+                    </Text>
+
+                    {/* 第一行：红色价格 + 预订按钮（靠右） */}
+                    <View className='price-button-group'>
+                      <Text className='room-price-large'>
+                        ¥{room.dynamicPrice ?? room.price}
+                        <Text className='room-price-unit-small'>/晚</Text>
+                      </Text>
+                      <Button
+                        className={`room-detail-btn ${
+                          selectedRoomTypeId === room.id ? 'selected' : ''
+                        } ${room.remainingRooms === 0 ? 'disabled' : ''}`}
+                        onClick={() =>
+                          room.remainingRooms !== 0 && handleViewRoom(room.id)
+                        }
+                      >
+                        {room.remainingRooms === 0
+                          ? '已售罄'
+                          : selectedRoomTypeId === room.id
+                          ? '已选择'
+                          : '选择房型'}
+                      </Button>
+                    </View>
+
+                    {/* 第二行：共几晚 + 总价 + 剩余房数（靠右） */}
+                    <View className='price-info'>
+                      <Text className='price-total'>
+                        共{getNightCount()}晚 ¥
+                        {(room.dynamicPrice ?? room.price) * getNightCount()}
+                      </Text>
+                      {room.remainingRooms !== null && (
+                        <Text
+                          className={`room-remaining ${
+                            room.remainingRooms <= 3 ? 'room-remaining-urgent' : ''
+                          }`}
+                        >
+                          {room.remainingRooms === 0
+                            ? '已售罄'
+                            : `仅剩${room.remainingRooms}间`}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View style={{ padding: '40rpx', textAlign: 'center' }}>
+              <Text>暂无房型信息</Text>
+            </View>
+          )}
+        </View>
+
         {/* 评论区 */}
         <View className='comment-section'>
           <View className='comment-header'>用户评论（{comments.length}条）</View>
@@ -632,88 +684,6 @@ function HotelDetail() {
             )}
           </View>
         </View>
-
-        {/* 4.房型列表区块 */}
-        <View className='room-type-section'>
-  {roomTypes.length > 0 ? (
-    roomTypes.map((room) => (
-      <View key={room.id} className='room-card'>
-        {/* 房型头部标签（可保留） */}
-        <View className='room-header'>
-          {room.features && room.features.length > 0 && (
-            <View className='room-header-right-tag'>
-              {room.features.slice(0, 2).map((feature, index) => (
-                <Text key={index} className='room-tag-item'>{feature}</Text>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* 图片 + 详情区域 */}
-        <View className='room-preview-row'>
-          <Image
-            className='room-preview-img'
-            src={getImageUrl(hotel.img)}
-            mode='aspectFill'
-          />
-          <View className='room-preview-details'>
-            {/* 房型名称（加粗大字） */}
-            <Text className='room-title'>{room.name}</Text>
-            {/* 规格信息（小字） */}
-            <Text className='room-specs'>
-              {room.area} · {room.capacity} · {room.floor}
-            </Text>
-
-            {/* 第一行：红色价格 + 预订按钮（靠右） */}
-            <View className='price-button-group'>
-              <Text className='room-price-large'>
-                ¥{room.dynamicPrice ?? room.price}
-                <Text className='room-price-unit-small'>/晚</Text>
-              </Text>
-              <Button
-                className={`room-detail-btn ${
-                  selectedRoomTypeId === room.id ? 'selected' : ''
-                } ${room.remainingRooms === 0 ? 'disabled' : ''}`}
-                onClick={() =>
-                  room.remainingRooms !== 0 && handleViewRoom(room.id)
-                }
-              >
-                {room.remainingRooms === 0
-                  ? '已售罄'
-                  : selectedRoomTypeId === room.id
-                  ? '已选择'
-                  : '选择房型'}
-              </Button>
-            </View>
-
-            {/* 第二行：共几晚 + 总价 + 剩余房数（靠右） */}
-            <View className='price-info'>
-              <Text className='price-total'>
-                共{getNightCount()}晚 ¥
-                {(room.dynamicPrice ?? room.price) * getNightCount()}
-              </Text>
-              {room.remainingRooms !== null && (
-                <Text
-                  className={`room-remaining ${
-                    room.remainingRooms <= 3 ? 'room-remaining-urgent' : ''
-                  }`}
-                >
-                  {room.remainingRooms === 0
-                    ? '已售罄'
-                    : `仅剩${room.remainingRooms}间`}
-                </Text>
-              )}
-            </View>
-          </View>
-        </View>
-      </View>
-    ))
-  ) : (
-    <View style={{ padding: '40rpx', textAlign: 'center' }}>
-      <Text>暂无房型信息</Text>
-    </View>
-  )}
-</View>
 
         {/* 底部留白 */}
         <View style={{ height: '50rpx' }} />
