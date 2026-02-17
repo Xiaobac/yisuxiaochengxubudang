@@ -30,6 +30,7 @@ function HotelDetail() {
   const [hotel, setHotel] = useState(null);
   const [roomTypes, setRoomTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeMediaTab, setActiveMediaTab] = useState('cover'); // 'cover' | 'location'
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
   const [scrollTop, setScrollTop] = useState(0);
   const [headerOpacity, setHeaderOpacity] = useState(0);
@@ -118,6 +119,8 @@ function HotelDetail() {
 
         // 处理图片数据
         let imageUrl = 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400';
+        let imagesList = [imageUrl];
+        
         if (rawData.images) {
           try {
             const images = typeof rawData.images === 'string'
@@ -125,6 +128,7 @@ function HotelDetail() {
               : rawData.images;
             if (Array.isArray(images) && images.length > 0) {
               imageUrl = images[0];
+              imagesList = images;
             }
           } catch (e) {
             // 使用默认图片
@@ -143,6 +147,7 @@ function HotelDetail() {
           services: facilitiesList,
           price: rawData.basePrice || '299',
           img: imageUrl,
+          images: imagesList,
           address: rawData.address || '未知地址',
           location: rawData.location?.name || '市中心',
           latitude: rawData.latitude || null,
@@ -410,6 +415,27 @@ function HotelDetail() {
     setIsCalendarVisible(false);
   };
 
+  const handleMediaTagClick = (tag) => {
+    if (tag === '相册') {
+      const urls = (hotel.images || []).map(url => getImageUrl(url));
+      if (urls.length > 0) {
+        Taro.previewImage({
+          urls,
+          current: urls[0] // Start from first
+        });
+      } else {
+        Taro.showToast({ title: '暂无更多图片', icon: 'none' });
+      }
+      return;
+    }
+
+    if (tag === '封面') {
+      setActiveMediaTab('cover');
+    } else if (tag === '位置') {
+      setActiveMediaTab('location');
+    }
+  };
+
   const filterTags = ['含早餐', '大床房', '双床房','棋牌房','家庭房','免费取消'];
 
   const FACILITY_MAP = {
@@ -510,15 +536,38 @@ function HotelDetail() {
         scrollTop={scrollTop}
       >
         {/* 2.媒体区域 */}
-        <View className='media-box'>
-          <Image className='main-media-img' src={getImageUrl(hotel.img)} mode='aspectFill' />
+        <View className='media-box' onClick={() => {
+          const urls = (hotel.images || [hotel.img]).map(url => getImageUrl(url));
+          if (urls.length > 0) {
+            Taro.previewImage({
+              urls,
+              current: activeMediaTab === 'location' && urls.length > 1 ? urls[1] : urls[0]
+            });
+          }
+        }}>
+          <Image 
+            className='main-media-img' 
+            src={getImageUrl(
+              activeMediaTab === 'location' && hotel.images && hotel.images.length > 1 
+                ? hotel.images[1] 
+                : (hotel.images && hotel.images.length > 0 ? hotel.images[0] : hotel.img)
+            )} 
+            mode='aspectFill' 
+          />
           <View className='media-tags-row'>
-            <Text className='media-tag'>封面</Text>
-            <Text className='media-tag'>精选</Text>
-            <Text className='media-tag'>位置</Text>
-            <Text className='media-tag'>相册</Text>
+            <Text 
+              className={`media-tag ${activeMediaTab === 'cover' ? 'active' : ''}`}
+              onClick={(e) => { e.stopPropagation(); handleMediaTagClick('封面'); }}
+            >封面</Text>
+            <Text 
+              className={`media-tag ${activeMediaTab === 'location' ? 'active' : ''}`}
+              onClick={(e) => { e.stopPropagation(); handleMediaTagClick('位置'); }}
+            >位置</Text>
+            <Text 
+              className='media-tag'
+              onClick={(e) => { e.stopPropagation(); handleMediaTagClick('相册'); }}
+            >相册</Text>
           </View>
-          <View className='preview-icon'>▶</View>
           <View className='tag-sq-btn'>口碑榜</View>
         </View>
 

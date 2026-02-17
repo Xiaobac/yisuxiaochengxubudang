@@ -434,7 +434,6 @@ function HotelList() {
             <View key={hotel.id} className='hotel-card-box' onClick={() => handleHotelClick(hotel.id)}>
               <View className='hotel-card-left'>
                 <Image className='hotel-card-img' src={getImageUrl(hotel.img)} mode='aspectFill' />
-                <View className='play-icon-overlay'>▶</View>
               </View>
               <View className='hotel-card-right'>
                 <View className='h-name-row'>

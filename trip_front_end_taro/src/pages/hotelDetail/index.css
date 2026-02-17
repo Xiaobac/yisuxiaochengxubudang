@@ -109,6 +109,11 @@
   margin-right: 10rpx;
 }
 
+.media-tag.active {
+  background-color: var(--color-primary); /* Use theme color or specific color */
+  font-weight: bold;
+}
+
 .preview-icon { /* 播放图标 */
   position: absolute;
   top: 50%;
