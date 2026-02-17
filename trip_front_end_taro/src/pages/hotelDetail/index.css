@@ -93,25 +93,23 @@
   object-fit: cover;
 }
 
-.media-tags-row {
+.media-swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.media-count-badge {
   position: absolute;
   bottom: 20rpx;
-  left: 20rpx;
-  display: flex;
+  right: 20rpx;
+  background-color: rgba(0, 0, 0, 0.45);
+  border-radius: 20rpx;
+  padding: 4rpx 16rpx;
 }
 
-.media-tag {
-  background-color: rgba(0, 0, 0, 0.5);
+.media-count-text {
   color: #fff;
-  font-size: 20rpx;
-  padding: 6rpx 14rpx;
-  border-radius: 6rpx;
-  margin-right: 10rpx;
-}
-
-.media-tag.active {
-  background-color: var(--color-primary); /* Use theme color or specific color */
-  font-weight: bold;
+  font-size: 22rpx;
 }
 
 .preview-icon { /* 播放图标 */
