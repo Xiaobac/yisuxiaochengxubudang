@@ -135,9 +135,9 @@ export async function GET(request: NextRequest) {
     const checkIn = searchParams.get('checkIn');
     const checkOut = searchParams.get('checkOut');
     
-    // Pagination
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    // Pagination (max 100 per page to prevent over-fetching)
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const skip = (page - 1) * limit;
 
     const where: any = {};

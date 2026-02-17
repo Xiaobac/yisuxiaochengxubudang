@@ -73,9 +73,6 @@ export async function GET(
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
-        user: {
-          select: { id: true, name: true, email: true, phone: true }
-        },
         hotel: {
           select: {
             id: true,
@@ -88,7 +85,7 @@ export async function GET(
           }
         },
         roomType: {
-          select: { id: true, name: true, price: true, discount: true, images: true }
+          select: { id: true, name: true }
         },
         review: true
       }
@@ -105,32 +102,7 @@ export async function GET(
       return NextResponse.json({ success: false, error: '无权查看此订单' }, { status: 403 });
     }
 
-    // build extra details: nights, per-date prices
-    let details: any = {};
-    try {
-      if (booking.roomTypeId) {
-        const availabilities = await prisma.roomAvailability.findMany({
-          where: {
-            roomTypeId: booking.roomTypeId,
-            date: {
-              gte: booking.checkInDate,
-              lt: booking.checkOutDate
-            }
-          },
-          orderBy: { date: 'asc' }
-        });
-
-        const dates = availabilities.map(a => ({ date: a.date, price: a.price ?? booking.roomType?.price }));
-        const nights = Math.ceil((+new Date(booking.checkOutDate) - +new Date(booking.checkInDate)) / (1000 * 60 * 60 * 24));
-        const pricePerNight = dates.length > 0 ? dates.map(d => Number(d.price)) : (booking.roomType ? [Number(booking.roomType.price)] : []);
-
-        details = { nights, dates, pricePerNight };
-      }
-    } catch (e) {
-      console.warn('Compute booking details error', e);
-    }
-
-    return NextResponse.json({ success: true, data: booking, details });
+    return NextResponse.json({ success: true, data: booking });
   } catch (error) {
     console.error('Get booking error:', error);
     return NextResponse.json({ success: false, error: '获取订单详情失败' }, { status: 500 });

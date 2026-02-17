@@ -1,6 +1,20 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+import { z } from 'zod';
+
+const createCouponSchema = z.object({
+  code:        z.string().min(1).max(50),
+  name:        z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  discount:    z.number().positive(),
+  minSpend:    z.number().nonnegative().optional(),
+  validFrom:   z.string().datetime({ message: 'validFrom 须为 ISO 日期时间' }),
+  validTo:     z.string().datetime({ message: 'validTo 须为 ISO 日期时间' }),
+}).refine(d => new Date(d.validTo) > new Date(d.validFrom), {
+  message: 'validTo 必须晚于 validFrom',
+  path: ['validTo'],
+});
 
 // GET /api/coupons - 获取所有优惠券列表
 // 可选：管理员可以看到所有，普通用户也可以看到（用于领券列表）
@@ -37,21 +51,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
-    const { 
-      code, 
-      name, 
-      description, 
-      discount, 
-      minSpend, 
-      validFrom, 
-      validTo 
-    } = body;
-
-    // 参数校验
-    if (!code || !name || !discount || !validFrom || !validTo) {
-      return NextResponse.json({ success: false, message: '必填参数缺失' }, { status: 400 });
+    const rawBody = await req.json();
+    const parsed = createCouponSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, message: parsed.error.errors[0].message }, { status: 400 });
     }
+    const { code, name, description, discount, minSpend, validFrom, validTo } = parsed.data;
 
     const coupon = await prisma.coupon.create({
       data: {

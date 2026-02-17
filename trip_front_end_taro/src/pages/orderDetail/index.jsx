@@ -75,6 +75,7 @@ function OrderDetail() {
           guestPhone: rawData.guestPhone || guestInfo.guestPhone || '-',
           specialRequests: rawData.specialRequests || guestInfo.specialRequests || '无',
           totalPrice: formatPrice(rawData.totalPrice || 0),
+          discountAmount: Number(rawData.discountAmount || 0),
           status: rawData.status || 'pending',
           statusText: getStatusText(rawData.status),
           statusColor: getStatusColor(rawData.status),
@@ -291,10 +292,18 @@ function OrderDetail() {
       {/* 费用信息卡片 */}
       <View className='info-card'>
         <Text className='section-title'>费用信息</Text>
-        <View className='info-row'>
-          <Text className='info-label'>房费</Text>
-          <Text className='info-value'>{order.totalPrice}</Text>
-        </View>
+        {order.discountAmount > 0 && (
+          <>
+            <View className='info-row'>
+              <Text className='info-label'>原价</Text>
+              <Text className='info-value'>{formatPrice((Number(order.totalPrice.replace('¥', '')) + order.discountAmount))}</Text>
+            </View>
+            <View className='info-row'>
+              <Text className='info-label'>优惠券抵扣</Text>
+              <Text className='info-value' style={{ color: '#f44336' }}>-¥{order.discountAmount.toFixed(2)}</Text>
+            </View>
+          </>
+        )}
         <View className='price-total-row'>
           <Text className='total-label'>订单总额</Text>
           <View className='total-price'>

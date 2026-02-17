@@ -34,6 +34,7 @@ function Mine() {
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
   const [points, setPoints] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   // 检查登录状态（首次加载）
   useEffect(() => {
@@ -64,6 +65,7 @@ function Mine() {
 
   // 加载用户统计数据
   const loadUserStats = async () => {
+    setStatsLoading(true);
     try {
       const [favoritesRes, bookingsRes, profileRes] = await Promise.all([
         getMyFavorites(),
@@ -84,6 +86,8 @@ function Mine() {
       }
     } catch (error) {
       console.error('❌ 加载用户统计数据失败:', error);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -173,11 +177,11 @@ function Mine() {
 {/* 2.横向导航菜单 (收藏、订单、积分、优惠券) */}
 <View className='mine-nav-row'>
 <View className='nav-menu-item' onClick={handleMyFavorites}>
-<Text className='nav-val-num'>{favoriteCount}</Text>
+{statsLoading ? <View className='stat-skeleton' /> : <Text className='nav-val-num'>{favoriteCount}</Text>}
 <Text className='nav-label-text'>我的收藏</Text>
 </View>
 <View className='nav-menu-item' onClick={handleMyOrders}>
-<Text className='nav-val-num'>{orderCount}</Text>
+{statsLoading ? <View className='stat-skeleton' /> : <Text className='nav-val-num'>{orderCount}</Text>}
 <Text className='nav-label-text'>我的订单</Text>
 </View>
 <View className='nav-menu-item'>

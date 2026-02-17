@@ -1,8 +1,7 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-should-be-in-env';
+import { JWT_SECRET } from '@/app/api/utils/auth';
 
 /**
  * @swagger

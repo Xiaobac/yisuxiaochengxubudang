@@ -2,6 +2,17 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+import { z } from 'zod';
+
+const createBookingSchema = z.object({
+  hotelId:     z.number().int().positive(),
+  roomTypeId:  z.number().int().positive(),
+  checkInDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD'),
+  checkOutDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD'),
+  guestCount:  z.number().int().min(1).max(20).optional().default(1),
+  guestInfo:   z.record(z.unknown()).optional(),
+  couponId:    z.number().int().positive().optional(),
+});
 
 /**
  * @swagger
@@ -174,23 +185,24 @@ export async function POST(request: NextRequest) {
     }
     const userId = authResult.user.userId;
 
-    // 2. 解析请求
-    const body = await request.json();
-    const { hotelId, roomTypeId, checkInDate, checkOutDate, guestCount = 1, guestInfo } = body;
-
-    // 简单校验
-    if (!hotelId || !roomTypeId || !checkInDate || !checkOutDate) {
-      return NextResponse.json({ success: false, error: '缺少必要参数' }, { status: 400 });
+    // 2. 解析并校验请求
+    const rawBody = await request.json();
+    const parsed = createBookingSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: parsed.error.errors[0].message }, { status: 400 });
     }
+    const { hotelId, roomTypeId, checkInDate, checkOutDate, guestCount, guestInfo, couponId } = parsed.data;
 
     const start = new Date(checkInDate);
     const end = new Date(checkOutDate);
-    
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) {
-      return NextResponse.json({ success: false, error: '日期无效' }, { status: 400 });
-    }
 
-    // 验证 start 是否在今天之后? (可选业务逻辑，暂不严格限制)
+    if (start >= end) {
+      return NextResponse.json({ success: false, error: '退房日期必须晚于入住日期' }, { status: 400 });
+    }
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (start < today) {
+      return NextResponse.json({ success: false, error: '入住日期不能早于今天' }, { status: 400 });
+    }
 
     // 3. 事务处理：检查库存并扣减
     const result = await prisma.$transaction(async (tx) => {
@@ -272,7 +284,39 @@ export async function POST(request: NextRequest) {
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
-      // 3.4 创建订单
+      // 3.4 优惠券验证与折扣计算
+      let discountAmount = 0;
+      if (couponId) {
+        const userCoupon = await tx.userCoupon.findUnique({
+          where: { userId_couponId: { userId, couponId } },
+          include: { coupon: true },
+        });
+        if (!userCoupon) {
+          throw new Error('优惠券不存在或未领取');
+        }
+        if (userCoupon.isUsed) {
+          throw new Error('该优惠券已被使用');
+        }
+        const now = new Date();
+        if (now < userCoupon.coupon.validFrom || now > userCoupon.coupon.validTo) {
+          throw new Error('优惠券不在有效期内');
+        }
+        const minSpend = userCoupon.coupon.minSpend ? Number(userCoupon.coupon.minSpend) : 0;
+        if (totalPrice < minSpend) {
+          throw new Error(`订单金额需满 ${minSpend} 元才能使用此优惠券`);
+        }
+        discountAmount = Math.min(Number(userCoupon.coupon.discount), totalPrice);
+
+        // 标记优惠券已使用
+        await tx.userCoupon.update({
+          where: { userId_couponId: { userId, couponId } },
+          data: { isUsed: true, usedAt: now },
+        });
+      }
+
+      const finalPrice = totalPrice - discountAmount;
+
+      // 3.5 创建订单
       const booking = await tx.booking.create({
         data: {
             userId,
@@ -281,8 +325,10 @@ export async function POST(request: NextRequest) {
             checkInDate: start,
             checkOutDate: end,
             guestCount,
-            totalPrice: totalPrice, // 应该根据实际精度处理
-            status: 'pending', // 默认状态
+            totalPrice: finalPrice,
+            discountAmount,
+            couponId: couponId ?? null,
+            status: 'pending',
             guestInfo: guestInfo ?? {}
         }
       });

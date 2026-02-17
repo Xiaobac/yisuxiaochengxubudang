@@ -76,6 +76,15 @@ function HotelDetail() {
       }
     } catch (error) {
       console.error('刷新房型库存失败:', error);
+      Taro.showModal({
+        title: '加载失败',
+        content: '获取房间可用性失败，是否重试？',
+        confirmText: '重试',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) refreshRoomAvailability(start, end);
+        },
+      });
     }
   };
 
