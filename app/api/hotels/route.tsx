@@ -287,9 +287,6 @@ export async function GET(request: NextRequest) {
  *               address:
  *                 type: string
  *                 description: 酒店地址
- *               starRating:
- *                 type: number
- *                 description: 星级
  *               description:
  *                 type: string
  *                 description: 酒店描述
@@ -325,7 +322,6 @@ export async function POST(request: NextRequest) {
 
     const merchantId = Number(body.merchantId);
     const locationId = body.locationId ? Number(body.locationId) : undefined;
-    const starRating = body.starRating ? Number(body.starRating) : undefined;
     
     // Extract nested data
     const roomTypes = Array.isArray(body.roomTypes) ? body.roomTypes : [];
@@ -335,8 +331,7 @@ export async function POST(request: NextRequest) {
       !body.nameZh ||
       !body.address ||
       Number.isNaN(merchantId) ||
-      (locationId !== undefined && Number.isNaN(locationId)) ||
-      (starRating !== undefined && Number.isNaN(starRating))
+      (locationId !== undefined && Number.isNaN(locationId))
     ) {
       return NextResponse.json({ success: false, error: '缺少必要字段' }, { status: 400 });
     }
@@ -345,7 +340,6 @@ export async function POST(request: NextRequest) {
         nameZh: body.nameZh,
         nameEn: body.nameEn,
         address: body.address,
-        starRating: starRating ?? null,
         description: body.description,
         facilities: body.facilities, // 注意：facilities是Json类型
         openingYear: body.openingYear ? Number(body.openingYear) : null,

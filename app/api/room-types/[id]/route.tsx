@@ -82,12 +82,36 @@ import { verifyAuth } from '@/app/api/utils/auth';
  */
 
 async function checkOwnership(userId: number, roomTypeId: number) {
-    const roomType = await prisma.roomType.findUnique({
-        where: { id: roomTypeId },
-        include: { hotel: { select: { merchantId: true } } }
-    });
-    if (!roomType || !roomType.hotel) return null;
-    return roomType.hotel.merchantId === userId;
+  // First check if user is the merchant owner of the hotel
+  const roomType = await prisma.roomType.findUnique({
+    where: { id: roomTypeId },
+    include: { hotel: { select: { merchantId: true } } },
+  });
+  
+  if (!roomType || !roomType.hotel) return null;
+  if (roomType.hotel.merchantId === userId) return true;
+
+  // If not owner, check if user is an ADMIN or SUPERADMIN with proper permissions
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      role: {
+        include: {
+          rolePermission: {
+            include: { permission: true }
+          }
+        }
+      }
+    }
+  });
+
+  if (user?.role?.name === 'ADMIN' || user?.role?.name === 'SUPERADMIN') {
+     // Check for HOTEL_UPDATE or specialized ROOM_UPDATE permission if it existed
+     // Usually HOTEL_UPDATE covers sub-resources
+     return !!user.role.rolePermission.some(rp => rp.permission.name === 'HOTEL_UPDATE');
+  }
+
+  return false;
 }
 
 export async function PUT(

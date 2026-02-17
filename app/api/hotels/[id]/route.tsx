@@ -237,6 +237,8 @@ export async function PUT(
     if (body.images !== undefined) updateData.images = body.images;
     if (body.rejectionReason !== undefined) updateData.rejectionReason = body.rejectionReason;
     if (body.locationId !== undefined) updateData.locationId = Number(body.locationId);
+    if (body.latitude !== undefined) updateData.latitude = Number(body.latitude);
+    if (body.longitude !== undefined) updateData.longitude = Number(body.longitude);
 
     // 检查状态变更
     const newStatus = body.status;
@@ -245,7 +247,7 @@ export async function PUT(
     if (isStatusChange) {
       // 4. 检查权限
       const isOwner = existingHotel.merchantId === userId;
-      const hasAuditPermission = currentUser.role?.rolePermission.some(
+      const hasAuditPermission = !!currentUser.role?.rolePermission.some(
         (rp) => rp.permission.name === 'HOTEL_AUDIT'
       );
 
@@ -362,7 +364,7 @@ export async function DELETE(
 
     // 4. 权限检查：拥有者 或 管理员(有HOTEL_DELETE权限)
     const isOwner = hotel.merchantId === userId;
-    const hasDeletePermission = currentUser.role?.rolePermission.some(
+    const hasDeletePermission = !!currentUser.role?.rolePermission.some(
       (rp) => rp.permission.name === 'HOTEL_DELETE'
     );
 
