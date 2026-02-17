@@ -412,29 +412,48 @@ function HotelDetail() {
 
   const filterTags = ['含早餐', '大床房', '双床房','棋牌房','家庭房','免费取消'];
 
-  const facilities = [
-    { icon: '🏢', text: '2020开业' },
-    { icon: '📶', text: '免费WiFi' },
-    { icon: '🏖️', text: '度假胜地' },
-    { icon: '🍳', text: '含早餐' },
-    { icon: '🅿️', text: '免费停车' },
-    { icon: '♨️', text: '温泉酒店' },
-    { icon: '🌊', text: '海景房' },
-    { icon: '🏊', text: '游泳池' },
-    { icon: '🚇', text: '靠近地铁' },
-    { icon: '🏋️', text: '健身房' },
-    { icon: '👨‍👩‍👧‍👦', text: '亲子友好' },
-    { icon: '💼', text: '商务出差' },
-    { icon: '💑', text: '情侣约会' },
-    { icon: '🚗', text: '接送机服务' },
-    { icon: '🐾', text: '宠物友好' },
-    { icon: '🕐', text: '24小时前台' },
-    { icon: '🚭', text: '无烟房' },
-    { icon: '🥂', text: '行政酒廊' },
-    { icon: '📊', text: '会议室' },
-    { icon: '🧺', text: '洗衣服务' },
-    { icon: '🧳', text: '行李寄存' }
-  ];
+  const FACILITY_MAP = {
+    '2020开业': '🏢',
+    '免费WiFi': '📶',
+    '度假胜地': '🏖️',
+    '含早餐': '🍳',
+    '免费停车': '🅿️',
+    '温泉酒店': '♨️',
+    '海景房': '🌊',
+    '游泳池': '🏊',
+    '靠近地铁': '🚇',
+    '健身房': '🏋️',
+    '亲子友好': '👨‍👩‍👧‍👦',
+    '商务出差': '💼',
+    '情侣约会': '💑',
+    '接送机服务': '🚗',
+    '宠物友好': '🐾',
+    '24小时前台': '🕐',
+    '无烟房': '🚭',
+    '行政酒廊': '🥂',
+    '会议室': '📊',
+    '洗衣服务': '🧺',
+    '行李寄存': '🧳'
+  };
+
+  const getFacilities = () => {
+    if (!hotel || !hotel.tags) return [];
+    
+    // 从tags中筛选出有对应图标的设施
+    // 同时也包含services中的设施
+    const allTags = new Set([...(hotel.tags || []), ...(hotel.services || [])]);
+    
+    return Array.from(allTags).map(tag => {
+      // 模糊匹配或者精确匹配
+      const icon = FACILITY_MAP[tag] || '✨'; // 默认图标
+      return {
+        icon,
+        text: tag
+      };
+    }).slice(0, 8); // 最多显示8个
+  };
+
+  const facilities = getFacilities();
 
   // Loading 状态
   if (loading) {
