@@ -26,7 +26,7 @@ function HotelList() {
   const [filterParams, setFilterParams] = useState({
     sortBy: 'recommend',
     priceRange: null,
-    starRating: null,
+    minScore: null,
     facilities: []
   });
   // 显示筛选面板
@@ -195,12 +195,10 @@ function HotelList() {
       console.log(`💰 价格筛选: ${beforeLength} -> ${filtered.length} (${min}-${max}元)`);
     }
 
-    // 星级筛选 (已移除)
-    /* if (filterParams.starRating) {
-      const beforeLength = filtered.length;
-      filtered = filtered.filter(h => h.starRating === filterParams.starRating);
-      console.log(`⭐ 星级筛选: ${beforeLength} -> ${filtered.length} (${filterParams.starRating}星)`);
-    } */
+    // 评分筛选
+    if (filterParams.minScore) {
+      filtered = filtered.filter(h => parseFloat(h.score) >= filterParams.minScore);
+    }
 
     // 设施筛选
     if (filterParams.facilities && filterParams.facilities.length > 0) {
@@ -305,8 +303,8 @@ function HotelList() {
       const [min, max] = filters.priceRange;
       filterInfo.push(`价格${min}-${max}元`);
     }
-    if (filters.starRating) {
-      filterInfo.push(`${filters.starRating}星级`);
+    if (filters.minScore) {
+      filterInfo.push(`${filters.minScore}分以上`);
     }
     if (filters.facilities && filters.facilities.length > 0) {
       filterInfo.push(`${filters.facilities.length}个设施`);
@@ -400,7 +398,7 @@ function HotelList() {
 
         <View className='filter-tab-item' onClick={handleOpenFilter}>
           筛选 <View className='f-icon'></View>
-          {(filterParams.priceRange || filterParams.starRating || filterParams.facilities.length > 0) && (
+          {(filterParams.priceRange || filterParams.minScore || filterParams.facilities.length > 0) && (
             <View className='filter-badge'></View>
           )}
         </View>
@@ -413,11 +411,8 @@ function HotelList() {
           {searchParams.priceRange && (
             <Text className='stats-filter-tag'>{searchParams.priceRange}</Text>
           )}
-          {searchParams.starRating && (
-            <Text className='stats-filter-tag'>{searchParams.starRating}</Text>
-          )}
-          {searchParams.tags && (
-            <Text className='stats-filter-tag'>{searchParams.tags.replace(/,/g, ' · ')}</Text>
+          {searchParams.tags && searchParams.tags.length > 0 && (
+            <Text className='stats-filter-tag'>{searchParams.tags.length}个标签</Text>
           )}
         </View>
       )}

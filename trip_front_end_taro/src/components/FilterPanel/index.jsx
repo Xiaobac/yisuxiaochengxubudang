@@ -12,8 +12,8 @@ import './index.css';
 function FilterPanel({ visible, onClose, onConfirm, defaultFilters = {} }) {
   // 价格区间
   const [priceRange, setPriceRange] = useState(defaultFilters.priceRange || null);
-  // 星级
-  const [starRating, setStarRating] = useState(defaultFilters.starRating || null);
+  // 评分
+  const [minScore, setMinScore] = useState(defaultFilters.minScore || null);
   // 设施
   const [facilities, setFacilities] = useState(defaultFilters.facilities || []);
 
@@ -26,12 +26,12 @@ function FilterPanel({ visible, onClose, onConfirm, defaultFilters = {} }) {
     { label: '1000以上', value: [1000, 99999] }
   ];
 
-  // 星级选项
-  const starOptions = [
+  // 评分选项
+  const scoreOptions = [
     { label: '不限', value: null },
-    { label: '三星级', value: 3 },
-    { label: '四星级', value: 4 },
-    { label: '五星级', value: 5 }
+    { label: '4.0分以上', value: 4.0 },
+    { label: '4.5分以上', value: 4.5 },
+    { label: '4.8分以上', value: 4.8 }
   ];
 
   // 设施选项
@@ -57,18 +57,16 @@ function FilterPanel({ visible, onClose, onConfirm, defaultFilters = {} }) {
 
   // 重置筛选
   const handleReset = () => {
-    console.log('🔄 FilterPanel 重置筛选');
     setPriceRange(null);
-    setStarRating(null);
+    setMinScore(null);
     setFacilities([]);
   };
 
   // 确认筛选
   const handleConfirm = () => {
-    console.log('🎯 FilterPanel 确认筛选:', { priceRange, starRating, facilities });
     onConfirm({
       priceRange,
-      starRating,
+      minScore,
       facilities
     });
   };
@@ -100,15 +98,15 @@ function FilterPanel({ visible, onClose, onConfirm, defaultFilters = {} }) {
           </View>
         </View>
 
-        {/* 星级 */}
+        {/* 评分 */}
         <View className='filter-section'>
-          <Text className='filter-section-title'>星级</Text>
+          <Text className='filter-section-title'>评分</Text>
           <View className='filter-options'>
-            {starOptions.map((option) => (
+            {scoreOptions.map((option) => (
               <View
                 key={option.label}
-                className={`filter-option ${starRating === option.value ? 'active' : ''}`}
-                onClick={() => setStarRating(option.value)}
+                className={`filter-option ${minScore === option.value ? 'active' : ''}`}
+                onClick={() => setMinScore(option.value)}
               >
                 <Text>{option.label}</Text>
               </View>

@@ -140,3 +140,63 @@
   opacity: 0.8;
   transform: scale(0.96);
 }
+
+/* 已领取按钮 */
+.coupon-btn-claimed {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
+  width: 140rpx;
+  height: 54rpx;
+  line-height: 54rpx;
+  border-radius: 40rpx;
+  font-size: 24rpx;
+  font-weight: bold;
+  text-align: center;
+  border: 2rpx solid var(--color-border-base);
+}
+
+/* 已过期按钮 */
+.coupon-btn-disabled {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-tertiary);
+  width: 140rpx;
+  height: 54rpx;
+  line-height: 54rpx;
+  border-radius: 40rpx;
+  font-size: 24rpx;
+  font-weight: bold;
+  text-align: center;
+  border: 2rpx solid var(--color-border-base);
+}
+
+/* 领取中状态 */
+.coupon-btn-loading {
+  opacity: 0.6;
+}
+
+/* 过期卡片整体灰化 */
+.coupon-card-expired {
+  opacity: 0.6;
+}
+
+/* 描述文字 */
+.coupon-desc-text {
+  font-size: 24rpx;
+  color: var(--color-text-secondary);
+  margin-bottom: 12rpx;
+  line-height: 1.4;
+}
+
+/* 已过期标签 */
+.tag-gray {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
+}
+
+.coupon-loading-tip,
+.coupon-empty-tip {
+  text-align: center;
+  color: var(--color-text-secondary, #999);
+  font-size: 28rpx;
+  padding: 80rpx 0;
+}

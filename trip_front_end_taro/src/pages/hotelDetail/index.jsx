@@ -301,9 +301,7 @@ function HotelDetail() {
   };
 
   const handleAskHotel = () => {
-    Taro.makePhoneCall({
-      phoneNumber: '400-123-4567'
-    });
+    Taro.showToast({ title: '请到前台咨询或通过官网联系酒店', icon: 'none', duration: 2000 });
   };
 
   const handleBookNow = async () => {
