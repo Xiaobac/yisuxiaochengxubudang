@@ -563,7 +563,7 @@ trip_front_end_project/
 │   ├── layout.tsx                    # 根布局（引入 providers / 全局字体）
 │   └── page.tsx                      # 首页（登录/注册入口 + 系统介绍）
 ├── prisma/
-│   ├── schema.prisma                 # 数据库模型定义（12 个 model）
+│   ├── schema.prisma                 # 数据库模型定义（14 个 model）
 │   ├── seed.ts                       # 基础种子数据（角色/权限/城市/标签）
 │   └── seed-hotels.ts                # 酒店与房型示例数据
 ├── public/
@@ -1496,7 +1496,7 @@ const handleCollect = async () => {
 }
 ```
 
-特殊情况处理：后端 upsert 幂等写入，若捕获到"已收藏"错误（接口返回含该字段的错误消息）则直接 `setIsFavorite(true)` 而非报错，保证 UI 状态始终与数据库一致。
+特殊情况处理：① 未登录用户点击收藏时，弹出 toast 提示"请先登录"，1.5s 后跳转登录页，不发起接口请求；② `favoriteLoading` 状态锁在请求期间阻止重复点击，`finally` 块确保锁必然释放；③ 页面初始化检查收藏状态时，未登录则跳过请求，避免 401 触发重定向；④ 后端 upsert 幂等写入，重复收藏请求不报错，UI 状态始终与数据库一致。
 
 == 日历选择组件实现
 
@@ -1540,20 +1540,21 @@ const generateMonthGrid = () => {
 
 === 日期范围选择状态机
 
-区间模式下，日期选择经历三个状态，由 `handleDayClick` 驱动：
+区间模式下，日期选择经历三个阶段，由 `handleDayClick` 驱动，内部维护 `tempStart` / `tempEnd` 两个状态：
 
 #table(
   columns: (auto, auto, 1fr),
   align: (left, left, left),
   table.header([*当前状态*], [*用户操作*], [*结果*]),
-  [空（未选）], [点击任意日期], [`startDate = 所选日` / `endDate = ''`],
-  [已有起点], [点击晚于起点的日期], [`endDate = 所选日`，区间确定],
-  [已有起点], [点击早于起点的日期], [自动交换：`startDate = 所选日` / `endDate = 原起点`（容错处理）],
-  [已有起点], [点击与起点相同日期], [忽略（不允许零晚预订）],
-  [区间已完成], [再次点击任意日期], [重置，重新开始选择],
+  [空（未选）或区间已完成], [点击任意日期], [`tempStart = 所选日`，`tempEnd = ''`，重新开始选择],
+  [已有 `tempStart`], [点击晚于起点的日期], [`tempEnd = 所选日`，区间确定，800ms 后自动关闭并回调 `onSelect`],
+  [已有 `tempStart`], [点击早于起点的日期], [自动交换顺序：`tempStart = 所选日` / `tempEnd = 原起点`，800ms 后关闭],
+  [已有 `tempStart`], [点击与起点相同日期], [忽略（不允许零晚预订）],
+  [区间已完成], [点击"确定"按钮], [立即调用 `onSelect` + `onClose`，不等 800ms 定时器],
+  [任意状态], [翻页切换月份], [保留已选日期，允许跨月选择区间],
 )
 
-单日模式（钟点房）下，点击任意日期后直接调用 `onConfirm()` 完成选择。
+单日模式（钟点房）下，点击任意日期后直接通过 `handleConfirm()` 完成选择并关闭。
 
 === 禁用日期处理
 
@@ -1642,7 +1643,7 @@ const loadMoreHotels = async () => {
 
 *排序与筛选*
 
-页面加载时将首页传入的 URL 参数解码为 `searchParams` 对象。所有后续的排序、筛选、关键词二次搜索均在客户端 `filterAndSortHotels()` 函数内完成，避免重复请求：关键词对酒店名称 / 描述 / 标签做大小写不敏感模糊匹配；价格区间和星级做精确过滤；设施标签要求全部命中（AND 逻辑）。`FilterPanel` 组件以受控方式接收 `defaultFilters` 并通过 `onConfirm` 回调将新筛选值传回列表页触发重算。地图模式下将酒店坐标转换为 Taro `<Map>` 的 `markers` 数组，`callout.content` 显示价格，点击标记更新 `selectedHotel` 展示详情卡。
+页面加载时将首页传入的 URL 参数解码为 `searchParams` 对象，解码过程用 `try/catch` 包裹，格式异常时安全回退为空对象，防止整页崩溃。酒店数据格式化时，`hotel.images` 和 `hotel.facilities` 的 JSON.parse 均以 `try/catch` 包裹，解析失败时回退为空数组，保证即使后端返回格式异常的 JSON 字段也不影响列表渲染。所有后续的排序、筛选、关键词二次搜索均在客户端 `filterAndSortHotels()` 函数内完成，避免重复请求：关键词对酒店名称 / 描述 / 标签做大小写不敏感模糊匹配；价格区间和星级做精确过滤；设施标签要求全部命中（AND 逻辑）。`FilterPanel` 组件以受控方式接收 `defaultFilters` 并通过 `onConfirm` 回调将新筛选值传回列表页触发重算。地图模式下将酒店坐标转换为 Taro `<Map>` 的 `markers` 数组，`callout.content` 显示价格，点击标记更新 `selectedHotel` 展示详情卡。
 
 == 订单流程实现
 
@@ -1678,7 +1679,7 @@ await prisma.$transaction(async (tx) => {
 });
 ```
 
-取消与归还在同一个 Prisma 事务内完成，任一步骤失败均会回滚，保证库存数据一致性。商户和订单归属用户均可发起取消。
+取消与归还在同一个 Prisma 事务内完成，任一步骤失败均会回滚，保证库存数据一致性。商户和订单归属用户均可发起取消。前端通过 `cancellingId` 状态锁防止同一订单被重复取消（按钮点击后立即锁定，`finally` 块释放），并额外保存 `hotelId` 字段，供"去评价"按钮跳转 `submitReview` 页时传递，使评价与对应酒店正确关联。
 
 *提交评价——星评交互*
 
@@ -1694,7 +1695,7 @@ await prisma.$transaction(async (tx) => {
 ))}
 ```
 
-`rating >= star` 使已选评分之前的所有星变为高亮色。提交时调用 `createReview(orderId, rating, content)`，后端接口在数据库层以 `bookingId @unique` 约束防止重复评价，重复提交返回 Prisma `P2002` 错误。
+`rating >= star` 使已选评分之前的所有星变为高亮色。提交时调用 `createReview(hotelId, rating, content)`，通过 `/api/comments` 接口将评价写入对应酒店；后端以 `bookingId @unique` 约束防止重复评价，重复提交返回 Prisma `P2002` 错误。
 
 == 优惠券页实现
 
@@ -1712,7 +1713,7 @@ await prisma.$transaction(async (tx) => {
 
 页面挂载时通过 `Promise.allSettled` 并发调用 `getCoupons()`（全量优惠券）和 `getUserCoupons()`（当前用户已领取记录），将已领取券的 ID 构建为 `Set<claimedIds>`，渲染时以 O(1) 查询判断每张券是否已领取。
 
-点击领取时，调用 `claimCoupon(couponId)` 发送 `POST /api/coupons/{id}/claim`；请求期间按钮切换为加载态（`coupon-btn-loading`）防止重复点击；成功后将该 ID 追加进 `claimedIds` Set 并触发重新渲染，按钮变为已领取态（`coupon-btn-claimed`）。后端服务端校验优惠券有效期，写入 `UserCoupon` 关联表，Prisma 复合主键 `@@id([userId, couponId])` 保证幂等，重复领取返回 400。
+点击领取时，前端首先通过 `storage.isAuthenticated()` 检查登录态，未登录则弹出 `Taro.showToast` 提示"请先登录后领取"并直接返回，不发起请求。已登录则调用 `claimCoupon(couponId)` 发送 `POST /api/coupons/{id}/claim`；请求期间按钮切换为加载态（`coupon-btn-loading`）防止重复点击；成功后将该 ID 追加进 `claimedIds` Set 并触发重新渲染，按钮变为已领取态（`coupon-btn-claimed`）。后端服务端校验优惠券有效期，写入 `UserCoupon` 关联表，Prisma 复合主键 `@@id([userId, couponId])` 保证幂等，重复领取返回 400。
 
 == 地图导航实现
 
@@ -1827,7 +1828,7 @@ await prisma.$transaction(async (tx) => {
   align: (center, left, center, left, left),
   table.header([*方法*], [*路径*], [*权限*], [*参数*], [*说明*]),
   [GET], [`/reviews`], [AUTH], [—], [当前用户所有评价，含 hotel（名称/图片）/ booking（日期）信息],
-  [POST], [`/reviews`], [AUTH], [Body: `bookingId`、`rating`（1–5 整数）、`content`（必填）], [三重校验：① booking.userId === 当前用户，② booking.status 为 completed 或 checked_out，③ bookingId 在 Review 表唯一（防一单多评）],
+  [POST], [`/reviews`], [AUTH], [Body: `hotelId`、`rating`（1–5 整数）、`content`（必填）], [实际调用 `/api/comments` 接口，通过 `hotelId` 关联酒店；后端校验 `bookingId @unique` 防止一单多评],
   [DELETE], [`/reviews/[id]`], [AUTH], [—], [仅评价本人可删除，其他用户返回 403],
 )
 
