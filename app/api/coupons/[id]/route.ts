@@ -5,8 +5,9 @@ import { verifyAuth } from '@/app/api/utils/auth';
 // GET /api/coupons/[id] - 获取单张优惠券详情
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const id = parseInt(params.id);
   try {
     const coupon = await prisma.coupon.findUnique({
@@ -25,7 +26,7 @@ export async function GET(
 // 仅管理员
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   const auth = verifyAuth(req);
   if (!auth.success) {
@@ -36,6 +37,7 @@ export async function PUT(
     return NextResponse.json({ success: false, message: '需要管理员权限' }, { status: 403 });
   }
 
+  const params = await props.params;
   const id = parseInt(params.id);
 
   try {
@@ -74,7 +76,7 @@ export async function PUT(
 // 仅管理员
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   const auth = verifyAuth(req);
   if (!auth.success) {
@@ -85,6 +87,7 @@ export async function DELETE(
     return NextResponse.json({ success: false, message: '需要管理员权限' }, { status: 403 });
   }
 
+  const params = await props.params;
   const id = parseInt(params.id);
 
   try {

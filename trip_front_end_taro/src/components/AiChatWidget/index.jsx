@@ -39,7 +39,7 @@ const AiChatWidget = () => {
 
   // 初始化屏幕尺寸和默认位置
   useEffect(() => {
-    const info = Taro.getSystemInfoSync();
+    const info = Taro.getWindowInfo();
     screenRef.current = { w: info.windowWidth, h: info.windowHeight };
     setPos({ x: info.windowWidth - BTN_SIZE - 16, y: info.windowHeight - BTN_SIZE - 100 });
   }, []);

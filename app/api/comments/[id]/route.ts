@@ -6,8 +6,9 @@ import { updateHotelScore } from '@/app/api/utils/updateHotelScore';
 // GET /api/comments/[id] - 获取单条评论详情
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const id = parseInt(params.id);
 
   try {
@@ -37,13 +38,14 @@ export async function GET(
 // 只有评论所属用户可修改
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   const auth = verifyAuth(req);
   if (!auth.success) {
     return NextResponse.json({ success: false, message: '未授权' }, { status: 401 });
   }
 
+  const params = await props.params;
   const id = parseInt(params.id);
 
   try {
@@ -84,13 +86,14 @@ export async function PUT(
 // 只有评论所属用户可删除
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   const auth = verifyAuth(req);
   if (!auth.success) {
     return NextResponse.json({ success: false, message: '未授权' }, { status: 401 });
   }
 
+  const params = await props.params;
   const id = parseInt(params.id);
 
   try {

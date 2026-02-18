@@ -39,6 +39,7 @@ function HotelDetail() {
   const [selectedRoomTypeId, setSelectedRoomTypeId] = useState(null);
   const [showBookingConfirm, setShowBookingConfirm] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [comments, setComments] = useState([]);
   const [showAllComments, setShowAllComments] = useState(false);
   const COMMENT_PREVIEW_COUNT = 3;
@@ -245,6 +246,10 @@ function HotelDetail() {
         console.warn('⚠️ hotelId为空，无法检查收藏状态');
         return;
       }
+      // 未登录时不检查收藏状态，避免触发 401 重定向
+      if (!storage.isAuthenticated()) {
+        return;
+      }
       const res = await checkFavorite(hotelId);
       if (res.success) {
         setIsFavorite(res.data?.isFavorite || false);
@@ -256,6 +261,13 @@ function HotelDetail() {
 
   // 切换收藏状态
   const handleCollect = async () => {
+    if (!storage.isAuthenticated()) {
+      Taro.showToast({ title: '请先登录', icon: 'none', duration: 1500 });
+      setTimeout(() => Taro.navigateTo({ url: '/pages/login/index' }), 1500);
+      return;
+    }
+    if (favoriteLoading) return;
+    setFavoriteLoading(true);
     try {
       if (isFavorite) {
         const res = await removeFavorite(hotelId);
@@ -291,6 +303,8 @@ function HotelDetail() {
           duration: 2000
         });
       }
+    } finally {
+      setFavoriteLoading(false);
     }
   };
 

@@ -5,7 +5,7 @@ import { verifyAuth } from '@/app/api/utils/auth';
 // POST /api/coupons/[id]/claim - 用户领取优惠券
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
   const authResult = verifyAuth(req);
   if (!authResult.success) {
@@ -13,6 +13,7 @@ export async function POST(
   }
 
   const userId = authResult.user.userId;
+  const params = await props.params;
   const couponId = parseInt(params.id);
 
   if (isNaN(couponId)) {
