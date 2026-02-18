@@ -29,6 +29,7 @@ function HotelList() {
     sortBy: 'recommend',
     priceRange: null,
     minScore: null,
+    minStars: null,
     facilities: []
   });
   const [showFilter, setShowFilter] = useState(false);
@@ -310,6 +311,11 @@ function HotelList() {
       filtered = filtered.filter(h => parseFloat(h.score) >= filterParams.minScore);
     }
 
+    // 星级筛选
+    if (filterParams.minStars) {
+      filtered = filtered.filter(h => (h.starRating || 0) >= filterParams.minStars);
+    }
+
     // 设施筛选
     if (filterParams.facilities && filterParams.facilities.length > 0) {
       filtered = filtered.filter(h =>
@@ -375,6 +381,9 @@ function HotelList() {
     }
     if (filters.minScore) {
       filterInfo.push(`${filters.minScore}分以上`);
+    }
+    if (filters.minStars) {
+      filterInfo.push(`${filters.minStars}星及以上`);
     }
     if (filters.facilities && filters.facilities.length > 0) {
       filterInfo.push(`${filters.facilities.length}个设施`);
@@ -476,7 +485,7 @@ function HotelList() {
         </View>
         <View className='filter-tab-item' onClick={handleOpenFilter}>
           筛选 <View className='f-icon'></View>
-          {(filterParams.priceRange || filterParams.minScore || filterParams.facilities.length > 0) && (
+          {(filterParams.priceRange || filterParams.minScore || filterParams.minStars || filterParams.facilities.length > 0) && (
             <View className='filter-badge'></View>
           )}
         </View>

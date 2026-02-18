@@ -134,7 +134,8 @@ export async function GET(request: NextRequest) {
     const maxPrice = searchParams.get('maxPrice');
     const checkIn = searchParams.get('checkIn');
     const checkOut = searchParams.get('checkOut');
-    
+    const minStarRating = searchParams.get('minStarRating');
+
     // Pagination (max 100 per page to prevent over-fetching)
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10')));
@@ -144,6 +145,7 @@ export async function GET(request: NextRequest) {
     if (locationId) where.locationId = parseInt(locationId);
     if (merchantId) where.merchantId = parseInt(merchantId);
     if (type) where.type = type;
+    if (minStarRating) where.starRating = { gte: parseInt(minStarRating) };
 
     // Availability filter logic
     if (checkIn && checkOut) {

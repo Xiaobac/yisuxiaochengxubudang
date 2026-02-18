@@ -415,9 +415,9 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
           indicatorActiveColor="#ffffff"
           className='banner-swiper'
         >
-          {BANNER_IMAGES.map((img, index) => (
-            <SwiperItem key={index}>
-              <Image className='banner-img' src={img} mode='aspectFill' lazyLoad />
+          {BANNER_IMAGES.map((item, index) => (
+            <SwiperItem key={index} onClick={() => Taro.navigateTo({ url: `/pages/hotelDetail/index?id=${item.hotelId}` })}>
+              <Image className='banner-img' src={item.src} mode='aspectFill' lazyLoad />
             </SwiperItem>
           ))}
         </Swiper>

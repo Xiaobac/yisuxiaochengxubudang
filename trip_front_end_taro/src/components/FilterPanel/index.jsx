@@ -14,6 +14,8 @@ function FilterPanel({ visible, onClose, onConfirm, defaultFilters = {} }) {
   const [priceRange, setPriceRange] = useState(defaultFilters.priceRange || null);
   // 评分
   const [minScore, setMinScore] = useState(defaultFilters.minScore || null);
+  // 星级
+  const [minStars, setMinStars] = useState(defaultFilters.minStars || null);
   // 设施
   const [facilities, setFacilities] = useState(defaultFilters.facilities || []);
 
@@ -32,6 +34,14 @@ function FilterPanel({ visible, onClose, onConfirm, defaultFilters = {} }) {
     { label: '4.0分以上', value: 4.0 },
     { label: '4.5分以上', value: 4.5 },
     { label: '4.8分以上', value: 4.8 }
+  ];
+
+  // 星级选项
+  const starOptions = [
+    { label: '不限', value: null },
+    { label: '3星及以上', value: 3 },
+    { label: '4星及以上', value: 4 },
+    { label: '5星', value: 5 }
   ];
 
   // 设施选项
@@ -59,6 +69,7 @@ function FilterPanel({ visible, onClose, onConfirm, defaultFilters = {} }) {
   const handleReset = () => {
     setPriceRange(null);
     setMinScore(null);
+    setMinStars(null);
     setFacilities([]);
   };
 
@@ -67,6 +78,7 @@ function FilterPanel({ visible, onClose, onConfirm, defaultFilters = {} }) {
     onConfirm({
       priceRange,
       minScore,
+      minStars,
       facilities
     });
   };
@@ -80,6 +92,22 @@ function FilterPanel({ visible, onClose, onConfirm, defaultFilters = {} }) {
         <View className='filter-header'>
           <Text className='filter-title'>筛选</Text>
           <Text className='filter-reset' onClick={handleReset}>重置</Text>
+        </View>
+
+        {/* 星级 */}
+        <View className='filter-section'>
+          <Text className='filter-section-title'>酒店星级</Text>
+          <View className='filter-options'>
+            {starOptions.map((option) => (
+              <View
+                key={option.label}
+                className={`filter-option ${minStars === option.value ? 'active' : ''}`}
+                onClick={() => setMinStars(option.value)}
+              >
+                <Text>{option.label}</Text>
+              </View>
+            ))}
+          </View>
         </View>
 
         {/* 价格区间 */}

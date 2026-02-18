@@ -257,10 +257,11 @@ export default function HotelManagementPage() {
       ...record,
       name: record.nameZh,
       name_en: record.nameEn,
+      star_rating: record.starRating ?? 3,
       opening_date: record.openingYear ? dayjs(`${record.openingYear}-01-01`) : null,
       locationId: record.locationId,
       // map hotelTags from [{ tag: { id, name } }] to [id, id]
-      hotelTags: record.hotelTags?.map((ht: any) => ht.tagId || ht.tag?.id), 
+      hotelTags: record.hotelTags?.map((ht: any) => ht.tagId || ht.tag?.id),
       rooms: record.roomTypes || [],
       latitude: record.latitude,
       longitude: record.longitude,
@@ -326,6 +327,7 @@ export default function HotelManagementPage() {
       const hotelData: any = {
         nameZh: values.name,
         nameEn: values.name_en,
+        starRating: values.star_rating,
         address: values.address,
         locationId: values.locationId,
         description: values.description,
@@ -555,6 +557,18 @@ export default function HotelManagementPage() {
 
           <Form.Item label="英文名称" name="name_en">
             <Input placeholder="请输入英文名称（可选）" />
+          </Form.Item>
+
+          <Form.Item
+            label="酒店星级"
+            name="star_rating"
+            rules={[{ required: true, message: '请选择酒店星级' }]}
+          >
+            <Select placeholder="请选择星级">
+              {[1, 2, 3, 4, 5].map(n => (
+                <Option key={n} value={n}>{n} 星</Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item
