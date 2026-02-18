@@ -77,10 +77,7 @@ export default function TencentMapSelector({ latitude, longitude, onSelect }: Te
                   markerRef.current.setGeometries([{
                       id: 'main',
                       styleId: 'marker',
-                      position: {
-                        lat: validLat,
-                        lng: validLng
-                    }
+                      position: center,
                   }]);
               } catch (e) {
                   // If marker instance is invalid, recreate it
