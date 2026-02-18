@@ -434,8 +434,6 @@ function HotelDetail() {
     setIsCalendarVisible(false);
   };
 
-  const filterTags = ['含早餐', '大床房', '双床房','棋牌房','家庭房','免费取消'];
-
   const FACILITY_MAP = {
     '2020开业': '🏢',
     '免费WiFi': '📶',

@@ -265,7 +265,7 @@
 /* 5. 酒店卡片列表主体 */
 .hotel-list-body {
   padding: 10rpx 20rpx;
-  height: calc(100vh - 220rpx);
+  height: calc(100vh - 110px);
   box-sizing: border-box;
 }
 

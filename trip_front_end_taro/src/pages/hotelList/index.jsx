@@ -330,7 +330,14 @@ function HotelList() {
         filtered.sort((a, b) => b.priceNum - a.priceNum);
         break;
       case 'distance':
-        filtered.sort((a, b) => a.priceNum - b.priceNum);
+        // 按综合热度排序（评分 × 点评数），无 GPS 时作为"好评优先"替代
+        filtered.sort((a, b) => {
+          const scoreA = parseFloat(a.score) || 0;
+          const scoreB = parseFloat(b.score) || 0;
+          const reviewA = parseInt(a.reviews) || 0;
+          const reviewB = parseInt(b.reviews) || 0;
+          return (scoreB * reviewB) - (scoreA * reviewA);
+        });
         break;
       case 'recommend':
       default:
@@ -358,7 +365,7 @@ function HotelList() {
   };
 
   const handleOpenSortMenu = () => {
-    const itemList = ['推荐排序', '位置距离', '价格升序', '价格降序'];
+    const itemList = ['推荐排序', '好评优先', '价格升序', '价格降序'];
     const keys = ['recommend', 'distance', 'priceAsc', 'priceDesc'];
     Taro.showActionSheet({
       itemList,
@@ -485,7 +492,7 @@ function HotelList() {
       <View className='filter-tab-bar'>
         <View className='filter-tab-item active' onClick={handleOpenSortMenu}>
           {sortBy === 'recommend' && '推荐排序'}
-          {sortBy === 'distance' && '位置距离'}
+          {sortBy === 'distance' && '好评优先'}
           {sortBy === 'priceAsc' && '价格升序'}
           {sortBy === 'priceDesc' && '价格降序'}
           <View className='s-arrow'></View>
