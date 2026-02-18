@@ -15,6 +15,7 @@ function OrderList() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all'); // all, pending, confirmed, cancelled
+  const [cancellingId, setCancellingId] = useState(null);
 
   useEffect(() => {
     checkAuthAndLoadOrders();
@@ -45,6 +46,7 @@ function OrderList() {
       if (res.success && res.data) {
         const transformedOrders = res.data.map(order => ({
           id: order.id,
+          hotelId: order.hotel?.id || order.hotelId,
           hotelName: order.hotel?.nameZh || order.hotel?.name || '未知酒店',
           hotelAddress: order.hotel?.address || '地址未知',
           checkInDate: formatDate(order.checkInDate, 'MM月DD日'),
@@ -92,11 +94,13 @@ function OrderList() {
   };
 
   const handleCancelOrder = (orderId, hotelName) => {
+    if (cancellingId === orderId) return;
     Taro.showModal({
       title: '取消订单',
       content: `确定要取消【${hotelName}】的订单吗？`,
       success: async (res) => {
         if (res.confirm) {
+          setCancellingId(orderId);
           try {
             const result = await cancelBooking(orderId);
 
@@ -114,29 +118,17 @@ function OrderList() {
               title: '取消失败，请重试',
               icon: 'none'
             });
+          } finally {
+            setCancellingId(null);
           }
         }
       }
     });
   };
 
-  const handleReviewOrder = (orderId, hotelName) => {
-    // Navigate to a review page (or reuse a generic review form page, or show modal)
-    // Here we can navigate to separate review page or modal.
-    // For now let's assume we prompt user or navigate.
-    // I will use a modal for simple input or assume there is no advanced review page yet.
-    // Given the constraints and the previous turn where I handled inline edit,
-    // a separate page for creating new review is probably best but I don't see one.
-    // I'll simulate "Go to review" by showing a toast saying "Use 'My Reviews' to manage reviews" 
-    // BUT the requirement is "implement a 'Go to Evaluate' capability".
-    // I really should creating a simple review page.
-    
-    // Check if we have a review page. 
-    // I'll assume we navigate to a new page 'pages/writeReview/index' (need to create it)
-    // OR navigate to reviewList and open a modal? No that's weird.
-    // I will navigate to '/pages/submitReview/index'. I will CREATE this page next.
+  const handleReviewOrder = (orderId, hotelId, hotelName) => {
     Taro.navigateTo({
-      url: `/pages/submitReview/index?orderId=${orderId}&hotelName=${encodeURIComponent(hotelName)}`
+      url: `/pages/submitReview/index?orderId=${orderId}&hotelId=${hotelId}&hotelName=${encodeURIComponent(hotelName)}`
     });
   };
 
@@ -248,7 +240,7 @@ function OrderList() {
                   {order.status === 'completed' && (
                     <View
                       className='action-btn detail-btn'
-                      onClick={() => handleReviewOrder(order.id, order.hotelName)}
+                      onClick={() => handleReviewOrder(order.id, order.hotelId, order.hotelName)}
                     >
                        <Text className='btn-text'>去评价</Text>
                     </View>

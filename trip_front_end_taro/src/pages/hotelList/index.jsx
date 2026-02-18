@@ -115,7 +115,7 @@ function HotelList() {
 
   const handleCalendarConfirm = (start, end) => {
     console.log('日历返回:', { start, end });
-    setIsCalendarVisible(false);
+    // Calendar 组件自己负责关闭，这里只处理数据
     if (start) setStartDate(start);
     if (end) setEndDate(end);
     let newParams = { ...searchParams };
@@ -147,12 +147,18 @@ function HotelList() {
   // ---------- 辅助：将接口返回的原始酒店数据格式化并获取最低价格 ----------
   const formatHotelsWithPrice = async (rawList) => {
     const baseHotels = rawList.map(hotel => {
-      const images = hotel.images && hotel.images.length > 0
-        ? (typeof hotel.images === 'string' ? JSON.parse(hotel.images) : hotel.images)
-        : [];
-      const facilities = hotel.facilities
-        ? (typeof hotel.facilities === 'string' ? JSON.parse(hotel.facilities) : hotel.facilities)
-        : [];
+      let images = [];
+      try {
+        images = hotel.images && hotel.images.length > 0
+          ? (typeof hotel.images === 'string' ? JSON.parse(hotel.images) : hotel.images)
+          : [];
+      } catch { images = []; }
+      let facilities = [];
+      try {
+        facilities = hotel.facilities
+          ? (typeof hotel.facilities === 'string' ? JSON.parse(hotel.facilities) : hotel.facilities)
+          : [];
+      } catch { facilities = []; }
       return {
         id: hotel.id,
         name: hotel.nameZh || hotel.name,

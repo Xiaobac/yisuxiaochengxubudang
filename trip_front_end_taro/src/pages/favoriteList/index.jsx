@@ -66,9 +66,12 @@ function FavoriteList() {
       if (res.success && res.data && res.data.length > 0) {
         const formattedFavorites = res.data.map(fav => {
           const hotel = fav.hotel;
-          const images = hotel.images && hotel.images.length > 0
-            ? (typeof hotel.images === 'string' ? JSON.parse(hotel.images) : hotel.images)
-            : [];
+          let images = [];
+          try {
+            images = hotel.images && hotel.images.length > 0
+              ? (typeof hotel.images === 'string' ? JSON.parse(hotel.images) : hotel.images)
+              : [];
+          } catch { images = []; }
 
           return {
             id: fav.id,

@@ -262,7 +262,7 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
 
   const handleCalendarConfirm = (start, end) => {
     console.log('日历返回:', { start, end, isHourlyRoom });
-    setIsCalendarVisible(false);
+    // Calendar 组件自己负责关闭，这里只处理数据
 
     if (isHourlyRoom) {
       if (start) {

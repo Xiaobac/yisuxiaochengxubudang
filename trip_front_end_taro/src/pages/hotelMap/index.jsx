@@ -22,9 +22,12 @@ function HotelMap() {
   const singleLat = router.params.lat ? parseFloat(router.params.lat) : null;
   const singleLng = router.params.lng ? parseFloat(router.params.lng) : null;
 
-  const searchParams = !singleMode && router.params.params
-    ? JSON.parse(decodeURIComponent(router.params.params))
-    : {};
+  let searchParams = {};
+  try {
+    searchParams = !singleMode && router.params.params
+      ? JSON.parse(decodeURIComponent(router.params.params))
+      : {};
+  } catch { searchParams = {}; }
 
   const [loading, setLoading] = useState(true);
   const [hotels, setHotels] = useState([]);
@@ -89,9 +92,12 @@ function HotelMap() {
 
       if (res.success && res.data && res.data.length > 0) {
         const hotelData = res.data.map(hotel => {
-          const images = hotel.images && hotel.images.length > 0
-            ? (typeof hotel.images === 'string' ? JSON.parse(hotel.images) : hotel.images)
-            : [];
+          let images = [];
+          try {
+            images = hotel.images && hotel.images.length > 0
+              ? (typeof hotel.images === 'string' ? JSON.parse(hotel.images) : hotel.images)
+              : [];
+          } catch { images = []; }
           return {
             id: hotel.id,
             name: hotel.nameZh || hotel.name,

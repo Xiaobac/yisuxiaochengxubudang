@@ -445,7 +445,7 @@ function HotelDetail() {
 
   const handleCalendarConfirm = () => {
     console.log('Calendar confirm');
-    setIsCalendarVisible(false);
+    // Calendar 组件自己负责关闭（onClose 已处理）
   };
 
   const FACILITY_MAP = {

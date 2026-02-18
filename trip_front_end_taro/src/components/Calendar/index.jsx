@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { View, Text, Button } from '@tarojs/components'
 import dayjs from 'dayjs'
 import './index.css'
@@ -41,20 +41,34 @@ const Calendar = ({
     availableMonths[currentMonthIndex] || availableMonths[0] || today.startOf('month'), 
   [availableMonths, currentMonthIndex, today])
   
-  // 内部临时选中的第一个日期（用于区间模式，第一次点击时不通知父组件）
+  // 内部临时选中的日期
   const [tempStart, setTempStart] = useState('')
+  const [tempEnd, setTempEnd] = useState('')
+  // 用于延迟自动关闭的 timer ref（防止用户重新点选时重复触发）
+  const autoCloseTimer = useRef(null)
 
-  // ✅ 关键：每次打开日历（visible 变为 true）时，清空临时状态
+  // 每次打开日历时，用 props 的已选日期来初始化临时状态（方便用户看到当前值再调整）
   useEffect(() => {
     if (visible) {
-      console.log('📅 日历打开，清空临时状态')
-      setTempStart('')
+      setTempStart(startDate || '')
+      setTempEnd(endDate || '')
+    } else {
+      // 关闭时清除待执行的定时器
+      if (autoCloseTimer.current) {
+        clearTimeout(autoCloseTimer.current)
+        autoCloseTimer.current = null
+      }
     }
   }, [visible])
 
-  // 封装关闭函数，关闭前也清空临时状态（双重保障）
+  // 封装关闭函数，关闭前清空临时状态和定时器
   const handleClose = () => {
+    if (autoCloseTimer.current) {
+      clearTimeout(autoCloseTimer.current)
+      autoCloseTimer.current = null
+    }
     setTempStart('')
+    setTempEnd('')
     onClose()
   }
 
@@ -92,18 +106,16 @@ const Calendar = ({
     return grid
   }, [monthStart, monthEnd])
   
-  // 处理月份切换
+  // 处理月份切换（切换月份时不清空临时状态，允许跨月选择区间）
   const handlePrevMonth = () => {
     if (currentMonthIndex > 0) {
       setCurrentMonthIndex(prev => prev - 1)
-      setTempStart('') // 切换月份时也清空临时状态
     }
   }
-  
+
   const handleNextMonth = () => {
     if (currentMonthIndex < availableMonths.length - 1) {
       setCurrentMonthIndex(prev => prev + 1)
-      setTempStart('')
     }
   }
   
@@ -122,38 +134,50 @@ const Calendar = ({
     }
 
     if (mode === 'single') {
-      // 单日期模式：直接选择并关闭
+      // 单日期模式：直接选择并关闭（保持原有行为）
       onSelect(dayStr, '')
       handleClose()
     } else {
       // 区间模式
-      if (!tempStart) {
-        // 第一次点击：记录临时开始日期
-        setTempStart(dayStr)
-      } else {
-        // 第二次点击：有临时开始日期
-        const firstDay = dayjs(tempStart)
-        const secondDay = day
+      // 如果之前有待执行的自动关闭定时器，先取消（用户在选第三个日期，重新选）
+      if (autoCloseTimer.current) {
+        clearTimeout(autoCloseTimer.current)
+        autoCloseTimer.current = null
+      }
 
-        if (secondDay.isSame(firstDay, 'day')) {
-          // 点击同一个日期，忽略
+      if (!tempStart || tempEnd) {
+        // 没有起始日期，或已经选完一次（第三次点击=重新选）
+        setTempStart(dayStr)
+        setTempEnd('')
+      } else {
+        // 第二次点击：有 tempStart 没有 tempEnd
+        if (dayStr === tempStart) {
+          // 点同一个日期，忽略
           return
         }
 
-        // 自动确定入住和离店
-        let checkIn, checkOut
+        // 自动确定入住/离店顺序
+        const firstDay = dayjs(tempStart)
+        const secondDay = day
+        let finalStart, finalEnd
         if (secondDay.isAfter(firstDay, 'day')) {
-          checkIn = tempStart
-          checkOut = dayStr
+          finalStart = tempStart
+          finalEnd = dayStr
         } else {
-          checkIn = dayStr
-          checkOut = tempStart
+          finalStart = dayStr
+          finalEnd = tempStart
         }
+        setTempStart(finalStart)
+        setTempEnd(finalEnd)
 
-        // 通过 onSelect 将两个日期传给父组件
-        onSelect(checkIn, checkOut)
-        // 关闭日历并清空临时状态
-        handleClose()
+        // 800ms 后自动关闭（用户能看清区间高亮和晚数）
+        autoCloseTimer.current = setTimeout(() => {
+          autoCloseTimer.current = null
+          onSelect(finalStart, finalEnd)
+          onClose()
+          setTempStart('')
+          setTempEnd('')
+        }, 800)
       }
     }
   }
@@ -167,42 +191,26 @@ const Calendar = ({
     return true
   }
   
-  // 获取日期状态（同时考虑 props 和内部临时状态）
+  // 获取日期状态（基于内部 temp 状态，不依赖 props 的 startDate/endDate）
   const getDayStatus = (day) => {
     if (!day) return ''
-    
+
     const dayStr = day.format('YYYY-MM-DD')
-    
-    // 已经正式选择的开始/结束日期（由父组件传入）
-    if (dayStr === startDate || dayStr === endDate) {
+
+    // 临时选中的起点或终点
+    if (dayStr === tempStart || (tempEnd && dayStr === tempEnd)) {
       return 'selected'
     }
-    
-    // 区间模式下，如果当前日期在正式选择的区间内
-    if (mode === 'range' && startDate && endDate) {
-      const start = dayjs(startDate)
-      const end = dayjs(endDate)
+
+    // 区间模式：tempStart 和 tempEnd 都存在时，显示区间高亮
+    if (mode === 'range' && tempStart && tempEnd) {
+      const start = dayjs(tempStart)
+      const end = dayjs(tempEnd)
       if (day.isAfter(start, 'day') && day.isBefore(end, 'day')) {
         return 'in-range'
       }
     }
 
-//   不保留上一次的选择
-//   const getDayStatus = (day) => {
-//   if (!day) return ''
-  
-//   const dayStr = day.format('YYYY-MM-DD')
-//   if (tempStart && dayStr === tempStart) {
-//     return 'selected'
-//   }
-//   return ''
-// }
-
-    // 如果存在临时开始日期，且当前日期等于临时开始日期，也显示为选中
-    if (tempStart && dayStr === tempStart) {
-      return 'selected'
-    }
-    
     return ''
   }
   
@@ -212,10 +220,10 @@ const Calendar = ({
     return day.month() === currentMonth.month() && day.year() === currentMonth.year()
   }
   
-  // 计算入住晚数
+  // 计算入住晚数（基于内部临时状态）
   const calculateNights = () => {
-    if (!startDate || !endDate) return 0
-    return dayjs(endDate).diff(dayjs(startDate), 'day')
+    if (!tempStart || !tempEnd) return 0
+    return dayjs(tempEnd).diff(dayjs(tempStart), 'day')
   }
   
   // 获取月份状态标签
@@ -229,16 +237,34 @@ const Calendar = ({
     return ''
   }
   
+  // 确定按钮：立即关闭（无需等 800ms 定时器）
+  const handleConfirm = () => {
+    if (mode === 'range') {
+      if (tempStart && tempEnd) {
+        onSelect(tempStart, tempEnd)
+        onConfirm()
+        handleClose() // handleClose 内部会清除 autoCloseTimer
+      }
+    } else {
+      // single 模式确定按钮（一般不会走到这里，单选即关）
+      if (tempStart) {
+        onSelect(tempStart, '')
+        onConfirm()
+        handleClose()
+      }
+    }
+  }
+
   // 渲染底部确认栏
   const renderFooter = () => {
     if (mode === 'single') {
       return (
         <View className='calendar-footer'>
           <View className='summary'>
-            {startDate ? (
+            {tempStart ? (
               <View className='date-summary'>
                 <Text className='summary-text'>
-                  已选择：{dayjs(startDate).format('MM月DD日')}
+                  已选择：{dayjs(tempStart).format('MM月DD日')}
                 </Text>
                 <Text className='date-range'>点击任意日期可重新选择</Text>
               </View>
@@ -247,9 +273,9 @@ const Calendar = ({
             )}
           </View>
           <Button
-            className={`confirm-btn ${startDate ? 'active' : ''}`}
-            disabled={!startDate}
-            onClick={onConfirm}
+            className={`confirm-btn ${tempStart ? 'active' : ''}`}
+            disabled={!tempStart}
+            onClick={handleConfirm}
           >
             确定
           </Button>
@@ -257,17 +283,14 @@ const Calendar = ({
       )
     } else {
       // 区间模式
-      let summaryText = '请选择两个日期'
+      let summaryText = '请选择入住日期'
       let detailText = ''
-      if (startDate && endDate) {
+      if (tempStart && tempEnd) {
         summaryText = `共 ${calculateNights()} 晚`
-        detailText = `${dayjs(startDate).format('MM月DD日')} - ${dayjs(endDate).format('MM月DD日')}`
+        detailText = `${dayjs(tempStart).format('MM月DD日')} - ${dayjs(tempEnd).format('MM月DD日')}`
       } else if (tempStart) {
         summaryText = `已选：${dayjs(tempStart).format('MM月DD日')}`
-        detailText = '请选择第二个日期'
-      } else if (startDate) {
-        summaryText = `已选：${dayjs(startDate).format('MM月DD日')}`
-        detailText = '请选择第二个日期'
+        detailText = '请选择离店日期'
       }
 
       return (
@@ -279,9 +302,9 @@ const Calendar = ({
             </View>
           </View>
           <Button
-            className={`confirm-btn ${startDate && endDate ? 'active' : ''}`}
-            disabled={!startDate || !endDate}
-            onClick={onConfirm}
+            className={`confirm-btn ${tempStart && tempEnd ? 'active' : ''}`}
+            disabled={!tempStart || !tempEnd}
+            onClick={handleConfirm}
           >
             确定
           </Button>
@@ -333,14 +356,19 @@ const Calendar = ({
           <Text className='notice-text'>
             📅 可选日期：今天至{maxDate.format('MM月DD日')}（共30天）
           </Text>
-          {mode === 'range' && !startDate && !tempStart && (
+          {mode === 'range' && !tempStart && (
             <Text className='notice-text' style={{ color: '#1677ff', fontWeight: 500 }}>
               💡 请先选择入住日期
             </Text>
           )}
-          {mode === 'range' && tempStart && (
+          {mode === 'range' && tempStart && !tempEnd && (
             <Text className='notice-text' style={{ color: '#1677ff', fontWeight: 500 }}>
               💡 请选择离店日期（系统会自动识别顺序）
+            </Text>
+          )}
+          {mode === 'range' && tempStart && tempEnd && (
+            <Text className='notice-text' style={{ color: '#52c41a', fontWeight: 500 }}>
+              ✅ 已选好，点"确定"确认，或重新点选更改
             </Text>
           )}
         </View>
@@ -359,9 +387,8 @@ const Calendar = ({
             const isSelectable = isDaySelectable(day) && isInMonth
             const status = getDayStatus(day)
             const isToday = day ? day.isSame(today, 'day') : false
-            const isStartDate = day ? day.format('YYYY-MM-DD') === startDate : false
-            const isEndDate = mode === 'range' && day ? day.format('YYYY-MM-DD') === endDate : false
-            const isTempStart = tempStart && day ? day.format('YYYY-MM-DD') === tempStart : false
+            const isStartDate = day ? day.format('YYYY-MM-DD') === tempStart : false
+            const isEndDate = mode === 'range' && day ? day.format('YYYY-MM-DD') === tempEnd : false
             
             return (
               <View
@@ -379,8 +406,6 @@ const Calendar = ({
                       <Text className='day-label start-label'>入住</Text>
                     ) : isEndDate && isInMonth ? (
                       <Text className='day-label end-label'>离店</Text>
-                    ) : isTempStart && isInMonth ? (
-                      <Text className='day-label start-label' style={{ backgroundColor: '#95c9ff' }}>入住</Text>
                     ) : isToday && isInMonth ? (
                       <Text className='day-label today-label'>今天</Text>
                     ) : !isSelectable && isInMonth ? (

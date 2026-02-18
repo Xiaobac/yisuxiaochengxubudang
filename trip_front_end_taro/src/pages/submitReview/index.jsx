@@ -8,7 +8,7 @@ import './index.css';
 function SubmitReview() {
   const { cssVars } = useTheme();
   const router = useRouter();
-  const { orderId, hotelName } = router.params;
+  const { orderId, hotelId, hotelName } = router.params;
   
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState('');
@@ -22,7 +22,7 @@ function SubmitReview() {
     
     setLoading(true);
     try {
-      await createReview(orderId, rating, content);
+      await createReview(hotelId, rating, content);
       Taro.showToast({ title: '评价提交成功', icon: 'success' });
       setTimeout(() => {
         Taro.navigateBack();

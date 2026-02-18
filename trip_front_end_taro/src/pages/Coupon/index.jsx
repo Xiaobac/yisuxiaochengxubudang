@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { getCoupons, getUserCoupons, claimCoupon } from '../../services/coupon';
+import { storage } from '../../utils/storage';
 import dayjs from 'dayjs';
 import './index.css';
 
@@ -50,6 +51,10 @@ function Coupons() {
   };
 
   const handleClaim = async (couponId) => {
+    if (!storage.isAuthenticated()) {
+      Taro.showToast({ title: '请先登录后领取', icon: 'none', duration: 1500 });
+      return;
+    }
     if (claimingId) return;
     setClaimingId(couponId);
     try {

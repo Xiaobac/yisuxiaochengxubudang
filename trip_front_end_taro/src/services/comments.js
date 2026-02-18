@@ -1,4 +1,5 @@
 import { get, post, put, del } from './request';
+import { storage } from '../utils/storage';
 // import { getReviewsByHotelId } from './review'; // Circular dependency if not careful, or just duplication.
 // Let's implement getReviewsByHotelId inside comments.js or use this file as the source of truth.
 
@@ -14,8 +15,10 @@ export const getComments = (params) => {
 
 // Re-implementing functions from review.js to consolidate
 
-export const getMyReviews = async (userId) => {
+export const getMyReviews = async () => {
   try {
+    const user = storage.getUser();
+    const userId = user?.id;
     const res = await get('/comments', { userId });
     return res;
   } catch (error) {
