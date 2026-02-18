@@ -2,6 +2,17 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+import { z } from 'zod';
+
+const createRoomTypeSchema = z.object({
+  name:        z.string().min(1).max(100),
+  description: z.string().max(1000).optional(),
+  price:       z.number().positive(),
+  stock:       z.number().int().nonnegative().optional().default(0),
+  amenities:   z.record(z.unknown()).optional(),
+  images:      z.array(z.string().url()).optional(),
+  discount:    z.number().min(0).max(1).optional().default(1.0),
+});
 
 /**
  * @swagger
@@ -226,12 +237,12 @@ export async function POST(
     }
 
     // 3. 创建房型
-    const body = await request.json();
-    const { name, description, price, stock, amenities, images, discount } = body;
-
-    if (!name || !price) {
-        return NextResponse.json({ success: false, error: '名称和价格必填' }, { status: 400 });
+    const rawBody = await request.json();
+    const parsed = createRoomTypeSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: parsed.error.errors[0].message }, { status: 400 });
     }
+    const { name, description, price, stock, amenities, images, discount } = parsed.data;
 
     const roomType = await prisma.roomType.create({
       data: {
@@ -239,10 +250,10 @@ export async function POST(
         name,
         description,
         price,
-        stock: stock ?? 0,
+        stock,
         amenities: amenities ?? {},
         images: images ?? [],
-        discount: discount ?? 1.0,
+        discount,
       }
     });
 

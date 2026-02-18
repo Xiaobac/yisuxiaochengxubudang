@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
+import { View, Text, Image, ScrollView, Button, Swiper, SwiperItem } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import dayjs from 'dayjs';
 import { getHotelById, getHotelRoomTypes } from '../../services/hotel';
@@ -30,7 +30,6 @@ function HotelDetail() {
   const [hotel, setHotel] = useState(null);
   const [roomTypes, setRoomTypes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeMediaTab, setActiveMediaTab] = useState('cover'); // 'cover' | 'location'
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
   const [scrollTop, setScrollTop] = useState(0);
   const [headerOpacity, setHeaderOpacity] = useState(0);
@@ -64,18 +63,32 @@ function HotelDetail() {
     try {
       const res = await getHotelRoomTypes(hotelId, start, end);
       if (res.success && res.data) {
-        setRoomTypes(prev => prev.map(room => {
-          const updated = res.data.find(r => r.id === room.id);
-          if (!updated) return room;
-          return {
-            ...room,
-            remainingRooms: updated.remainingRooms ?? null,
-            dynamicPrice: updated.dynamicPrice ?? null,
-          };
-        }));
+        setRoomTypes(prev => {
+          const updated = prev.map(room => {
+            const fresh = res.data.find(r => r.id === room.id);
+            if (!fresh) return room;
+            return {
+              ...room,
+              remainingRooms: fresh.remainingRooms ?? null,
+              dynamicPrice: fresh.dynamicPrice ?? null,
+            };
+          });
+          // 保持按价格从低到高排序
+          updated.sort((a, b) => (a.dynamicPrice ?? a.price) - (b.dynamicPrice ?? b.price));
+          return updated;
+        });
       }
     } catch (error) {
       console.error('刷新房型库存失败:', error);
+      Taro.showModal({
+        title: '加载失败',
+        content: '获取房间可用性失败，是否重试？',
+        confirmText: '重试',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) refreshRoomAvailability(start, end);
+        },
+      });
     }
   };
 
@@ -185,6 +198,12 @@ function HotelDetail() {
               remainingRooms: room.remainingRooms ?? null,
               dynamicPrice: room.dynamicPrice ?? null,
             };
+          });
+          // 按价格从低到高排序（优先使用动态价格）
+          transformedRoomTypes.sort((a, b) => {
+            const priceA = a.dynamicPrice ?? a.price;
+            const priceB = b.dynamicPrice ?? b.price;
+            return priceA - priceB;
           });
           console.log('🛏️ 处理后的房型数据:', transformedRoomTypes);
           setRoomTypes(transformedRoomTypes);
@@ -415,27 +434,6 @@ function HotelDetail() {
     setIsCalendarVisible(false);
   };
 
-  const handleMediaTagClick = (tag) => {
-    if (tag === '相册') {
-      const urls = (hotel.images || []).map(url => getImageUrl(url));
-      if (urls.length > 0) {
-        Taro.previewImage({
-          urls,
-          current: urls[0] // Start from first
-        });
-      } else {
-        Taro.showToast({ title: '暂无更多图片', icon: 'none' });
-      }
-      return;
-    }
-
-    if (tag === '封面') {
-      setActiveMediaTab('cover');
-    } else if (tag === '位置') {
-      setActiveMediaTab('location');
-    }
-  };
-
   const filterTags = ['含早餐', '大床房', '双床房','棋牌房','家庭房','免费取消'];
 
   const FACILITY_MAP = {
@@ -535,38 +533,34 @@ function HotelDetail() {
         onScroll={handleScroll}
         scrollTop={scrollTop}
       >
-        {/* 2.媒体区域 */}
-        <View className='media-box' onClick={() => {
-          const urls = (hotel.images || [hotel.img]).map(url => getImageUrl(url));
-          if (urls.length > 0) {
-            Taro.previewImage({
-              urls,
-              current: activeMediaTab === 'location' && urls.length > 1 ? urls[1] : urls[0]
-            });
-          }
-        }}>
-          <Image 
-            className='main-media-img' 
-            src={getImageUrl(
-              activeMediaTab === 'location' && hotel.images && hotel.images.length > 1 
-                ? hotel.images[1] 
-                : (hotel.images && hotel.images.length > 0 ? hotel.images[0] : hotel.img)
-            )} 
-            mode='aspectFill' 
-          />
-          <View className='media-tags-row'>
-            <Text 
-              className={`media-tag ${activeMediaTab === 'cover' ? 'active' : ''}`}
-              onClick={(e) => { e.stopPropagation(); handleMediaTagClick('封面'); }}
-            >封面</Text>
-            <Text 
-              className={`media-tag ${activeMediaTab === 'location' ? 'active' : ''}`}
-              onClick={(e) => { e.stopPropagation(); handleMediaTagClick('位置'); }}
-            >位置</Text>
-            <Text 
-              className='media-tag'
-              onClick={(e) => { e.stopPropagation(); handleMediaTagClick('相册'); }}
-            >相册</Text>
+        {/* 2.媒体区域 - Swiper 左右滑动 */}
+        <View className='media-box'>
+          <Swiper
+            className='media-swiper'
+            indicatorDots
+            indicatorColor='rgba(255,255,255,0.5)'
+            indicatorActiveColor='#ffffff'
+            circular
+            autoplay={false}
+          >
+            {(hotel.images && hotel.images.length > 0 ? hotel.images : [hotel.img]).map((imgUrl, index) => (
+              <SwiperItem key={index}>
+                <Image
+                  className='main-media-img'
+                  src={getImageUrl(imgUrl)}
+                  mode='aspectFill'
+                  onClick={() => {
+                    const urls = (hotel.images || [hotel.img]).map(url => getImageUrl(url));
+                    Taro.previewImage({ urls, current: getImageUrl(imgUrl) });
+                  }}
+                />
+              </SwiperItem>
+            ))}
+          </Swiper>
+          <View className='media-count-badge'>
+            <Text className='media-count-text'>
+              {hotel.images ? hotel.images.length : 1} 张
+            </Text>
           </View>
           <View className='tag-sq-btn'>口碑榜</View>
         </View>

@@ -1,7 +1,11 @@
 import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-should-be-in-env';
+const raw = process.env.JWT_SECRET;
+if (!raw || raw === 'your-secret-key-should-be-in-env') {
+  throw new Error('[startup] JWT_SECRET 环境变量未设置或使用了默认值，请在 .env 中配置强密钥');
+}
+export const JWT_SECRET = raw;
 
 export interface DecodedUser {
   userId: number;

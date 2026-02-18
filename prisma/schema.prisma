@@ -116,6 +116,10 @@ model Hotel {
   reviews         Review[]
   comments        Comment[]
 
+  @@index([merchantId])
+  @@index([locationId])
+  @@index([status])
+  @@index([type])
   @@map("hotels")
 }
 
@@ -168,6 +172,7 @@ model RoomType {
   availability RoomAvailability[]
   bookings    Booking[]
 
+  @@index([hotelId])
   @@map("room_types")
 }
 
@@ -198,13 +203,18 @@ model Booking {
   totalPrice  Decimal   @db.Decimal(10, 2)
   // 订单状态: 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'completed' | 'cancelled'
   status      String    @default("pending")
-  guestInfo   Json?
-  createdAt   DateTime  @default(now())
-  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  hotel       Hotel?    @relation(fields: [hotelId], references: [id], onDelete: SetNull)
-  roomType    RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: SetNull)
-  review      Review?
+  guestInfo      Json?
+  couponId       Int?
+  discountAmount Decimal   @default(0) @db.Decimal(10, 2)
+  createdAt      DateTime  @default(now())
+  user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  hotel          Hotel?    @relation(fields: [hotelId], references: [id], onDelete: SetNull)
+  roomType       RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: SetNull)
+  review         Review?
 
+  @@index([userId])
+  @@index([hotelId])
+  @@index([status])
   @@map("bookings")
 }
 
@@ -221,6 +231,8 @@ model Review {
   hotel     Hotel?   @relation(fields: [hotelId], references: [id], onDelete: SetNull)
   booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
+  @@index([hotelId])
+  @@index([userId])
   @@map("reviews")
 }
 
@@ -235,6 +247,8 @@ model Comment {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   hotel     Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
 
+  @@index([hotelId])
+  @@index([userId])
   @@map("comments")
 }
 

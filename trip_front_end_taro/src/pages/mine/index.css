@@ -184,3 +184,19 @@
 .theme-seg-active .theme-seg-label {
   color: #ffffff;
 }
+
+/* 统计数字骨架屏 */
+.stat-skeleton {
+  width: 36px;
+  height: 22px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s infinite;
+  margin: 0 auto 4px;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
