@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, Input, Map, ScrollView } from '@tarojs/components';
-import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
+import Taro, { usePullDownRefresh, useDidShow, useReachBottom } from '@tarojs/taro';
 import dayjs from 'dayjs';
 import { getHotels } from '../../services/hotel';
 import { getLocations } from '../../services/location';
@@ -23,7 +23,11 @@ function HotelList() {
   const [hotelList, setHotelList] = useState([]);
   const [filteredHotels, setFilteredHotels] = useState([]);
   const [searchParams, setSearchParams] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const pageSize = 10;
+  
   const [filterParams, setFilterParams] = useState({
     sortBy: 'recommend',
     priceRange: null,
@@ -97,7 +101,9 @@ function HotelList() {
     setIsCitySelectorVisible(false);
     const newParams = { ...searchParams, locationId: location.id, locationName: location.name };
     setSearchParams(newParams);
-    loadHotels(newParams);
+    setPage(1);
+    setHasMore(true);
+    loadHotels(newParams, 1, false);
   };
 
   // ---------- 新增：日期选择处理 ----------
@@ -110,15 +116,16 @@ function HotelList() {
     setIsCalendarVisible(false);
     if (start) setStartDate(start);
     if (end) setEndDate(end);
+    let newParams = { ...searchParams };
     if (start && end) {
-      const newParams = { ...searchParams, checkIn: start, checkOut: end };
-      setSearchParams(newParams);
-      loadHotels(newParams);
+      newParams = { ...newParams, checkIn: start, checkOut: end };
     } else if (start) {
-      const newParams = { ...searchParams, checkIn: start, checkOut: '' };
-      setSearchParams(newParams);
-      loadHotels(newParams);
+      newParams = { ...newParams, checkIn: start, checkOut: '' };
     }
+    setSearchParams(newParams);
+    setPage(1);
+    setHasMore(true);
+    loadHotels(newParams, 1, false);
   };
 
   // ---------- 辅助函数：日期显示 ----------
@@ -138,20 +145,26 @@ function HotelList() {
   };
 
   // ---------- 修改：加载酒店列表，并获取每个酒店的最低价格 ----------
-  const loadHotels = async (params = {}) => {
+  const loadHotels = async (params = {}, currentPage = 1, isLoadMore = false) => {
+    if (loading) return;
     setLoading(true);
     try {
-      const res = await getHotels({
-        locationId: params.locationId,
-        keyword: params.keyword,
-        type: params.type,
-        minPrice: params.minPrice,
-        maxPrice: params.maxPrice,
-        checkIn: params.checkIn,
-        checkOut: params.checkOut,
-        starRating: params.starRating,
-        tags: params.tags
-      });
+      // 合并当前所有的筛选参数，并加入分页参数
+      const queryParams = {
+        locationId: params.locationId || searchParams.locationId,
+        keyword: params.keyword || searchParams.keyword,
+        type: params.type || searchParams.type,
+        minPrice: params.minPrice || searchParams.minPrice,
+        maxPrice: params.maxPrice || searchParams.maxPrice,
+        checkIn: params.checkIn || searchParams.checkIn,
+        checkOut: params.checkOut || searchParams.checkOut,
+        starRating: params.starRating || searchParams.starRating,
+        tags: params.tags || searchParams.tags,
+        page: currentPage,
+        limit: pageSize
+      };
+
+      const res = await getHotels(queryParams);
 
       if (res.success && res.data && res.data.length > 0) {
         // 第一步：基础格式化
@@ -200,16 +213,30 @@ function HotelList() {
           })
         );
 
-        setHotelList(hotelsWithPrice);
-        generateMapMarkers(hotelsWithPrice);
+        if (isLoadMore) {
+          setHotelList(prev => [...prev, ...hotelsWithPrice]);
+        } else {
+          setHotelList(hotelsWithPrice);
+        }
+
+        if (res.data.length < pageSize) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
+
+        generateMapMarkers(isLoadMore ? [...hotelList, ...hotelsWithPrice] : hotelsWithPrice);
       } else {
-        setHotelList([]);
-        setMarkers([]);
+        if (!isLoadMore) {
+          setHotelList([]);
+          setMarkers([]);
+        }
+        setHasMore(false);
       }
     } catch (error) {
       console.error('❌ 加载酒店列表失败:', error);
       Taro.showToast({ title: '加载失败，请重试', icon: 'none' });
-      setHotelList([]);
+      if (!isLoadMore) setHotelList([]);
     } finally {
       setLoading(false);
     }
@@ -244,7 +271,9 @@ function HotelList() {
     }
   };
 
-  // ---------- 原有：筛选和排序 ----------
+  // ---------- 修改：筛选和排序 ----------
+  // 注意：如果分页后数据量较大，建议将筛选和排序逻辑移至后端处理。
+  // 当前前端逻辑仅对已加载的数据生效。
   const filterAndSortHotels = () => {
     let filtered = [...hotelList];
     if (filterParams.priceRange) {
@@ -285,11 +314,17 @@ function HotelList() {
   const handleSearch = (keyword) => {
     const newParams = { ...searchParams, keyword };
     setSearchParams(newParams);
-    loadHotels(newParams);
+    setPage(1);
+    setHasMore(true);
+    loadHotels(newParams, 1, false);
   };
 
   const handleSortChange = (newSortBy) => {
     setSortBy(newSortBy);
+    // 可选：如果排序由后端处理，这里应重置列表并刷新
+    // setPage(1);
+    // setHasMore(true);
+    // loadHotels({ ...searchParams, sortBy: newSortBy }, 1, false);
   };
 
   const handleOpenSortMenu = () => {
@@ -350,14 +385,13 @@ function HotelList() {
   useDidShow(() => {
     const params = Taro.getStorageSync('hotelSearchParams');
     if (params) {
-      console.log('📦 收到首页传递的搜索参数:', params);
-      setSearchParams(params);
-      if (params.checkIn) setStartDate(params.checkIn);
-      if (params.checkOut) setEndDate(params.checkOut);
-      loadHotels(params);
+      setPage(1);
+      setHasMore(true);
+      loadHotels(params, 1, false);
       Taro.removeStorageSync('hotelSearchParams');
     } else if (hotelList.length === 0) {
-      loadHotels();
+      setPage(1);
+      loadHotels({}, 1, false);
     }
   });
 
@@ -365,12 +399,23 @@ function HotelList() {
     loadLocations();
   }, []);
 
+  // 监听触底事件
+  useReachBottom(() => {
+    if (!loading && hasMore && viewMode === 'list') {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      loadHotels(searchParams, nextPage, true);
+    }
+  });
+
   useEffect(() => {
     filterAndSortHotels();
   }, [hotelList, filterParams, sortBy, localSearchKeyword]);
 
   usePullDownRefresh(async () => {
-    await loadHotels(searchParams);
+    setPage(1);
+    setHasMore(true);
+    await loadHotels(searchParams, 1, false);
     Taro.stopPullDownRefresh();
   });
 
@@ -435,8 +480,6 @@ function HotelList() {
           )}
         </View>
       )}
-
-      {/* 酒店列表/地图视图 */}
       {loading ? (
         <LoadingSpinner text='加载中...' />
       ) : filteredHotels.length === 0 ? (

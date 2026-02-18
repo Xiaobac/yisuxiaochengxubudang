@@ -146,7 +146,7 @@ export default function HotelManagementPage() {
   const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 15, total: 0 });
   
   // Comments states
   const [commentsVisible, setCommentsVisible] = useState(false);
@@ -157,7 +157,7 @@ export default function HotelManagementPage() {
   const { message } = App.useApp();
 
   useEffect(() => {
-    fetchHotels(1, 10);
+    fetchHotels(1, 15);
     fetchLocations();
     fetchTags();
   }, []);
@@ -167,16 +167,12 @@ export default function HotelManagementPage() {
       setLoading(true);
       const res = await getMyHotels({ page, limit: pageSize });
       // The service now returns { success: true, data: Hotel[], total: number, ... }
-      // Or due to my change in service which returns "response" directly if `get` returns data.
-      // Wait, `get` usually returns parsed JSON body.
-      // My service change: `return get<HotelListResponse>(...)`.
-      // So `res` is `HotelListResponse`.
       if (res.success && res.data) {
           setHotels(res.data);
           setPagination({
               current: page,
               pageSize: pageSize,
-              total: res.total || 0
+              total: res.total || 0 // Assuming backend returns total count
           });
       }
     } catch (error) {

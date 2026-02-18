@@ -38,6 +38,7 @@ export default function HotelManagementPage() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 15, total: 0 });
   
   // Filter states
   const [searchText, setSearchText] = useState('');
@@ -58,7 +59,7 @@ export default function HotelManagementPage() {
 
   useEffect(() => {
     fetchLocations();
-    fetchHotels();
+    fetchHotels(1, 15);
   }, []);
 
   const fetchLocations = async () => {
@@ -70,17 +71,29 @@ export default function HotelManagementPage() {
     }
   };
 
-  const fetchHotels = async () => {
+  const fetchHotels = async (page = pagination.current, pageSize = pagination.pageSize) => {
     try {
       setLoading(true);
-      const params: any = {};
+      const params: any = {
+        page: page,
+        limit: pageSize
+      };
       
       if (searchText) params.keyword = searchText;
       if (selectedLocation) params.locationId = selectedLocation;
       if (selectedStatus) params.status = selectedStatus;
 
       const res = await getHotels(params);
-      setHotels(res.data || []);
+      if (res.success) {
+        setHotels(res.data || []);
+        // Assuming the API returns total count
+        setPagination(prev => ({
+           ...prev,
+           current: page,
+           pageSize: pageSize,
+           total: res.total || 0
+        }));
+      }
     } catch (error) {
       console.error('获取酒店列表失败:', error);
       message.error('获取酒店列表失败');
@@ -90,17 +103,18 @@ export default function HotelManagementPage() {
   };
 
   const handleSearch = () => {
-    fetchHotels();
+    fetchHotels(1, pagination.pageSize);
   };
 
   const handleReset = () => {
     setSearchText('');
     setSelectedLocation(undefined);
     setSelectedStatus(undefined);
-    // Needed to trigger re-fetch with empty params, but state update is async.
-    // Better to just call fetch with empty directly or rely on useEffect deps if we used them (but we don't automatedly).
-    // Let's just manually refetch next tick or directly.
-    getHotels({}).then(res => setHotels(res.data || [])).finally(()=>setLoading(false));
+    fetchHotels(1, pagination.pageSize);
+  };
+  
+  const handleTableChange = (newPagination: any) => {
+      fetchHotels(newPagination.current, newPagination.pageSize);
   };
 
   const handleView = (record: Hotel) => {
@@ -306,7 +320,8 @@ export default function HotelManagementPage() {
         dataSource={hotels}
         rowKey="id"
         loading={loading}
-        pagination={{ pageSize: 10 }}
+        pagination={pagination}
+        onChange={handleTableChange}
       />
 
       <Drawer
