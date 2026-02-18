@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, Input, Map, ScrollView } from '@tarojs/components';
-import Taro, { usePullDownRefresh, useDidShow, useReachBottom } from '@tarojs/taro';
+import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
 import dayjs from 'dayjs';
 import { getHotels } from '../../services/hotel';
 import { getLocations } from '../../services/location';
@@ -24,10 +24,7 @@ function HotelList() {
   const [filteredHotels, setFilteredHotels] = useState([]);
   const [searchParams, setSearchParams] = useState({});
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const pageSize = 10;
-  
+
   const [filterParams, setFilterParams] = useState({
     sortBy: 'recommend',
     priceRange: null,
@@ -46,6 +43,7 @@ function HotelList() {
   const PAGE_SIZE = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   // ---------- 新增：城市选择状态 ----------
   const [locations, setLocations] = useState([]);
@@ -106,9 +104,7 @@ function HotelList() {
     setIsCitySelectorVisible(false);
     const newParams = { ...searchParams, locationId: location.id, locationName: location.name };
     setSearchParams(newParams);
-    setPage(1);
-    setHasMore(true);
-    loadHotels(newParams, 1, false);
+    loadHotels(newParams);
   };
 
   // ---------- 新增：日期选择处理 ----------
@@ -128,9 +124,7 @@ function HotelList() {
       newParams = { ...newParams, checkIn: start, checkOut: '' };
     }
     setSearchParams(newParams);
-    setPage(1);
-    setHasMore(true);
-    loadHotels(newParams, 1, false);
+    loadHotels(newParams);
   };
 
   // ---------- 辅助函数：日期显示 ----------
@@ -351,17 +345,11 @@ function HotelList() {
   const handleSearch = (keyword) => {
     const newParams = { ...searchParams, keyword };
     setSearchParams(newParams);
-    setPage(1);
-    setHasMore(true);
-    loadHotels(newParams, 1, false);
+    loadHotels(newParams);
   };
 
   const handleSortChange = (newSortBy) => {
     setSortBy(newSortBy);
-    // 可选：如果排序由后端处理，这里应重置列表并刷新
-    // setPage(1);
-    // setHasMore(true);
-    // loadHotels({ ...searchParams, sortBy: newSortBy }, 1, false);
   };
 
   const handleOpenSortMenu = () => {
@@ -422,13 +410,13 @@ function HotelList() {
   useDidShow(() => {
     const params = Taro.getStorageSync('hotelSearchParams');
     if (params) {
-      setPage(1);
-      setHasMore(true);
-      loadHotels(params, 1, false);
+      setSearchParams(params);
+      if (params.checkIn) setStartDate(params.checkIn);
+      if (params.checkOut) setEndDate(params.checkOut);
+      loadHotels(params);
       Taro.removeStorageSync('hotelSearchParams');
     } else if (hotelList.length === 0) {
-      setPage(1);
-      loadHotels({}, 1, false);
+      loadHotels({});
     }
   });
 
@@ -436,23 +424,12 @@ function HotelList() {
     loadLocations();
   }, []);
 
-  // 监听触底事件
-  useReachBottom(() => {
-    if (!loading && hasMore && viewMode === 'list') {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      loadHotels(searchParams, nextPage, true);
-    }
-  });
-
   useEffect(() => {
     filterAndSortHotels();
   }, [hotelList, filterParams, sortBy, localSearchKeyword]);
 
   usePullDownRefresh(async () => {
-    setPage(1);
-    setHasMore(true);
-    await loadHotels(searchParams, 1, false);
+    await loadHotels(searchParams);
     Taro.stopPullDownRefresh();
   });
 
