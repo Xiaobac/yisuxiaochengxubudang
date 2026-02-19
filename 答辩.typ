@@ -109,15 +109,15 @@
   [审核/发布/下线], [10], [通过/拒绝/下线/恢复四种操作 ✓ \ 状态机展示（pending/published/rejected/offline）✓ \ 拒绝原因输入并展示给商户 ✓ \ 下线可恢复（状态流转代替软删除）✓ \ 审计日志原子写入 ✓], [§ Web·审核],
   [*技术复杂度*], [*10*], [], [],
   [数据结构与动态定价], [2], [RoomAvailability 每日粒度 upsert + 动态价格覆盖基础价 ✓], [§ 系统设计·数据库],
-  [用户体验流畅度], [5], [流式 AI 推荐 ✓ \ 滚动渐变 Header ✓ \ loadingMore 互斥锁 ✓ \ Axios failedQueue token 刷新 ✓], [§ UX与兼容性],
+  [用户体验流畅度], [5], [流式 AI 推荐 ✓ \ 滚动渐变 Header ✓ \ Skeleton 骨架屏 ✓ \ loadingMore 互斥锁 ✓ \ Axios failedQueue token 刷新 ✓], [§ UX与兼容性],
   [长列表渲染优化], [3], [服务端分页(10条/页)+客户端无限滚动追加 ✓ \ onScrollToLower+loadingMore锁 ✓ \ hasMore状态管理 ✓], [§ 小程序·列表],
   [*用户体验*], [*10*], [], [],
-  [视觉设计与布局], [6], [Ant Design 企业级组件 ✓ \ 深色/浅色双主题 ✓ \ 统一 Loading/EmptyState ✓ \ 卡片圆角阴影 ✓], [§ UX与兼容性],
+  [视觉设计与布局], [6], [Ant Design 企业级组件 ✓ \ 深色/浅色双主题（CSS 变量 + tokens）✓ \ 统一 Icon/Skeleton/Loading/EmptyState ✓ \ 卡片圆角阴影 ✓], [§ UX与兼容性],
   [浏览器兼容性], [4], [Web端：Chrome/Firefox/Safari/Edge ✓ \ 小程序：微信/支付宝/抖音/H5（Taro 4 编译）✓], [§ UX与兼容性],
   [*代码质量*], [*10*], [], [],
   [项目结构与存储设计], [4], [前后端共享 types/index.ts ✓ \ API 按业务域分目录 ✓ \ 14表最小冗余设计 ✓], [§ 代码质量],
   [编码规范与 README], [3], [ESLint 统一规范 ✓ \ TypeScript 全链路 ✓ \ README 含完整启动/种子/排障指南 ✓], [§ 代码质量],
-  [代码复用与组件抽象], [3], [Calendar/AiChatWidget/FilterPanel 多处复用 ✓ \ verifyAuth() 被29个API文件共享 ✓], [§ 代码质量],
+  [代码复用与组件抽象], [3], [Calendar/Icon/Skeleton/AiChatWidget/FilterPanel 等 8 个共享组件 ✓ \ verifyAuth() 被29个API文件共享 ✓ \ useTheme() 全局主题 Hook ✓], [§ 代码质量],
   [*项目创新*], [*10*], [], [],
   [提升研发效率新技术], [5], [Taro(多端编译) / Prisma(Schema驱动) / LangChain(LLM调用) / Zod(类型+校验) / next-themes(深色模式) / Swagger(自动文档) ✓], [§ 创新点详解],
   [自主 UX 创新功能], [5], [AI自然语言推荐+流式输出 / 可拖拽悬浮AI按钮 / 滚动渐变Header / 地图视图切换 / 优惠券系统 / 搜索历史去重 / 商户数据可视化看板 ✓], [§ 创新点详解],
@@ -586,7 +586,9 @@ trip_front_end_project/
     │   ├── components/
     │   │   ├── AiChatWidget/index.jsx     # 悬浮 AI 聊天（流式 chunk 渲染）
     │   │   ├── BookingConfirm/index.jsx   # 预订确认弹窗（填写入住人）
-    │   │   ├── Calendar/index.jsx         # 日历组件（区间/单日模式）
+    │   │   ├── Calendar/index.jsx         # 日历组件（区间/单日模式，底部确认按钮）
+    │   │   ├── Icon/index.jsx             # 图标组件（借鉴 Phosphor Icons，data URI 渲染）
+    │   │   ├── Skeleton/index.jsx         # 骨架屏（hotelCard/hotelDetail/orderCard）
     │   │   ├── SearchSuggestion/index.jsx # 搜索建议（历史+热门城市）
     │   │   ├── FilterPanel/index.jsx      # 筛选面板（价格/星级）
     │   │   ├── EmptyState/index.jsx       # 空状态占位组件
@@ -600,6 +602,8 @@ trip_front_end_project/
     │   │   └── auth.js               # 认证相关 API
     │   ├── utils/
     │   │   ├── useTheme.js           # 深色模式 Hook + eventCenter 广播
+    │   │   ├── theme.js              # 主题工具（TOKENS 定义 / resolveTheme / cssVars 生成）
+    │   │   ├── icons.js              # SVG 图标 path data（借鉴 Phosphor Icons）+ data URI 生成
     │   │   ├── format.js             # 日期/价格格式化工具
     │   │   ├── storage.js            # Taro 本地存储封装
     │   │   ├── constants.js          # 全局常量（API 地址等）
@@ -630,8 +634,12 @@ trip_front_end_project/
   [#flink("trip_front_end_taro/src/components/AiChatWidget/index.jsx")], [组件], [悬浮 AI 聊天，可拖拽，小程序退化为单次请求模式],
   [#flink("trip_front_end_taro/src/components/BookingConfirm/index.jsx")], [组件], [预订确认弹窗：入住人信息填写 + 提交],
   [#flink("trip_front_end_taro/src/components/Calendar/index.jsx")], [组件], [日历：区间模式（普通住宿）/ 单日模式（钟点房）],
+  [#flink("trip_front_end_taro/src/components/Icon/index.jsx")], [组件], [图标：借鉴 Phosphor Icons SVG path data，通过 `<Image>` data URI 渲染，深色模式经 tokens 适配],
+  [#flink("trip_front_end_taro/src/components/Skeleton/index.jsx")], [组件], [骨架屏：hotelCard / hotelDetail / orderCard 三种布局 + shimmer 动画],
   [#flink("trip_front_end_taro/src/components/FilterPanel/index.jsx")], [组件], [筛选面板：价格/设施多维度筛选],
-  [#flink("trip_front_end_taro/src/utils/useTheme.js")], [Hook], [深色模式：懒初始化 + eventCenter 跨页同步],
+  [#flink("trip_front_end_taro/src/utils/icons.js")], [工具], [20+ 条 Phosphor Icons SVG path data + `createIconUri` / `getIconUri` 生成函数],
+  [#flink("trip_front_end_taro/src/utils/theme.js")], [工具], [主题工具：TOKENS 颜色定义、resolveTheme、getThemeCssVars、applyNativeTheme],
+  [#flink("trip_front_end_taro/src/utils/useTheme.js")], [Hook], [深色模式：懒初始化 + eventCenter 跨页同步，返回 cssVars / isDark / tokens],
 )
 
 == 模块划分
@@ -1253,11 +1261,34 @@ while (true) {
 
 === 怎么做的
 
-*小程序端*：`useTheme()` Hook 以懒初始化方式（`useState(() => ...)` 避免重复计算）读取 `resolveTheme()` 的结果——该函数优先读 `Taro.getStorageSync('theme')` 中的用户偏好，缺失时回退到 `Taro.getSystemInfoSync().theme` 系统设置。Hook 返回两个值：`cssVars`（一段 CSS 变量字符串，如 `--color-bg:#1a1a1a;--color-text:#fff;...`）和 `isDark` 布尔值。各页面将 `cssVars` 绑定到根 `<View style={cssVars}>`，子组件通过 `var(--color-xxx)` 继承，无需任何改动。
+*小程序端*：`useTheme()` Hook 以懒初始化方式（`useState(() => ...)` 避免重复计算）读取 `resolveTheme()` 的结果——该函数优先读 `Taro.getStorageSync('theme')` 中的用户偏好，缺失时回退到 `Taro.getSystemInfoSync().theme` 系统设置。Hook 返回三个值：`cssVars`（一段 CSS 变量字符串，如 `--color-bg:#1a1a1a;--color-text:#fff;...`）、`isDark` 布尔值、以及 `tokens`（已解析的主题色键值对对象，如 `{ '--color-primary': '#1677ff', '--color-text-primary': '#1a1a1a', ... }`）。
+
+`cssVars` 用于 CSS 变量注入，各页面将其绑定到根 `<View style={cssVars}>`，子组件通过 `var(--color-xxx)` 继承。`tokens` 用于 JS 层面需要动态颜色的场景——典型用例是 SVG Icon 组件的 `color` 属性：由于 Taro 小程序中 SVG 的 `fill` 属性不支持 CSS 变量，Icon 组件通过 `tokens['--color-text-primary']` 获取已解析的十六进制色值，注入 SVG data URI。这一设计保证了 `theme.js` 中的 `TOKENS` 对象是颜色的唯一真相源（Single Source of Truth），避免各组件硬编码 `isDark ? '#hex1' : '#hex2'` 三元表达式。
 
 主题同步通过两条路径保证：① Taro 的 `useDidShow` 生命周期钩子在每次页面重新进入前台时重新计算并应用主题（处理从"我的"页切换主题后返回其他页的场景）；② `useEffect` 内监听 `Taro.eventCenter.on('themeChanged', handler)`，当用户在"我的"页手动切换时，`app.js` 广播该事件，所有已挂载页面的 Handler 同步更新状态，退出时 `off` 清理防止内存泄漏。
 
 *Web 端*：由 `next-themes` 的 `ThemeProvider` 统一管理，`data-theme` 属性写入 `<html>` 标签，`globals.css` 通过 `[data-theme='dark']` 选择器覆写 CSS 变量。Navbar 调用 `useTheme().setTheme()` 完成切换，无需额外状态管理。
+
+== Icon 图标组件与骨架屏
+
+=== 相关文件
+
+- 图标组件：#flink("trip_front_end_taro/src/components/Icon/index.jsx")
+- 图标 path data：#flink("trip_front_end_taro/src/utils/icons.js")（借鉴 Phosphor Icons 开源库）
+- 骨架屏组件：#flink("trip_front_end_taro/src/components/Skeleton/index.jsx")
+- 骨架屏样式：#flink("trip_front_end_taro/src/components/Skeleton/index.css")
+
+=== 做了什么
+
+Icon 组件统一了小程序端全部页面的图标渲染（40+ 处调用），替代了之前散落的 emoji 和 unicode 字符。骨架屏组件为酒店卡片、酒店详情、订单卡片三种场景提供内容占位加载态，提升感知加载速度。
+
+=== 怎么做的
+
+*Icon*：图标 SVG path data 借鉴自 Phosphor Icons 开源图标库（MIT 协议），存放于 `icons.js` 的 `ICON_PATHS` 对象（20+ 个图标，涵盖导航、搜索、收藏、日历等分类）。`createIconUri(pathData, color)` 将 path data 拼接为完整 SVG 字符串后 `encodeURIComponent` 生成 data URI；`getIconUri(name, color)` 封装了名称查找。Icon 组件内部用 `useMemo` 缓存生成结果，通过 Taro `<Image>` 的 `src` 属性渲染，绕开了小程序不支持内联 SVG 的限制。
+
+图标颜色由调用方传入，统一使用 `tokens['--color-text-primary']` 等已解析色值（而非 CSS 变量字符串），保证深色/浅色模式下图标颜色跟随主题自动切换。
+
+*Skeleton*：组件接收 `type` 参数，按场景渲染不同骨架布局——`hotelCard` 模拟卡片列表（图片+标题+标签+价格），`hotelDetail` 模拟详情页（Banner+设施行+房型列表），`orderCard` 模拟订单卡片（头部+信息行+按钮）。所有占位块通过 `.skeleton-shimmer` CSS 类添加从左到右的渐变光扫动画（`@keyframes shimmer`），`count` 参数控制列表类骨架的重复数量。
 
 == 管理员酒店审核实现
 
@@ -1484,7 +1515,7 @@ updated.sort(
 
 === 收藏切换
 
-收藏状态由 `isFavorite` boolean 驱动，图标在 `♡`（未收藏）/ `♥`（已收藏）间切换：
+收藏状态由 `isFavorite` boolean 驱动，通过 `Icon` 组件在 `heart`（未收藏空心）/ `heartFill`（已收藏实心）间切换，颜色跟随收藏状态动态变化：
 
 #text(size: 8.5pt, fill: black.lighten(55%))[来源：#flink("trip_front_end_taro/src/pages/hotelDetail/index.jsx")]
 ```js
@@ -1502,13 +1533,14 @@ const handleCollect = async () => {
 
 === 相关文件
 
-- 组件（395 行）：#flink("trip_front_end_taro/src/components/Calendar/index.jsx")
+- 组件（430 行）：#flink("trip_front_end_taro/src/components/Calendar/index.jsx")
+- 样式（386 行）：#flink("trip_front_end_taro/src/components/Calendar/index.css")
 - 调用方：#flink("trip_front_end_taro/src/pages/home/index.jsx")（首页日期选择）、#flink("trip_front_end_taro/src/pages/hotelDetail/index.jsx")（详情页日期修改）
 - 依赖库：dayjs（日期计算与格式化）
 
 === 功能概述
 
-自研日历组件，支持单日选择（钟点房模式）和日期区间选择（普通住宿模式）。用月份网格形式渲染，支持向前/向后翻月，今天之前及 30 天之后的日期不可选。选择完成后通过 `onConfirm` 回调将日期传回父组件。
+自研日历组件，支持单日选择（钟点房模式）和日期区间选择（普通住宿模式）。用月份网格形式渲染，支持向前/向后翻月，今天之前及 30 天之后的日期不可选。底部固定确认栏始终可见，用户选好日期后需点击"确定"按钮才会提交（不自动关闭），防止误操作。
 
 === 月份网格生成算法
 
@@ -1547,14 +1579,25 @@ const generateMonthGrid = () => {
   align: (left, left, left),
   table.header([*当前状态*], [*用户操作*], [*结果*]),
   [空（未选）或区间已完成], [点击任意日期], [`tempStart = 所选日`，`tempEnd = ''`，重新开始选择],
-  [已有 `tempStart`], [点击晚于起点的日期], [`tempEnd = 所选日`，区间确定，800ms 后自动关闭并回调 `onSelect`],
-  [已有 `tempStart`], [点击早于起点的日期], [自动交换顺序：`tempStart = 所选日` / `tempEnd = 原起点`，800ms 后关闭],
+  [已有 `tempStart`], [点击晚于起点的日期], [`tempEnd = 所选日`，区间确定，底部确认栏显示"共 N 晚"摘要],
+  [已有 `tempStart`], [点击早于起点的日期], [自动交换顺序：`tempStart = 所选日` / `tempEnd = 原起点`],
   [已有 `tempStart`], [点击与起点相同日期], [忽略（不允许零晚预订）],
-  [区间已完成], [点击"确定"按钮], [立即调用 `onSelect` + `onClose`，不等 800ms 定时器],
+  [区间已完成], [点击"确定"按钮], [调用 `onSelect(start, end)` + `onConfirm()` + 关闭日历],
+  [区间已完成], [重新点击任意日期], [清空区间，重新开始选择（不关闭日历）],
   [任意状态], [翻页切换月份], [保留已选日期，允许跨月选择区间],
 )
 
-单日模式（钟点房）下，点击任意日期后直接通过 `handleConfirm()` 完成选择并关闭。
+单日模式（钟点房）下，点击任意日期后 `tempStart` 高亮，用户需点击"确定"按钮才提交并关闭。
+
+=== 底部确认栏与布局优化
+
+日历采用 Flex 纵向布局 + 可滚动内容区设计，保证底部确认栏在任何屏幕高度下始终可见：
+
+- `.calendar-main`：`max-height: 80vh; display: flex; flex-direction: column;`
+- `.calendar-header` / `.month-switcher` / `.calendar-footer`：`flex-shrink: 0`（固定不收缩）
+- `.calendar-scroll-body`：`flex: 1; overflow-y: auto;`（日期网格区域可滚动）
+
+确认按钮采用高级感胶囊设计：`width: 240rpx; height: 88rpx; border-radius: 44rpx;` 圆角胶囊造型，未激活态为灰色（`var(--color-bg-tertiary)`），选好日期后渐变蓝（`linear-gradient(135deg, #1677ff, #4a90e2)`）+ 双层投影 + `cubic-bezier` 缓动过渡，按压时 `scale(0.96)` 反馈。`env(safe-area-inset-bottom)` 适配全面屏安全区。
 
 === 禁用日期处理
 
@@ -2048,8 +2091,9 @@ npm run build:weapp     # 生产构建（微信），输出到 dist/weapp/
 
 - *统一色系*：主色蓝 `#1890ff`，辅助灰/橙配色，与 Web 管理端保持视觉一致性；
 - *卡片风格*：圆角（8px）+ 阴影（`box-shadow: 0 2px 12px rgba(0,0,0,0.08)`），层次清晰；
-- *加载态*：每个数据请求期间展示 `LoadingSpinner` 居中旋转动画，避免白屏等待感知；
-- *空状态*：无数据时统一渲染 `EmptyState` 组件（图标 + 提示文字），杜绝裸空白页；
+- *骨架屏*：酒店卡片、详情页、订单卡片等场景使用 `Skeleton` 组件渲染内容占位 + shimmer 光扫动画，提升感知加载速度；
+- *统一图标*：借鉴 Phosphor Icons 开源库的 SVG path data，封装 `Icon` 组件通过 data URI 渲染，40+ 处调用统一风格，深色模式经 `tokens` 自动适配；
+- *加载与空态*：`LoadingSpinner` 居中旋转动画避免白屏；无数据时统一渲染 `EmptyState` 组件（图标 + 提示文字），杜绝裸空白页；
 - *动效*：酒店详情页滚动渐变 Header（0-150px 线性透明度插值），滚动切换 Tab 高亮，交互流畅自然。
 
 == 浏览器与平台兼容性（4分）
@@ -2172,7 +2216,9 @@ app/api/
   columns: (auto, auto, 1fr),
   align: (left, left, left),
   table.header([*组件*], [*复用场景*], [*说明*]),
-  [`Calendar`], [首页日期选择、详情页日期修改], [支持区间/单日双模式，通过 `onConfirm` 回调解耦],
+  [`Calendar`], [首页日期选择、详情页日期修改], [支持区间/单日双模式，底部固定确认按钮，Flex 可滚动布局保证按钮始终可见],
+  [`Icon`], [全部页面的图标渲染（40+ 处）], [借鉴 Phosphor Icons 开源图标库的 SVG path data，封装为 Taro 小程序兼容的 `<Image>` data URI 方案；支持 `name/size/color` 属性，`color` 接收 `tokens['--color-xxx']` 实现深色模式适配],
+  [`Skeleton`], [酒店卡片、详情页、订单卡片加载态], [支持 `hotelCard` / `hotelDetail` / `orderCard` 多种骨架屏类型，shimmer 动画],
   [`AiChatWidget`], [Web 端多页面、小程序端多页面], [Web 版用 SSE 流式渲染，小程序版降级单次请求，同一组件接口],
   [`FilterPanel`], [酒店列表筛选、首页筛选], [受控组件，接收 `defaultFilters` 初始值，`onConfirm` 回调],
   [`LoadingSpinner`], [所有数据加载场景], [统一加载动画样式，替代各页面散装 loading 逻辑],
@@ -2185,4 +2231,5 @@ app/api/
 - `verifyAuth(request)` — 封装 JWT 解析 + Role 查询，被 ~29 个 API route 文件共享，修改一处即全局生效；
 - `app/types/index.ts` — 统一 TypeScript 类型定义，Web Service 层和页面组件 import 同一来源；
 - `trip_front_end_taro/src/utils/storage.js` — 小程序端统一封装 `getStorageSync/setStorageSync`，各页面通过 `storage.getToken()` / `storage.isAuthenticated()` 访问认证状态；
-- `trip_front_end_taro/src/utils/useTheme.js` — 全局主题 Hook，各页面通过 `const { cssVars } = useTheme()` 一行获取当前主题 CSS 变量，切换主题无需修改各页面代码。
+- `trip_front_end_taro/src/utils/useTheme.js` — 全局主题 Hook，各页面通过 `const { cssVars, isDark, tokens } = useTheme()` 一行获取 CSS 变量字符串、布尔标记及已解析色值对象，切换主题无需修改各页面代码；
+- `trip_front_end_taro/src/utils/icons.js` — 集中存放 20+ 个 Phosphor Icons SVG path data 及 data URI 生成函数，`Icon` 组件按名称引用，新增图标只需添加一条 path entry。
