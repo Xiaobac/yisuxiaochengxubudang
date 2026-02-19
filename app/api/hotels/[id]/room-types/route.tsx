@@ -240,7 +240,7 @@ export async function POST(
     const rawBody = await request.json();
     const parsed = createRoomTypeSchema.safeParse(rawBody);
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: parsed.error.errors[0].message }, { status: 400 });
+      return NextResponse.json({ success: false, error: parsed.error.issues[0].message }, { status: 400 });
     }
     const { name, description, price, stock, amenities, images, discount } = parsed.data;
 

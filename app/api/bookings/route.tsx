@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.json();
     const parsed = createBookingSchema.safeParse(rawBody);
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: parsed.error.errors[0].message }, { status: 400 });
+      return NextResponse.json({ success: false, error: parsed.error.issues[0].message }, { status: 400 });
     }
     const { hotelId, roomTypeId, checkInDate, checkOutDate, guestCount, guestInfo, couponId } = parsed.data;
 

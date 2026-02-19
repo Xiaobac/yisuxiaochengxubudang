@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.json();
     const parsed = createCouponSchema.safeParse(rawBody);
     if (!parsed.success) {
-      return NextResponse.json({ success: false, message: parsed.error.errors[0].message }, { status: 400 });
+      return NextResponse.json({ success: false, message: parsed.error.issues[0].message }, { status: 400 });
     }
     const { code, name, description, discount, minSpend, validFrom, validTo } = parsed.data;
 
