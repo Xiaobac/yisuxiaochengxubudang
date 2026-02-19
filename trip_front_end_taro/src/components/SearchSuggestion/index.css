@@ -6,7 +6,7 @@
   max-height: 600rpx;
   background: var(--color-card-bg);
   border-radius: 0 0 16rpx 16rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   overflow-y: auto;
   z-index: 1000;
 }
@@ -84,7 +84,7 @@
 .hot-rank {
   width: 40rpx;
   height: 40rpx;
-  background: #e0e0e0;
+  background: var(--color-bg-tertiary);
   border-radius: 8rpx;
   display: flex;
   align-items: center;

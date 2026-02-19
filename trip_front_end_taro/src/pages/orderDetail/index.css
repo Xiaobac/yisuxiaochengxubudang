@@ -6,7 +6,7 @@
 
 /* 订单状态卡片 */
 .status-card {
-  background: linear-gradient(135deg, #0066FF 0%, #4A90E2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #4A90E2 100%);
   padding: 60rpx 40rpx;
   text-align: center;
   color: #fff;
@@ -207,7 +207,7 @@
   padding: 24rpx 32rpx;
   padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
   background: var(--color-card-bg);
-  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-md);
 }
 
 .footer-btn {
@@ -226,7 +226,7 @@
 }
 
 .contact-btn {
-  background: linear-gradient(135deg, #0066FF 0%, #4A90E2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #4A90E2 100%);
   color: #fff;
 }
 

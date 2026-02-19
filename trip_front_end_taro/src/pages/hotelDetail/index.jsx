@@ -12,15 +12,16 @@ import { formatPrice, formatStars } from '../../utils/format';
 import { getImageUrl, DEFAULT_AVATAR } from '../../config/images';
 import { storage } from '../../utils/storage';
 import BookingConfirm from '../../components/BookingConfirm';
-import LoadingSpinner from '../../components/LoadingSpinner';
+import Skeleton from '../../components/Skeleton';
 import Calendar from '../../components/Calendar';
+import Icon from '../../components/Icon';
 import { useTheme } from '../../utils/useTheme'
 import './index.css';
 import AiChatWidget from '../../components/AiChatWidget';
 
 function HotelDetail() {
   // 获取路由参数
-  const { cssVars } = useTheme()
+  const { cssVars, isDark, tokens } = useTheme()
   const router = useRouter();
   const hotelId = Number(router.params.id);
   const checkIn = router.params.checkIn;
@@ -491,11 +492,12 @@ function HotelDetail() {
 
   const facilities = getFacilities();
 
-  // Loading 状态
+
+  // Loading 状态 - 使用骨架屏
   if (loading) {
     return (
       <View className='detail-page-container' style={cssVars}>
-        <LoadingSpinner text='加载中...' fullScreen />
+        <Skeleton type='hotelDetail' />
       </View>
     );
   }
@@ -517,22 +519,32 @@ function HotelDetail() {
       <View
         className='detail-header'
         style={{
-          backgroundColor: `rgba(255, 255, 255, ${headerOpacity})`,
-          color: headerOpacity > 0.5 ? '#333' : '#fff'
+          backgroundColor: isDark
+            ? `rgba(36,36,36,${headerOpacity})`
+            : `rgba(255,255,255,${headerOpacity})`,
+          color: headerOpacity > 0.5 ? tokens['--color-text-primary'] : '#fff'
         }}
       >
-        <Text
+        <View
           className='header-back'
+          hoverClass='header-back-hover'
           onClick={() => Taro.navigateBack()}
-          style={{ color: headerOpacity > 0.5 ? '#333' : '#fff' }}
         >
-          {'<'}
-        </Text>
+          <Icon
+            name='arrowLeft'
+            size={36}
+            color={headerOpacity > 0.5
+              ? (tokens['--color-text-primary'])
+              : '#fff'}
+          />
+        </View>
         <Text
           className='header-title'
           style={{
             opacity: showHeaderTitle ? 1 : 0,
-            color: headerOpacity > 0.5 ? '#333' : '#fff'
+            color: headerOpacity > 0.5
+              ? (tokens['--color-text-primary'])
+              : '#fff'
           }}
         >
           {hotel.name}
@@ -561,6 +573,7 @@ function HotelDetail() {
                   className='main-media-img'
                   src={getImageUrl(imgUrl)}
                   mode='aspectFill'
+                  lazyLoad
                   onClick={() => {
                     const urls = (hotel.images || [hotel.img]).map(url => getImageUrl(url));
                     Taro.previewImage({ urls, current: getImageUrl(imgUrl) });
@@ -599,7 +612,9 @@ function HotelDetail() {
                 <Text className='facility-text'>{item.text}</Text>
               </View>
             ))}
-            <View className='shortcut-arrow' onClick={handleFacilityClick}>{'>'}</View>
+            <View className='shortcut-arrow' onClick={handleFacilityClick}>
+            <Icon name='caretRight' size={24} color={tokens['--color-text-tertiary']} />
+          </View>
           </View>
 
           {/* 评分与地址 (分栏显示) */}
@@ -637,7 +652,7 @@ function HotelDetail() {
               </View>
             </View>
             <Text className='night-count-total'>{getNightCount()}晚</Text>
-            <Text className='date-change-arrow'>{'>'}</Text>
+            <Icon name='caretRight' size={28} color={tokens['--color-text-tertiary']} style={{ marginRight: '10rpx' }} />
           </View>
         </View>
 
@@ -790,10 +805,10 @@ function HotelDetail() {
             className={`footer-collect-btn ${isFavorite ? 'active' : ''}`}
             onClick={handleCollect}
           >
-            <Text className='collect-icon'>{isFavorite ? '♥' : '♡'}</Text>
+            <Icon name={isFavorite ? 'heartFill' : 'heart'} size={28} color={isFavorite ? '#FF6B00' : (tokens['--color-border-base'])} />
             <Text>{isFavorite ? '已收藏' : '收藏'}</Text>
           </View>
-          <Button className='footer-action-btn' onClick={handleBookNow}>
+          <Button className='footer-action-btn' hoverClass='footer-action-btn-hover' onClick={handleBookNow}>
             立即预订
           </Button>
         </View>

@@ -282,7 +282,7 @@
   padding: 24px 32px;
   padding-bottom: calc(24px + env(safe-area-inset-bottom));
   background: var(--color-card-bg);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   bottom: 0;
 }

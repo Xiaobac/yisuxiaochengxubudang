@@ -8,16 +8,16 @@ import { getUserProfile } from '../../services/user';
 import { storage } from '../../utils/storage';
 import { useTheme } from '../../utils/useTheme';
 import { getSavedTheme, saveTheme, resolveTheme, applyNativeTheme, THEME } from '../../utils/theme';
+import Icon from '../../components/Icon';
 import AiChatWidget from '../../components/AiChatWidget';
 import './index.css';
 
 function Mine() {
-  const { cssVars, isDark } = useTheme();
+  const { cssVars, tokens } = useTheme();
 
   // 主题偏好状态
   const [themePreference, setThemePreference] = useState(getSavedTheme());
 
-  // 选择主题
   const handleThemeSelect = (pref) => {
     setThemePreference(pref);
     saveTheme(pref);
@@ -36,12 +36,10 @@ function Mine() {
   const [points, setPoints] = useState(0);
   const [statsLoading, setStatsLoading] = useState(false);
 
-  // 检查登录状态（首次加载）
   useEffect(() => {
     checkAuth();
   }, []);
 
-  // 监听页面显示（从登录页返回时刷新状态）
   useDidShow(() => {
     checkAuth();
     if (storage.isAuthenticated()) {
@@ -49,11 +47,9 @@ function Mine() {
     }
   });
 
-  // 检查认证状态
   const checkAuth = () => {
     const loggedIn = storage.isAuthenticated();
     setIsLogin(loggedIn);
-
     if (loggedIn) {
       const userInfo = storage.getUser();
       setUser(userInfo);
@@ -63,7 +59,6 @@ function Mine() {
     }
   };
 
-  // 加载用户统计数据
   const loadUserStats = async () => {
     setStatsLoading(true);
     try {
@@ -72,48 +67,28 @@ function Mine() {
         getMyBookings(),
         getUserProfile()
       ]);
-
-      if (favoritesRes.success && favoritesRes.data) {
-        setFavoriteCount(favoritesRes.data.length);
-      }
-
-      if (bookingsRes.success && bookingsRes.data) {
-        setOrderCount(bookingsRes.data.length);
-      }
-
-      if (profileRes.success && profileRes.data) {
-        setPoints(profileRes.data.points || 0);
-      }
+      if (favoritesRes.success && favoritesRes.data) setFavoriteCount(favoritesRes.data.length);
+      if (bookingsRes.success && bookingsRes.data) setOrderCount(bookingsRes.data.length);
+      if (profileRes.success && profileRes.data) setPoints(profileRes.data.points || 0);
     } catch (error) {
-      console.error('❌ 加载用户统计数据失败:', error);
+      console.error('加载用户统计数据失败:', error);
     } finally {
       setStatsLoading(false);
     }
   };
 
-  // 处理登录按钮点击
-  const handleLogin = () => {
-    Taro.navigateTo({ url: '/pages/login/index' });
-  };
+  const handleLogin = () => Taro.navigateTo({ url: '/pages/login/index' });
+  const handleRegister = () => Taro.navigateTo({ url: '/pages/register/index' });
 
-  // 处理注册按钮点击
-  const handleRegister = () => {
-    Taro.navigateTo({ url: '/pages/register/index' });
-  };
-
-  // 处理我的收藏点击
   const handleMyFavorites = () => {
     if (!isLogin) {
       Taro.showToast({ title: '请先登录', icon: 'none' });
-      setTimeout(() => {
-        Taro.navigateTo({ url: '/pages/login/index' });
-      }, 1500);
+      setTimeout(() => Taro.navigateTo({ url: '/pages/login/index' }), 1500);
       return;
     }
     Taro.navigateTo({ url: '/pages/favoriteList/index' });
   };
 
-  // 处理退出登录
   const handleLogout = () => {
     Taro.showModal({
       title: '提示',
@@ -128,20 +103,15 @@ function Mine() {
     });
   };
 
-  // 跳转到订单列表
   const handleMyOrders = () => {
     if (!isLogin) {
       Taro.showToast({ title: '请先登录', icon: 'none', duration: 1500 });
-      setTimeout(() => {
-        Taro.navigateTo({ url: '/pages/login/index' });
-      }, 1500);
+      setTimeout(() => Taro.navigateTo({ url: '/pages/login/index' }), 1500);
       return;
     }
-
     Taro.navigateTo({ url: '/pages/orderList/index' });
   };
 
-  // 处理意见反馈
   const handleFeedback = () => {
     Taro.showModal({
       title: '意见反馈',
@@ -151,7 +121,6 @@ function Mine() {
     });
   };
 
-  // 处理关于系统
   const handleAbout = () => {
     Taro.showModal({
       title: '关于系统',
@@ -162,102 +131,120 @@ function Mine() {
   };
 
   return (
-<View className='mine-container' style={cssVars}>
-{/* 1.顶部用户信息区域 */}
-<View className='user-header-box'>
-<View className='avatar-placeholder-circle'></View>
-<View className='user-text-info'>
-<Text className='user-name-title'>{isLogin && user ? user.name : '未登录'}</Text>
-<Text className='user-sub-status'>{isLogin ? '欢迎回来' : '点击下方按钮登录'}</Text>
-</View>
-</View>
+    <View className='mine-container' style={cssVars}>
+      {/* 1. 顶部用户信息区域 */}
+      <View className='user-header-box'>
+        <View className='avatar-circle'>
+          <Icon name='userCircle' size={96} color='rgba(255, 255, 255, 0.9)' />
+        </View>
+        <View className='user-text-info'>
+          <Text className='user-name-title'>{isLogin && user ? user.name : '未登录'}</Text>
+          <Text className='user-sub-status'>{isLogin ? '欢迎回来' : '点击下方按钮登录'}</Text>
+        </View>
+      </View>
 
+      {/* 2. 横向导航菜单 */}
+      <View className='mine-nav-row'>
+        <View className='nav-menu-item' hoverClass='nav-menu-hover' onClick={handleMyFavorites}>
+          {statsLoading ? (
+            <View className='stat-skeleton' />
+          ) : (
+            <Text className='nav-val-num'>{favoriteCount}</Text>
+          )}
+          <Text className='nav-label-text'>我的收藏</Text>
+        </View>
+        <View className='nav-menu-item' hoverClass='nav-menu-hover' onClick={handleMyOrders}>
+          {statsLoading ? (
+            <View className='stat-skeleton' />
+          ) : (
+            <Text className='nav-val-num'>{orderCount}</Text>
+          )}
+          <Text className='nav-label-text'>我的订单</Text>
+        </View>
+        <View className='nav-menu-item'>
+          <Text className='nav-val-num'>{points}</Text>
+          <Text className='nav-label-text'>积分</Text>
+        </View>
+        <View className='nav-menu-item' hoverClass='nav-menu-hover' onClick={() => Taro.navigateTo({ url: '/pages/Coupon/index' })}>
+          <Text className='nav-val-num'>0</Text>
+          <Text className='nav-label-text'>优惠券</Text>
+        </View>
+      </View>
 
+      {/* 3. 登录/注册 或 退出登录 */}
+      {!isLogin ? (
+        <View className='auth-action-group'>
+          <Button className='mine-btn-login' hoverClass='mine-btn-login-hover' onClick={handleLogin}>
+            立即登录
+          </Button>
+          <Button className='mine-btn-register' hoverClass='mine-btn-register-hover' onClick={handleRegister}>
+            注册账号
+          </Button>
+        </View>
+      ) : (
+        <View className='auth-action-group'>
+          <Button className='mine-btn-logout' hoverClass='mine-btn-logout-hover' onClick={handleLogout}>
+            <Icon name='signOut' size={32} color='#ff4d4f' style={{ marginRight: '12rpx' }} />
+            退出登录
+          </Button>
+        </View>
+      )}
 
-{/* 2.横向导航菜单 (收藏、订单、积分、优惠券) */}
-<View className='mine-nav-row'>
-<View className='nav-menu-item' onClick={handleMyFavorites}>
-{statsLoading ? <View className='stat-skeleton' /> : <Text className='nav-val-num'>{favoriteCount}</Text>}
-<Text className='nav-label-text'>我的收藏</Text>
-</View>
-<View className='nav-menu-item' onClick={handleMyOrders}>
-{statsLoading ? <View className='stat-skeleton' /> : <Text className='nav-val-num'>{orderCount}</Text>}
-<Text className='nav-label-text'>我的订单</Text>
-</View>
-<View className='nav-menu-item'>
-<Text className='nav-val-num'>{points}</Text>
-<Text className='nav-label-text'>积分</Text>
-</View>
-<View className='nav-menu-item'onClick={() => Taro.navigateTo({ url: '/pages/Coupon/index' })}>
-<Text className='nav-val-num'>0</Text>
-<Text className='nav-label-text'>优惠券</Text>
-</View>
-</View>
+      {/* 4. 底部常用功能列表 */}
+      <View className='common-list-section'>
+        <View className='list-cell-row' hoverClass='list-cell-hover' onClick={() => Taro.navigateTo({ url: '/pages/reviewList/index' })}>
+          <View className='cell-left-group'>
+            <Icon name='pencilSimple' size={36} color={tokens['--color-text-primary']} style={{ marginRight: '16rpx' }} />
+            <Text className='cell-left-text'>我的评价</Text>
+          </View>
+          <Icon name='caretRight' size={28} color={tokens['--color-text-disabled']} />
+        </View>
+        <View className='list-cell-row' hoverClass='list-cell-hover' onClick={handleFeedback}>
+          <View className='cell-left-group'>
+            <Icon name='chatCircle' size={36} color={tokens['--color-text-primary']} style={{ marginRight: '16rpx' }} />
+            <Text className='cell-left-text'>意见反馈</Text>
+          </View>
+          <Icon name='caretRight' size={28} color={tokens['--color-text-disabled']} />
+        </View>
+        <View className='list-cell-row' hoverClass='list-cell-hover' onClick={handleAbout}>
+          <View className='cell-left-group'>
+            <Icon name='info' size={36} color={tokens['--color-text-primary']} style={{ marginRight: '16rpx' }} />
+            <Text className='cell-left-text'>关于系统</Text>
+          </View>
+          <Icon name='caretRight' size={28} color={tokens['--color-text-disabled']} />
+        </View>
+        <View className='list-cell-row no-border theme-picker-row'>
+          <Text className='cell-left-text'>显示模式</Text>
+          <View className='theme-seg-ctrl'>
+            <View
+              className={`theme-seg-item${themePreference === THEME.LIGHT ? ' theme-seg-active' : ''}`}
+              onClick={() => handleThemeSelect(THEME.LIGHT)}
+            >
+              <Text className='theme-seg-icon'>☀️</Text>
+              <Text className='theme-seg-label'>浅色</Text>
+            </View>
+            <View
+              className={`theme-seg-item${themePreference === THEME.SYSTEM ? ' theme-seg-active' : ''}`}
+              onClick={() => handleThemeSelect(THEME.SYSTEM)}
+            >
+              <Text className='theme-seg-icon'>🌐</Text>
+              <Text className='theme-seg-label'>跟随</Text>
+            </View>
+            <View
+              className={`theme-seg-item${themePreference === THEME.DARK ? ' theme-seg-active' : ''}`}
+              onClick={() => handleThemeSelect(THEME.DARK)}
+            >
+              <Text className='theme-seg-icon'>🌙</Text>
+              <Text className='theme-seg-label'>深色</Text>
+            </View>
+          </View>
+        </View>
+      </View>
 
-{/* 3.登录与注册按钮区域 / 退出登录按钮 */}
-{!isLogin ? (
-<View className='auth-action-group'>
-<Button className='mine-btn-login' onClick={handleLogin}>
-立即登录
-</Button>
-<Button className='mine-btn-register' onClick={handleRegister}>
-注册账号
-</Button>
-</View>
-) : (
-<View className='auth-action-group'>
-<Button className='mine-btn-logout' onClick={handleLogout}>
-退出登录
-</Button>
-</View>
-)}
-
-{/* 4.底部常用功能列表 (补充一些酒店常用入口) */}
-<View className='common-list-section'>
-<View className='list-cell-row' onClick={() => Taro.navigateTo({ url: '/pages/reviewList/index' })}>
-<Text className='cell-left-text'>我的评价</Text>
-<Text className='cell-arrow-right'>{'>'}</Text>
-</View>
-<View className='list-cell-row' onClick={handleFeedback}>
-<Text className='cell-left-text'>意见反馈</Text>
-<Text className='cell-arrow-right'>{'>'}</Text>
-</View>
-<View className='list-cell-row' onClick={handleAbout}>
-<Text className='cell-left-text'>关于系统</Text>
-<Text className='cell-arrow-right'>{'>'}</Text>
-</View>
-<View className='list-cell-row no-border theme-picker-row'>
-<Text className='cell-left-text'>显示模式</Text>
-<View className='theme-seg-ctrl'>
-  <View
-    className={`theme-seg-item${themePreference === THEME.LIGHT ? ' theme-seg-active' : ''}`}
-    onClick={() => handleThemeSelect(THEME.LIGHT)}
-  >
-    <Text className='theme-seg-icon'>☀️</Text>
-    <Text className='theme-seg-label'>浅色</Text>
-  </View>
-  <View
-    className={`theme-seg-item${themePreference === THEME.SYSTEM ? ' theme-seg-active' : ''}`}
-    onClick={() => handleThemeSelect(THEME.SYSTEM)}
-  >
-    <Text className='theme-seg-icon'>🌐</Text>
-    <Text className='theme-seg-label'>跟随</Text>
-  </View>
-  <View
-    className={`theme-seg-item${themePreference === THEME.DARK ? ' theme-seg-active' : ''}`}
-    onClick={() => handleThemeSelect(THEME.DARK)}
-  >
-    <Text className='theme-seg-icon'>🌙</Text>
-    <Text className='theme-seg-label'>深色</Text>
-  </View>
-</View>
-</View>
-</View>
-
-{/* AI 助手悬浮按钮 */}
-<AiChatWidget />
-</View>
+      {/* AI 助手悬浮按钮 */}
+      <AiChatWidget />
+    </View>
   );
 }
 
-export default Mine; // 最底部补全：Taro/React必须默认导出组件才能识别
+export default Mine;

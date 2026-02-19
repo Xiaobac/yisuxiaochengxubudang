@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { View, Text, Button } from '@tarojs/components'
 import dayjs from 'dayjs'
 import './index.css'
@@ -44,29 +44,17 @@ const Calendar = ({
   // 内部临时选中的日期
   const [tempStart, setTempStart] = useState('')
   const [tempEnd, setTempEnd] = useState('')
-  // 用于延迟自动关闭的 timer ref（防止用户重新点选时重复触发）
-  const autoCloseTimer = useRef(null)
 
   // 每次打开日历时，用 props 的已选日期来初始化临时状态（方便用户看到当前值再调整）
   useEffect(() => {
     if (visible) {
       setTempStart(startDate || '')
       setTempEnd(endDate || '')
-    } else {
-      // 关闭时清除待执行的定时器
-      if (autoCloseTimer.current) {
-        clearTimeout(autoCloseTimer.current)
-        autoCloseTimer.current = null
-      }
     }
   }, [visible])
 
-  // 封装关闭函数，关闭前清空临时状态和定时器
+  // 封装关闭函数，关闭前清空临时状态
   const handleClose = () => {
-    if (autoCloseTimer.current) {
-      clearTimeout(autoCloseTimer.current)
-      autoCloseTimer.current = null
-    }
     setTempStart('')
     setTempEnd('')
     onClose()
@@ -134,17 +122,11 @@ const Calendar = ({
     }
 
     if (mode === 'single') {
-      // 单日期模式：直接选择并关闭（保持原有行为）
-      onSelect(dayStr, '')
-      handleClose()
+      // 单日期模式：选中后等待用户点"确定"
+      setTempStart(dayStr)
+      setTempEnd('')
     } else {
       // 区间模式
-      // 如果之前有待执行的自动关闭定时器，先取消（用户在选第三个日期，重新选）
-      if (autoCloseTimer.current) {
-        clearTimeout(autoCloseTimer.current)
-        autoCloseTimer.current = null
-      }
-
       if (!tempStart || tempEnd) {
         // 没有起始日期，或已经选完一次（第三次点击=重新选）
         setTempStart(dayStr)
@@ -169,15 +151,6 @@ const Calendar = ({
         }
         setTempStart(finalStart)
         setTempEnd(finalEnd)
-
-        // 800ms 后自动关闭（用户能看清区间高亮和晚数）
-        autoCloseTimer.current = setTimeout(() => {
-          autoCloseTimer.current = null
-          onSelect(finalStart, finalEnd)
-          onClose()
-          setTempStart('')
-          setTempEnd('')
-        }, 800)
       }
     }
   }
@@ -237,7 +210,7 @@ const Calendar = ({
     return ''
   }
   
-  // 确定按钮：立即关闭（无需等 800ms 定时器）
+  // 确定按钮：提交选择并关闭
   const handleConfirm = () => {
     if (mode === 'range') {
       if (tempStart && tempEnd) {
@@ -351,74 +324,76 @@ const Calendar = ({
           </View>
         </View>
         
-        {/* 预约提示 */}
-        <View className='booking-notice'>
-          <Text className='notice-text'>
-            📅 可选日期：今天至{maxDate.format('MM月DD日')}（共30天）
-          </Text>
-          {mode === 'range' && !tempStart && (
-            <Text className='notice-text' style={{ color: '#1677ff', fontWeight: 500 }}>
-              💡 请先选择入住日期
+        {/* 可滚动内容区 */}
+        <View className='calendar-scroll-body'>
+          {/* 预约提示 */}
+          <View className='booking-notice'>
+            <Text className='notice-text'>
+              📅 可选日期：今天至{maxDate.format('MM月DD日')}（共30天）
             </Text>
-          )}
-          {mode === 'range' && tempStart && !tempEnd && (
-            <Text className='notice-text' style={{ color: '#1677ff', fontWeight: 500 }}>
-              💡 请选择离店日期（系统会自动识别顺序）
-            </Text>
-          )}
-          {mode === 'range' && tempStart && tempEnd && (
-            <Text className='notice-text' style={{ color: '#52c41a', fontWeight: 500 }}>
-              ✅ 已选好，点"确定"确认，或重新点选更改
-            </Text>
-          )}
+            {mode === 'range' && !tempStart && (
+              <Text className='notice-text' style={{ color: '#1677ff', fontWeight: 500 }}>
+                💡 请先选择入住日期
+              </Text>
+            )}
+            {mode === 'range' && tempStart && !tempEnd && (
+              <Text className='notice-text' style={{ color: '#1677ff', fontWeight: 500 }}>
+                💡 请选择离店日期（系统会自动识别顺序）
+              </Text>
+            )}
+            {mode === 'range' && tempStart && tempEnd && (
+              <Text className='notice-text' style={{ color: '#52c41a', fontWeight: 500 }}>
+                ✅ 已选好，点"确定"确认，或重新点选更改
+              </Text>
+            )}
+          </View>
+
+          {/* 星期标题 */}
+          <View className='weekdays'>
+            {WEEKDAYS.map(day => (
+              <Text key={day} className='weekday'>{day}</Text>
+            ))}
+          </View>
+
+          {/* 日期网格 */}
+          <View className='dates-grid'>
+            {monthGrid.map((day, index) => {
+              const isInMonth = isInCurrentMonth(day)
+              const isSelectable = isDaySelectable(day) && isInMonth
+              const status = getDayStatus(day)
+              const isToday = day ? day.isSame(today, 'day') : false
+              const isStartDate = day ? day.format('YYYY-MM-DD') === tempStart : false
+              const isEndDate = mode === 'range' && day ? day.format('YYYY-MM-DD') === tempEnd : false
+
+              return (
+                <View
+                  key={index}
+                  className={`date-cell ${status} ${isSelectable ? 'selectable' : 'disabled'} ${!isInMonth ? 'other-month' : ''}`}
+                  onClick={() => isSelectable && handleDayClick(day)}
+                >
+                  {day ? (
+                    <View className='day-content'>
+                      <Text className={`day-number ${isToday ? 'today' : ''}`}>
+                        {day.date()}
+                      </Text>
+                      {isStartDate && isInMonth ? (
+                        <Text className='day-label start-label'>入住</Text>
+                      ) : isEndDate && isInMonth ? (
+                        <Text className='day-label end-label'>离店</Text>
+                      ) : isToday && isInMonth ? (
+                        <Text className='day-label today-label'>今天</Text>
+                      ) : !isSelectable && isInMonth ? (
+                        <Text className='day-label disabled-label'>不可选</Text>
+                      ) : null}
+                    </View>
+                  ) : null}
+                </View>
+              )
+            })}
+          </View>
         </View>
-        
-        {/* 星期标题 */}
-        <View className='weekdays'>
-          {WEEKDAYS.map(day => (
-            <Text key={day} className='weekday'>{day}</Text>
-          ))}
-        </View>
-        
-        {/* 日期网格 */}
-        <View className='dates-grid'>
-          {monthGrid.map((day, index) => {
-            const isInMonth = isInCurrentMonth(day)
-            const isSelectable = isDaySelectable(day) && isInMonth
-            const status = getDayStatus(day)
-            const isToday = day ? day.isSame(today, 'day') : false
-            const isStartDate = day ? day.format('YYYY-MM-DD') === tempStart : false
-            const isEndDate = mode === 'range' && day ? day.format('YYYY-MM-DD') === tempEnd : false
-            
-            return (
-              <View
-                key={index}
-                className={`date-cell ${status} ${isSelectable ? 'selectable' : 'disabled'} ${!isInMonth ? 'other-month' : ''}`}
-                onClick={() => isSelectable && handleDayClick(day)}
-              >
-                {day ? (
-                  <View className='day-content'>
-                    <Text className={`day-number ${isToday ? 'today' : ''}`}>
-                      {day.date()}
-                    </Text>
-                    {/* 显示标签：优先级：正式入住/离店 > 临时开始 > 今天 > 不可选 */}
-                    {isStartDate && isInMonth ? (
-                      <Text className='day-label start-label'>入住</Text>
-                    ) : isEndDate && isInMonth ? (
-                      <Text className='day-label end-label'>离店</Text>
-                    ) : isToday && isInMonth ? (
-                      <Text className='day-label today-label'>今天</Text>
-                    ) : !isSelectable && isInMonth ? (
-                      <Text className='day-label disabled-label'>不可选</Text>
-                    ) : null}
-                  </View>
-                ) : null}
-              </View>
-            )
-          })}
-        </View>
-        
-        {/* 底部 */}
+
+        {/* 底部确认栏 — 始终可见 */}
         {renderFooter()}
       </View>
     </View>

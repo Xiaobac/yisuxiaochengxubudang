@@ -1,0 +1,206 @@
+/* Skeleton shimmer animation */
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-border-base, #e8e8e8) 25%,
+    var(--color-bg-secondary, #f5f5f5) 50%,
+    var(--color-border-base, #e8e8e8) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s infinite;
+  border-radius: 8rpx;
+}
+
+/* ---- Hotel Card Skeleton ---- */
+.skeleton-list {
+  padding: 10rpx 20rpx;
+}
+
+.skeleton-hotel-card {
+  display: flex;
+  margin-bottom: 40rpx;
+}
+
+.skeleton-hotel-img {
+  width: 220rpx;
+  height: 380rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+}
+
+.skeleton-hotel-info {
+  flex: 1;
+  padding-left: 20rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 16rpx;
+}
+
+/* ---- Common Skeleton Lines ---- */
+.skeleton-line {
+  height: 28rpx;
+  border-radius: 6rpx;
+}
+
+.skeleton-line-title {
+  width: 80%;
+  height: 32rpx;
+}
+
+.skeleton-line-short {
+  width: 45%;
+}
+
+.skeleton-line-medium {
+  width: 65%;
+}
+
+.skeleton-line-price {
+  width: 30%;
+  height: 36rpx;
+}
+
+.skeleton-line-tag {
+  width: 60rpx;
+  height: 24rpx;
+}
+
+/* Tags row */
+.skeleton-tags-row {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 8rpx;
+}
+
+.skeleton-tag {
+  width: 80rpx;
+  height: 28rpx;
+  border-radius: 4rpx;
+}
+
+/* Price row */
+.skeleton-price-row {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---- Hotel Detail Skeleton ---- */
+.skeleton-detail {
+  padding-bottom: 120rpx;
+}
+
+.skeleton-detail-banner {
+  width: 100%;
+  height: 450rpx;
+}
+
+.skeleton-detail-card {
+  margin: 20rpx 24rpx 0;
+  padding: 30rpx;
+  background-color: var(--color-card-bg, #fff);
+  border-radius: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.skeleton-facility-row {
+  display: flex;
+  gap: 24rpx;
+  margin: 10rpx 0;
+}
+
+.skeleton-facility-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.skeleton-circle {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+}
+
+.skeleton-divider {
+  width: 100%;
+  height: 1rpx;
+  background-color: var(--color-border-base, #e8e8e8);
+}
+
+.skeleton-room-row {
+  display: flex;
+  gap: 20rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid var(--color-border-base, #e8e8e8);
+}
+
+.skeleton-room-row:last-child {
+  border-bottom: none;
+}
+
+.skeleton-room-img {
+  width: 200rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+  flex-shrink: 0;
+}
+
+.skeleton-room-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+/* ---- Order Card Skeleton ---- */
+.skeleton-order-card {
+  background-color: var(--color-card-bg, #fff);
+  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+  padding: 24rpx;
+}
+
+.skeleton-order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid var(--color-border-base, #e8e8e8);
+  margin-bottom: 16rpx;
+}
+
+.skeleton-order-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.skeleton-order-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skeleton-order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20rpx;
+  border-top: 1rpx solid var(--color-border-base, #e8e8e8);
+}
+
+.skeleton-btn {
+  width: 140rpx;
+  height: 56rpx;
+  border-radius: 8rpx;
+}

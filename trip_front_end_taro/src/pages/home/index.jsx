@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { View, Text, Image, Input, Button, Swiper, SwiperItem, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import Calendar from '../../components/Calendar';
 import SearchSuggestion from '../../components/SearchSuggestion';
 import AiChatWidget from '../../components/AiChatWidget';
+import Icon from '../../components/Icon';
 import { getLocations } from '../../services/location';
 import { getTags } from '../../services/tag';
 import { BANNER_IMAGES } from '../../config/images';
@@ -12,13 +13,13 @@ import { useTheme } from '../../utils/useTheme';
 import './index.css';
 
 function Home() {
-  const { cssVars } = useTheme();
+  const { cssVars, tokens } = useTheme();
 
-  // --- 基础状态：标签切换 ---
+  // --- 基础状态 ---
   const [currentTab, setCurrentTab] = useState(0);
   const tabs = ['国内', '海外', '钟点房', '民宿'];
 
-  // --- 位置和标签数据（从 API 获取）---
+  // --- 位置和标签数据 ---
   const [locations, setLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [tags, setTags] = useState([]);
@@ -33,12 +34,14 @@ function Home() {
   // --- 价格面板 ---
   const PRICE_MIN = 0;
   const PRICE_MAX = 4500;
-const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
+  const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
   const [sliderMin, setSliderMin] = useState(PRICE_MIN);
   const [sliderMax, setSliderMax] = useState(PRICE_MAX);
   const [panelMinInput, setPanelMinInput] = useState('');
   const [panelMaxInput, setPanelMaxInput] = useState('');
 
+  // 价格滑块：缓存轨道 rect，避免每次 touchMove 都查询 DOM
+  const sliderRectRef = useRef(null);
 
   const handlePanelMinInput = (e) => {
     const val = e.detail.value;
@@ -76,122 +79,103 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
     return `¥${minPriceInput}-${maxPriceInput}`;
   };
 
+  // 缓存滑块轨道位置（touchStart 时获取，touchMove 直接用）
+  const cacheSliderRect = () => {
+    Taro.createSelectorQuery()
+      .select('.price-slider-track')
+      .boundingClientRect((rect) => {
+        if (rect) sliderRectRef.current = rect;
+      })
+      .exec();
+  };
+
+  const calcPriceFromTouch = (touchX) => {
+    const rect = sliderRectRef.current;
+    if (!rect) return null;
+    const ratio = Math.max(0, Math.min(1, (touchX - rect.left) / rect.width));
+    return Math.round(ratio * PRICE_MAX / 50) * 50;
+  };
+
   // --- 城市选择弹窗状态 ---
   const [isCitySelectorVisible, setIsCitySelectorVisible] = useState(false);
 
-  // --- 搜索建议相关状态 ---
+  // --- 搜索建议 ---
   const [showSearchSuggestion, setShowSearchSuggestion] = useState(false);
   const [searchHistory, setSearchHistory] = useState([]);
   const [hotSearches] = useState([
-    '上海外滩酒店',
-    '浦东机场附近',
-    '迪士尼度假区',
-    '南京路步行街',
-    '虹桥枢纽',
-    '豫园附近',
-    '陆家嘴金融中心',
-    '新天地商圈'
+    '上海外滩酒店', '浦东机场附近', '迪士尼度假区', '南京路步行街',
+    '虹桥枢纽', '豫园附近', '陆家嘴金融中心', '新天地商圈'
   ]);
 
-  // --- 日历控制状态 ---
+  // --- 日历 ---
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // 实际上的今天和明天
   const today = dayjs();
   const tomorrow = today.add(1, 'day');
-
-  // 检查当前标签是否为钟点房
   const isHourlyRoom = useMemo(() => currentTab === 2, [currentTab]);
 
-  // 检查当前时间是否在凌晨0点到6点之间
   const isEarlyMorning = useMemo(() => {
     const currentHour = today.hour();
     return currentHour >= 0 && currentHour < 6;
   }, [today]);
 
-  // ---------- 辅助函数：根据标签过滤城市列表 ----------
-  const getLocationType = (tabIndex) => {
-    return tabIndex === 1 ? 'overseas' : 'domestic';
-  };
+  // ---------- 辅助函数 ----------
+  const getLocationType = (tabIndex) => tabIndex === 1 ? 'overseas' : 'domestic';
 
   const filterCitiesByTab = (tabIndex, locationList) => {
     const locationType = getLocationType(tabIndex);
     return locationList.filter(loc => loc.type === locationType);
   };
 
-  // 初始化默认日期（今天和明天）
   useEffect(() => {
     if (!startDate && !endDate) {
-      const todayStr = today.format('YYYY-MM-DD');
-      const tomorrowStr = tomorrow.format('YYYY-MM-DD');
-      setStartDate(todayStr);
-      setEndDate(tomorrowStr);
+      setStartDate(today.format('YYYY-MM-DD'));
+      setEndDate(tomorrow.format('YYYY-MM-DD'));
     }
   }, [today, tomorrow]);
 
-  // 加载位置和标签数据
   useEffect(() => {
     loadInitialData();
     loadSearchHistory();
   }, []);
 
-  // 加载初始数据（位置和标签）
   const loadInitialData = async () => {
     try {
       let locationsData = [];
       let tagsData = [];
 
-      // --- 获取位置列表 ---
       try {
         const res = await getLocations();
-        console.log('原始位置响应:', res);
-
         if (res) {
-          if (Array.isArray(res)) {
-            locationsData = res;
-          } else if (res.data && Array.isArray(res.data)) {
-            locationsData = res.data;
-          } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
-            locationsData = res.data.data;
-          } else {
-            console.warn('未知的位置数据结构:', res);
-          }
+          if (Array.isArray(res)) locationsData = res;
+          else if (res.data && Array.isArray(res.data)) locationsData = res.data;
+          else if (res.data && res.data.data && Array.isArray(res.data.data)) locationsData = res.data.data;
         }
       } catch (error) {
         console.error('获取位置失败:', error);
       }
 
-      // --- 获取标签列表 ---
       try {
         const res = await getTags();
-        console.log('原始标签响应:', res);
         if (res) {
-          if (Array.isArray(res)) {
-            tagsData = res;
-          } else if (res.data && Array.isArray(res.data)) {
-            tagsData = res.data;
-          } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
-            tagsData = res.data.data;
-          }
+          if (Array.isArray(res)) tagsData = res;
+          else if (res.data && Array.isArray(res.data)) tagsData = res.data;
+          else if (res.data && res.data.data && Array.isArray(res.data.data)) tagsData = res.data.data;
         }
       } catch (error) {
         console.error('获取标签失败:', error);
       }
 
-      // --- 处理位置数据：保存全部城市，根据当前标签选中第一个 ---
       if (locationsData.length > 0) {
         setLocations(locationsData);
-        // 根据当前标签设置默认选中的城市
         const defaultCity = filterCitiesByTab(currentTab, locationsData)[0] || null;
         setSelectedLocation(defaultCity);
       } else {
         setLocations([]);
         setSelectedLocation(null);
       }
-
-      // --- 处理标签数据（保存全量标签）---
       setTags(tagsData);
     } catch (error) {
       console.error('loadInitialData 未知错误:', error);
@@ -201,35 +185,29 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
     }
   };
 
-  // 加载搜索历史
   const loadSearchHistory = () => {
     try {
       const history = Taro.getStorageSync('searchHistory') || [];
       setSearchHistory(history);
     } catch (error) {
-      console.error('❌ 加载搜索历史失败:', error);
+      console.error('加载搜索历史失败:', error);
     }
   };
 
-  // 保存搜索历史
   const saveSearchHistory = (keyword) => {
     if (!keyword || !keyword.trim()) return;
-
     try {
       let history = Taro.getStorageSync('searchHistory') || [];
       history = history.filter(item => item !== keyword);
       history.unshift(keyword);
-      if (history.length > 10) {
-        history = history.slice(0, 10);
-      }
+      if (history.length > 10) history = history.slice(0, 10);
       Taro.setStorageSync('searchHistory', history);
       setSearchHistory(history);
     } catch (error) {
-      console.error('❌ 保存搜索历史失败:', error);
+      console.error('保存搜索历史失败:', error);
     }
   };
 
-  // 清空搜索历史
   const handleClearSearchHistory = () => {
     Taro.showModal({
       title: '清空搜索历史',
@@ -241,42 +219,27 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
             setSearchHistory([]);
             Taro.showToast({ title: '已清空', icon: 'success', duration: 1000 });
           } catch (error) {
-            console.error('❌ 清空搜索历史失败:', error);
+            console.error('清空搜索历史失败:', error);
           }
         }
       }
     });
   };
 
-  // 选择搜索建议
   const handleSelectSuggestion = (keyword) => {
     setSearchKeyword(keyword);
     setShowSearchSuggestion(false);
     saveSearchHistory(keyword);
   };
 
-  // ----------------------- 事件处理函数 -----------------------
-  const handleOpenCalendar = () => {
-    setIsCalendarVisible(true);
-  };
+  const handleOpenCalendar = () => setIsCalendarVisible(true);
 
   const handleCalendarConfirm = (start, end) => {
-    console.log('日历返回:', { start, end, isHourlyRoom });
-    // Calendar 组件自己负责关闭，这里只处理数据
-
     if (isHourlyRoom) {
-      if (start) {
-        setStartDate(start);
-        setEndDate('');
-      }
+      if (start) { setStartDate(start); setEndDate(''); }
     } else {
-      if (start && end) {
-        setStartDate(start);
-        setEndDate(end);
-      } else if (start) {
-        setStartDate(start);
-        setEndDate('');
-      }
+      if (start && end) { setStartDate(start); setEndDate(end); }
+      else if (start) { setStartDate(start); setEndDate(''); }
     }
   };
 
@@ -284,9 +247,7 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
     if (isHourlyRoom) return '钟点房';
     const start = startDate ? dayjs(startDate) : today;
     const end = endDate ? dayjs(endDate) : tomorrow;
-    if (end.isAfter(start, 'day')) {
-      return `共${end.diff(start, 'day')}晚`;
-    }
+    if (end.isAfter(start, 'day')) return `共${end.diff(start, 'day')}晚`;
     return '共1晚';
   };
 
@@ -294,28 +255,21 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
     const todayStr = today.format('YYYY-MM-DD');
     const tomorrowStr = tomorrow.format('YYYY-MM-DD');
     const dayAfterTomorrowStr = today.add(2, 'day').format('YYYY-MM-DD');
-    const nextWeekStr = today.add(7, 'day').format('YYYY-MM-DD');
 
     switch (type) {
       case 'today':
-        setStartDate(todayStr);
-        setEndDate(tomorrowStr);
-        break;
+        setStartDate(todayStr); setEndDate(tomorrowStr); break;
       case 'tomorrow':
-        setStartDate(tomorrowStr);
-        setEndDate(dayAfterTomorrowStr);
-        break;
+        setStartDate(tomorrowStr); setEndDate(dayAfterTomorrowStr); break;
       case 'weekend': {
         const dayOfWeek = today.day();
         const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 7 - dayOfWeek + 5;
-        const fridayStr = today.add(daysUntilFriday, 'day').format('YYYY-MM-DD');
-        const sundayStr = today.add(daysUntilFriday + 2, 'day').format('YYYY-MM-DD');
-        setStartDate(fridayStr);
-        setEndDate(sundayStr);
+        setStartDate(today.add(daysUntilFriday, 'day').format('YYYY-MM-DD'));
+        setEndDate(today.add(daysUntilFriday + 2, 'day').format('YYYY-MM-DD'));
         break;
       }
       case 'nextweek':
-        setStartDate(nextWeekStr);
+        setStartDate(today.add(7, 'day').format('YYYY-MM-DD'));
         setEndDate(today.add(8, 'day').format('YYYY-MM-DD'));
         break;
     }
@@ -333,18 +287,12 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
     return isStartDate ? '今天' : '明天';
   };
 
-  // 切换标签时的处理
   const handleTabChange = (index) => {
     setCurrentTab(index);
-
-    // 检查当前选中的城市是否在新标签范围内，若不在则选中范围内的第一个
     const citiesForTab = filterCitiesByTab(index, locations);
     const isValid = selectedLocation && citiesForTab.some(loc => loc.id === selectedLocation.id);
-    if (!isValid) {
-      setSelectedLocation(citiesForTab[0] || null);
-    }
+    if (!isValid) setSelectedLocation(citiesForTab[0] || null);
 
-    // 日期逻辑
     if (index === 2) {
       if (!startDate) setStartDate(today.format('YYYY-MM-DD'));
       setEndDate('');
@@ -358,7 +306,6 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
     setSelectedLocation(location);
     setIsCitySelectorVisible(false);
   };
-
 
   const handleToggleTag = (tag) => {
     setSelectedTags(prev => {
@@ -383,12 +330,8 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
     const params = {
       locationId: selectedLocation?.id,
       locationName: selectedLocation?.name,
-      checkIn: startDate,
-      checkOut: endDate,
-      keyword,
-      minPrice,
-      maxPrice,
-      type,
+      checkIn: startDate, checkOut: endDate,
+      keyword, minPrice, maxPrice, type,
       tags: selectedTags.map(t => t.id)
     };
 
@@ -400,17 +343,14 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
   const handleSearchFocus = () => setShowSearchSuggestion(true);
   const handleSearchBlur = () => setTimeout(() => setShowSearchSuggestion(false), 200);
 
-  // ----------------------- 页面渲染 -----------------------
+  // ----------------------- 渲染 -----------------------
   return (
     <View className='home-page-container' style={cssVars}>
       {/* 顶部轮播图 */}
       <View className='top-banner-box'>
         <Swiper
-          autoplay
-          circular
-          indicatorDots
-          interval={5000}
-          duration={500}
+          autoplay circular indicatorDots
+          interval={5000} duration={500}
           indicatorColor="rgba(255, 255, 255, 0.4)"
           indicatorActiveColor="#ffffff"
           className='banner-swiper'
@@ -431,6 +371,7 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
             <View
               key={index}
               className={currentTab === index ? 'tab-item-box active' : 'tab-item-box'}
+              hoverClass='tab-item-hover'
               onClick={() => handleTabChange(index)}
             >
               <Text className='tab-text-val'>{tab}</Text>
@@ -441,17 +382,17 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
 
         {/* 城市选择+搜索输入 */}
         <View className='row-section city-search-row'>
-          <View className='city-wrap-box' onClick={() => setIsCitySelectorVisible(true)}>
+          <View className='city-wrap-box' hoverClass='city-wrap-hover' onClick={() => setIsCitySelectorVisible(true)}>
             <Text className='city-label-text'>
               {selectedLocation?.name || '选择城市'}
             </Text>
-            <View className='triangle-down-icon'></View>
+            <Icon name='caretDown' size={24} color={tokens['--color-text-primary']} style={{ marginLeft: '6rpx' }} />
           </View>
           <View className='input-wrap-box' style={{ position: 'relative' }}>
             <Input
               className='search-input-el'
               placeholder='位置/品牌/酒店'
-              placeholderStyle='color:#ccc;'
+              placeholderStyle='color:var(--color-text-disabled);'
               value={searchKeyword}
               onInput={(e) => setSearchKeyword(e.detail.value)}
               onFocus={handleSearchFocus}
@@ -467,12 +408,12 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
             />
           </View>
           <View className='gps-location-box'>
-            <View className='gps-circle-icon'></View>
+            <Icon name='crosshair' size={36} color={tokens['--color-primary']} />
           </View>
         </View>
 
         {/* 日期选择行 */}
-        <View className='row-section date-select-row' onClick={handleOpenCalendar}>
+        <View className='row-section date-select-row' hoverClass='date-select-hover' onClick={handleOpenCalendar}>
           {isHourlyRoom ? (
             <View className='date-single-info'>
               <View className='date-item-group'>
@@ -499,22 +440,20 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
         {/* 快捷日期选择 */}
         {!isHourlyRoom && (
           <View className='quick-date-row'>
-            <View className='quick-date-item' onClick={() => handleQuickDateSelect('today')}>
-              <Text className='quick-date-text'>今晚</Text>
-            </View>
-            <View className='quick-date-item' onClick={() => handleQuickDateSelect('tomorrow')}>
-              <Text className='quick-date-text'>明晚</Text>
-            </View>
-            <View className='quick-date-item' onClick={() => handleQuickDateSelect('weekend')}>
-              <Text className='quick-date-text'>周末</Text>
-            </View>
+            {['today', 'tomorrow', 'weekend'].map((type) => (
+              <View key={type} className='quick-date-item' hoverClass='quick-date-hover' onClick={() => handleQuickDateSelect(type)}>
+                <Text className='quick-date-text'>
+                  {type === 'today' ? '今晚' : type === 'tomorrow' ? '明晚' : '周末'}
+                </Text>
+              </View>
+            ))}
           </View>
         )}
 
         {/* 凌晨提示条 */}
         {isEarlyMorning && (
           <View className='night-notice-bar'>
-            <Text className='moon-icon-fix'>🌙</Text>
+            <Icon name='info' size={32} color='#faad14' style={{ marginRight: '12rpx' }} />
             <Text className='notice-content-text'>
               当前已过0点，如需今天凌晨6点前入住，请选择"今天凌晨"
             </Text>
@@ -522,15 +461,15 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
         )}
 
         {/* 价格区间筛选入口 */}
-        <View className='row-section price-filter-row' onClick={() => setIsPricePanelVisible(true)}>
+        <View className='row-section price-filter-row' hoverClass='price-filter-hover' onClick={() => setIsPricePanelVisible(true)}>
           <Text className={minPriceInput || maxPriceInput ? 'filter-active-text' : 'placeholder-light-text'}>
             {getPriceLabel()}
           </Text>
-          <View className='filter-arrow-icon'></View>
+          <Icon name='caretDown' size={24} color={tokens['--color-text-tertiary']} />
         </View>
 
         {/* 标签选择器入口 */}
-        <View className='row-section tag-filter-row' onClick={() => setIsTagSelectorVisible(true)}>
+        <View className='row-section tag-filter-row' hoverClass='price-filter-hover' onClick={() => setIsTagSelectorVisible(true)}>
           <View className='tag-filter-content'>
             {selectedTags.length > 0 ? (
               <View className='selected-tags-preview'>
@@ -542,27 +481,28 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
               <Text className='placeholder-light-text'>标签筛选</Text>
             )}
           </View>
-          <View className='filter-arrow-icon'></View>
+          <Icon name='caretDown' size={24} color={tokens['--color-text-tertiary']} />
         </View>
 
         {/* 查询按钮 */}
-        <Button className='submit-search-btn' onClick={handleSearch}>
+        <Button className='submit-search-btn' hoverClass='submit-search-btn-hover' onClick={handleSearch}>
           查询
         </Button>
 
         {/* 优惠券入口 */}
         <View
           className='coupon-entry-card'
+          hoverClass='coupon-entry-hover'
           onClick={() => Taro.navigateTo({ url: '/pages/Coupon/index' })}
         >
           <View className='coupon-entry-left'>
-            <Text className='coupon-entry-icon'>🎫</Text>
+            <Icon name='ticket' size={44} color={tokens['--color-primary']} />
             <View>
               <Text className='coupon-entry-title'>领取优惠券</Text>
               <Text className='coupon-entry-desc'>精选酒店红包，限时领取</Text>
             </View>
           </View>
-          <Text className='coupon-entry-arrow'>›</Text>
+          <Icon name='caretRight' size={32} color={tokens['--color-primary']} />
         </View>
       </View>
 
@@ -588,7 +528,9 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
         <View className='city-selector-content' onClick={e => e.stopPropagation()}>
           <View className='city-selector-header'>
             选择标签
-            <View className='city-selector-close' onClick={() => setIsTagSelectorVisible(false)}>×</View>
+            <View className='city-selector-close' onClick={() => setIsTagSelectorVisible(false)}>
+              <Icon name='x' size={36} color={tokens['--color-text-tertiary']} />
+            </View>
           </View>
           <ScrollView scrollY className='city-selector-scroll'>
             <View className='tag-selector-grid'>
@@ -598,6 +540,7 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
                   <View
                     key={tag.id}
                     className={isSelected ? 'tag-bubble-item tag-active' : 'tag-bubble-item'}
+                    hoverClass='tag-bubble-hover'
                     onClick={() => handleToggleTag(tag)}
                   >
                     {tag.name}
@@ -607,16 +550,10 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
             </View>
           </ScrollView>
           <View className='city-selector-header' style={{ borderTop: '1rpx solid var(--color-border-base)', borderBottom: 'none' }}>
-            <View
-              className='tag-selector-reset'
-              onClick={() => setSelectedTags([])}
-            >
+            <View className='tag-selector-reset' hoverClass='tag-btn-hover' onClick={() => setSelectedTags([])}>
               重置
             </View>
-            <View
-              className='tag-selector-confirm'
-              onClick={() => setIsTagSelectorVisible(false)}
-            >
+            <View className='tag-selector-confirm' hoverClass='tag-btn-hover' onClick={() => setIsTagSelectorVisible(false)}>
               确定
             </View>
           </View>
@@ -631,7 +568,9 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
         <View className='city-selector-content price-panel-content' onClick={e => e.stopPropagation()}>
           <View className='city-selector-header'>
             价格区间
-            <View className='city-selector-close' onClick={() => setIsPricePanelVisible(false)}>×</View>
+            <View className='city-selector-close' onClick={() => setIsPricePanelVisible(false)}>
+              <Icon name='x' size={36} color={tokens['--color-text-tertiary']} />
+            </View>
           </View>
 
           {/* 输入框区域 */}
@@ -640,7 +579,7 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
               className='price-panel-input'
               type='number'
               placeholder='最低价'
-              placeholderStyle='color:#ccc;'
+              placeholderStyle='color:var(--color-text-disabled);'
               value={panelMinInput}
               onInput={handlePanelMinInput}
             />
@@ -649,7 +588,7 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
               className='price-panel-input'
               type='number'
               placeholder='最高价'
-              placeholderStyle='color:#ccc;'
+              placeholderStyle='color:var(--color-text-disabled);'
               value={panelMaxInput}
               onInput={handlePanelMaxInput}
             />
@@ -667,25 +606,18 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
                 }}
               />
             </View>
-            {/* 左滑块 */}
+            {/* 左滑块 - 使用缓存 rect */}
             <View
               className='price-thumb price-thumb-min'
               style={{ left: `calc(${(sliderMin / PRICE_MAX) * 100}% - 20rpx)` }}
               catchMove
+              onTouchStart={cacheSliderRect}
               onTouchMove={(e) => {
-                const touch = e.touches[0];
-                Taro.createSelectorQuery()
-                  .select('.price-slider-track')
-                  .boundingClientRect((rect) => {
-                    if (!rect) return;
-                    const ratio = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-                    const price = Math.round(ratio * PRICE_MAX / 50) * 50;
-                    if (price < sliderMax) {
-                      setSliderMin(price);
-                      setPanelMinInput(price === PRICE_MIN ? '' : String(price));
-                    }
-                  })
-                  .exec();
+                const price = calcPriceFromTouch(e.touches[0].clientX);
+                if (price !== null && price < sliderMax) {
+                  setSliderMin(price);
+                  setPanelMinInput(price === PRICE_MIN ? '' : String(price));
+                }
               }}
             />
             {/* 右滑块 */}
@@ -693,20 +625,13 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
               className='price-thumb price-thumb-max'
               style={{ left: `calc(${(sliderMax / PRICE_MAX) * 100}% - 20rpx)` }}
               catchMove
+              onTouchStart={cacheSliderRect}
               onTouchMove={(e) => {
-                const touch = e.touches[0];
-                Taro.createSelectorQuery()
-                  .select('.price-slider-track')
-                  .boundingClientRect((rect) => {
-                    if (!rect) return;
-                    const ratio = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-                    const price = Math.round(ratio * PRICE_MAX / 50) * 50;
-                    if (price > sliderMin) {
-                      setSliderMax(price);
-                      setPanelMaxInput(price === PRICE_MAX ? '' : String(price));
-                    }
-                  })
-                  .exec();
+                const price = calcPriceFromTouch(e.touches[0].clientX);
+                if (price !== null && price > sliderMin) {
+                  setSliderMax(price);
+                  setPanelMaxInput(price === PRICE_MAX ? '' : String(price));
+                }
               }}
             />
           </View>
@@ -725,6 +650,7 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
                 <View
                   key={label}
                   className={`price-quick-tag ${isActive ? 'active' : ''}`}
+                  hoverClass='price-quick-tag-hover'
                   onClick={() => {
                     setSliderMin(min);
                     setSliderMax(max);
@@ -740,8 +666,8 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
 
           {/* 底部按钮 */}
           <View className='city-selector-header' style={{ borderTop: '1rpx solid var(--color-border-base)', borderBottom: 'none', display: 'flex', justifyContent: 'space-between' }}>
-            <View className='tag-selector-reset' onClick={handlePriceReset}>重置</View>
-            <View className='tag-selector-confirm' onClick={handlePriceConfirm}>确定</View>
+            <View className='tag-selector-reset' hoverClass='tag-btn-hover' onClick={handlePriceReset}>重置</View>
+            <View className='tag-selector-confirm' hoverClass='tag-btn-hover' onClick={handlePriceConfirm}>确定</View>
           </View>
         </View>
       </View>
@@ -754,19 +680,21 @@ const [isPricePanelVisible, setIsPricePanelVisible] = useState(false);
         <View className='city-selector-content' onClick={e => e.stopPropagation()}>
           <View className='city-selector-header'>
             选择城市
-            <View className='city-selector-close' onClick={() => setIsCitySelectorVisible(false)}>×</View>
+            <View className='city-selector-close' onClick={() => setIsCitySelectorVisible(false)}>
+              <Icon name='x' size={36} color={tokens['--color-text-tertiary']} />
+            </View>
           </View>
           <ScrollView scrollY className='city-selector-scroll'>
             {filterCitiesByTab(currentTab, locations).map((loc) => (
               <View
                 key={loc.id}
                 className={`city-select-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
+                hoverClass='city-select-hover'
                 onClick={() => handleSelectCity(loc)}
               >
                 {loc.name}
               </View>
             ))}
-            {/* 如果过滤后无城市，显示提示 */}
             {filterCitiesByTab(currentTab, locations).length === 0 && (
               <View className='empty-city-tip'>当前标签下无城市可选</View>
             )}

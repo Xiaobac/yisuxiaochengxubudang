@@ -9,17 +9,19 @@
  */
 import { useState, useEffect } from 'react';
 import Taro, { useDidShow } from '@tarojs/taro';
-import { resolveTheme, applyNativeTheme, getThemeCssVars } from './theme';
+import { resolveTheme, applyNativeTheme, getThemeCssVars, getResolvedTokens } from './theme';
 
 export function useTheme() {
   const [cssVars, setCssVars] = useState(() => getThemeCssVars(resolveTheme()));
   const [isDark, setIsDark] = useState(() => resolveTheme() === 'dark');
+  const [tokens, setTokens] = useState(() => getResolvedTokens(resolveTheme()));
 
   // 每次页面显示时同步主题（处理从"我的"页面修改后返回的情况）
   useDidShow(() => {
     const resolved = resolveTheme();
     setCssVars(getThemeCssVars(resolved));
     setIsDark(resolved === 'dark');
+    setTokens(getResolvedTokens(resolved));
     applyNativeTheme(resolved);
   });
 
@@ -28,10 +30,11 @@ export function useTheme() {
     const handler = (resolved) => {
       setCssVars(getThemeCssVars(resolved));
       setIsDark(resolved === 'dark');
+      setTokens(getResolvedTokens(resolved));
     };
     Taro.eventCenter.on('themeChanged', handler);
     return () => Taro.eventCenter.off('themeChanged', handler);
   }, []);
 
-  return { cssVars, isDark };
+  return { cssVars, isDark, tokens };
 }

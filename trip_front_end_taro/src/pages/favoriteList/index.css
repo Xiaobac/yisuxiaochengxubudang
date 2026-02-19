@@ -28,7 +28,7 @@
   border-radius: 16rpx;
   overflow: hidden;
   display: flex;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   position: relative;
 }
 
@@ -83,7 +83,7 @@
 }
 
 .score-badge {
-  background: linear-gradient(135deg, #0066FF 0%, #4A90E2 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #4A90E2 100%);
   color: #fff;
   font-size: 24rpx;
   font-weight: 600;
@@ -154,7 +154,7 @@
 }
 
 .favorite-btn.active {
-  background: #ffe5e5;
+  background: var(--color-bg-tertiary);
 }
 
 .favorite-icon {

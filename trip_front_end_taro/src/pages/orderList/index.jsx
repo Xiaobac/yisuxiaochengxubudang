@@ -4,17 +4,17 @@ import Taro, { usePullDownRefresh } from '@tarojs/taro';
 import { getMyBookings, cancelBooking } from '../../services/booking';
 import { formatDate, formatPrice } from '../../utils/format';
 import { storage } from '../../utils/storage';
-import LoadingSpinner from '../../components/LoadingSpinner';
+import Skeleton from '../../components/Skeleton';
 import EmptyState from '../../components/EmptyState';
-import { useTheme } from '../../utils/useTheme'
+import { useTheme } from '../../utils/useTheme';
 import './index.css';
 import AiChatWidget from '../../components/AiChatWidget';
 
 function OrderList() {
-  const { cssVars } = useTheme()
+  const { cssVars } = useTheme();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all'); // all, pending, confirmed, cancelled
+  const [activeTab, setActiveTab] = useState('all');
   const [cancellingId, setCancellingId] = useState(null);
 
   useEffect(() => {
@@ -22,19 +22,11 @@ function OrderList() {
   }, []);
 
   const checkAuthAndLoadOrders = async () => {
-    // 检查登录状态
     if (!storage.isAuthenticated()) {
-      Taro.showToast({
-        title: '请先登录',
-        icon: 'none',
-        duration: 1500
-      });
-      setTimeout(() => {
-        Taro.navigateTo({ url: '/pages/login/index' });
-      }, 1500);
+      Taro.showToast({ title: '请先登录', icon: 'none', duration: 1500 });
+      setTimeout(() => Taro.navigateTo({ url: '/pages/login/index' }), 1500);
       return;
     }
-
     await loadOrders();
   };
 
@@ -64,10 +56,7 @@ function OrderList() {
       }
     } catch (error) {
       console.error('获取订单列表失败:', error);
-      Taro.showToast({
-        title: '加载失败，请重试',
-        icon: 'none'
-      });
+      Taro.showToast({ title: '加载失败，请重试', icon: 'none' });
     } finally {
       setLoading(false);
     }
@@ -75,20 +64,16 @@ function OrderList() {
 
   const getStatusText = (status) => {
     const statusMap = {
-      'pending': '待确认',
-      'confirmed': '已确认',
-      'cancelled': '已取消',
-      'completed': '已完成'
+      'pending': '待确认', 'confirmed': '已确认',
+      'cancelled': '已取消', 'completed': '已完成'
     };
     return statusMap[status] || status;
   };
 
   const getStatusColor = (status) => {
     const colorMap = {
-      'pending': '#ff9800',
-      'confirmed': '#4caf50',
-      'cancelled': '#999',
-      'completed': '#2196f3'
+      'pending': '#ff9800', 'confirmed': '#4caf50',
+      'cancelled': '#999', 'completed': '#2196f3'
     };
     return colorMap[status] || '#999';
   };
@@ -103,21 +88,13 @@ function OrderList() {
           setCancellingId(orderId);
           try {
             const result = await cancelBooking(orderId);
-
             if (result.success) {
-              Taro.showToast({
-                title: '取消成功',
-                icon: 'success'
-              });
-              // 重新加载订单列表
+              Taro.showToast({ title: '取消成功', icon: 'success' });
               loadOrders();
             }
           } catch (error) {
             console.error('取消订单失败:', error);
-            Taro.showToast({
-              title: '取消失败，请重试',
-              icon: 'none'
-            });
+            Taro.showToast({ title: '取消失败，请重试', icon: 'none' });
           } finally {
             setCancellingId(null);
           }
@@ -133,18 +110,14 @@ function OrderList() {
   };
 
   const handleOrderDetail = (orderId) => {
-    Taro.navigateTo({
-      url: `/pages/orderDetail/index?id=${orderId}`
-    });
+    Taro.navigateTo({ url: `/pages/orderDetail/index?id=${orderId}` });
   };
 
-  // 下拉刷新
   usePullDownRefresh(async () => {
     await loadOrders();
     Taro.stopPullDownRefresh();
   });
 
-  // 根据状态筛选订单
   const filteredOrders = orders.filter(order => {
     if (activeTab === 'all') return true;
     return order.status === activeTab;
@@ -154,46 +127,39 @@ function OrderList() {
     <View className='order-list-container' style={cssVars}>
       {/* 顶部标签栏 */}
       <View className='order-tabs'>
-        <View
-          className={`tab-item ${activeTab === 'all' ? 'active' : ''}`}
-          onClick={() => setActiveTab('all')}
-        >
-          <Text className='tab-text'>全部</Text>
-        </View>
-        <View
-          className={`tab-item ${activeTab === 'pending' ? 'active' : ''}`}
-          onClick={() => setActiveTab('pending')}
-        >
-          <Text className='tab-text'>待确认</Text>
-        </View>
-        <View
-          className={`tab-item ${activeTab === 'confirmed' ? 'active' : ''}`}
-          onClick={() => setActiveTab('confirmed')}
-        >
-          <Text className='tab-text'>已确认</Text>
-        </View>
-        <View
-          className={`tab-item ${activeTab === 'cancelled' ? 'active' : ''}`}
-          onClick={() => setActiveTab('cancelled')}
-        >
-          <Text className='tab-text'>已取消</Text>
-        </View>
+        {[
+          { key: 'all', label: '全部' },
+          { key: 'pending', label: '待确认' },
+          { key: 'confirmed', label: '已确认' },
+          { key: 'cancelled', label: '已取消' },
+        ].map(tab => (
+          <View
+            key={tab.key}
+            className={`tab-item ${activeTab === tab.key ? 'active' : ''}`}
+            hoverClass='tab-item-hover'
+            onClick={() => setActiveTab(tab.key)}
+          >
+            <Text className='tab-text'>{tab.label}</Text>
+          </View>
+        ))}
       </View>
 
       {/* 订单列表 */}
       <ScrollView scrollY className='order-scroll'>
         {loading ? (
-          <LoadingSpinner text='加载订单中...' />
+          <Skeleton type='orderCard' count={3} />
         ) : filteredOrders.length > 0 ? (
           filteredOrders.map((order) => (
-            <View key={order.id} className='order-card'>
+            <View
+              key={order.id}
+              className='order-card'
+              hoverClass='order-card-hover'
+              hoverStayTime={100}
+            >
               {/* 订单头部 */}
               <View className='order-header'>
                 <Text className='order-hotel-name'>{order.hotelName}</Text>
-                <Text
-                  className='order-status'
-                  style={{ color: order.statusColor }}
-                >
+                <Text className='order-status' style={{ color: order.statusColor }}>
                   {order.statusText}
                 </Text>
               </View>
@@ -232,6 +198,7 @@ function OrderList() {
                   {order.status === 'pending' && (
                     <View
                       className='action-btn cancel-btn'
+                      hoverClass='action-btn-hover'
                       onClick={() => handleCancelOrder(order.id, order.hotelName)}
                     >
                       <Text className='btn-text'>取消订单</Text>
@@ -240,13 +207,15 @@ function OrderList() {
                   {order.status === 'completed' && (
                     <View
                       className='action-btn detail-btn'
+                      hoverClass='action-btn-hover'
                       onClick={() => handleReviewOrder(order.id, order.hotelId, order.hotelName)}
                     >
-                       <Text className='btn-text'>去评价</Text>
+                      <Text className='btn-text'>去评价</Text>
                     </View>
                   )}
                   <View
                     className='action-btn detail-btn'
+                    hoverClass='action-btn-hover'
                     onClick={() => handleOrderDetail(order.id)}
                   >
                     <Text className='btn-text'>查看详情</Text>

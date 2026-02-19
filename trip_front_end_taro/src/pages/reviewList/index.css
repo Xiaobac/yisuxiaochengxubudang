@@ -14,7 +14,7 @@
   border-radius: 20rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 .review-hotel-info {
@@ -119,8 +119,8 @@
 }
 
 .edit-input, .edit-textarea {
-  background: white;
-  border: 1rpx solid #ddd;
+  background: var(--color-card-bg);
+  border: 1rpx solid var(--color-border-base);
   margin: 10rpx 0 20rpx;
   padding: 10rpx;
   width: 100%;

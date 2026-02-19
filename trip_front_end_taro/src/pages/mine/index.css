@@ -18,13 +18,62 @@
   box-sizing: border-box;
 }
 
-.avatar-placeholder-circle {
+.avatar-circle {
   width: 120rpx;
   height: 120rpx;
-  background-color: rgba(255, 255, 255, 0.3);
-  border: 4rpx solid rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 4rpx solid rgba(255, 255, 255, 0.6);
   border-radius: 60rpx;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Hover states */
+.nav-menu-hover {
+  opacity: 0.7;
+}
+
+.mine-btn-login-hover {
+  opacity: 0.85;
+}
+
+.mine-btn-register-hover {
+  opacity: 0.85;
+}
+
+.mine-btn-logout-hover {
+  opacity: 0.7;
+}
+
+.list-cell-hover {
+  background-color: var(--color-bg-secondary);
+}
+
+/* Cell left group for icon + text alignment */
+.cell-left-group {
+  display: flex;
+  align-items: center;
+}
+
+/* Logout button style */
+.mine-btn-logout {
+  background-color: var(--color-card-bg);
+  color: #ff4d4f;
+  border: 2rpx solid #ff4d4f;
+  border-radius: 10rpx;
+  font-size: 32rpx;
+  height: 90rpx;
+  line-height: 90rpx;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mine-btn-logout::after {
+  border: none;
 }
 
 .user-text-info {
@@ -53,7 +102,7 @@
   display: flex;
   justify-content: space-around;
   padding: 30rpx 0;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-md);
   position: relative;
   z-index: 5;
   box-sizing: border-box;

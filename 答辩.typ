@@ -58,7 +58,7 @@
     gutter: 0.6em,
     align: (right, left),
     text(size: 10.5pt, fill: black.lighten(60%))[作　　者：],
-    text(size: 10.5pt)[G,C,R],
+    text(size: 10.5pt)[G,Chiaki,Raven],
     text(size: 10.5pt, fill: black.lighten(60%))[学　　校：],
     text(size: 10.5pt)[],
     text(size: 10.5pt, fill: black.lighten(60%))[指导教师：],

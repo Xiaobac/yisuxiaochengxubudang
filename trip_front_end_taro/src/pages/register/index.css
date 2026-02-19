@@ -27,7 +27,7 @@
   background: var(--color-card-bg);
   border-radius: 20rpx;
   padding: 60rpx 40rpx;
-  box-shadow: 0 10rpx 40rpx rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 .form-item {

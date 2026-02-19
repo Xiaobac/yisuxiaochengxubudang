@@ -37,6 +37,7 @@
   align-items: center;
   padding: 40rpx 30rpx 20rpx;
   border-bottom: 1rpx solid var(--color-border-base);
+  flex-shrink: 0;
 }
 
 .header-title {
@@ -76,6 +77,7 @@
   align-items: center;
   padding: 20rpx 30rpx;
   border-bottom: 1rpx solid var(--color-border-base);
+  flex-shrink: 0;
 }
 
 .current-month-info {
@@ -154,6 +156,13 @@
   font-weight: 500;
 }
 
+/* 可滚动内容区（日期网格） */
+.calendar-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* 日期网格 */
 .dates-grid {
   display: flex;
@@ -189,7 +198,7 @@
   justify-content: center;
   border-radius: 50%;
   font-size: 30rpx !important;
-  color: #000000 !important;
+  color: var(--color-text-primary) !important;
   font-weight: 400;
   flex-shrink: 0;
   transition: all 0.2s ease;
@@ -252,7 +261,7 @@
 }
 
 .date-cell.in-range {
-  background-color: #e6f4ff;
+  background-color: var(--color-bg-tertiary);
 }
 
 .date-cell.in-range .day-number {
@@ -277,12 +286,12 @@
 
 /* 禁用日期 */
 .date-cell.disabled .day-number {
-  color: #d9d9d9 !important;
+  color: var(--color-text-disabled) !important;
   background-color: transparent !important;
 }
 
 .date-cell.disabled .day-label {
-  color: #d9d9d9 !important;
+  color: var(--color-text-disabled) !important;
 }
 
 .date-cell.disabled {
@@ -310,19 +319,22 @@
   border-radius: 8rpx;
 }
 
-/* 底部 */
+/* 底部确认栏 */
 .calendar-footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 30rpx;
+  padding: 24rpx 30rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
   border-top: 1rpx solid var(--color-border-base);
   background-color: var(--color-card-bg);
-  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.06);
+  gap: 24rpx;
+  flex-shrink: 0;
 }
 
 .summary {
   flex: 1;
+  min-width: 0;
 }
 
 .date-summary {
@@ -331,45 +343,53 @@
 }
 
 .summary-text {
-  font-size: 32rpx;
+  font-size: 30rpx;
   color: var(--color-text-primary);
   font-weight: 600;
-  margin-bottom: 6rpx;
+  line-height: 1.3;
 }
 
 .date-range {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: var(--color-text-secondary);
   line-height: 1.4;
+  margin-top: 4rpx;
 }
 
+/* 确定按钮 — 大面积、圆角胶囊、渐变光感 */
 .confirm-btn {
-  padding: 22rpx 48rpx;
-  font-size: 30rpx;
-  border-radius: 12rpx;
-  background-color: var(--color-bg-tertiary);
-  color: var(--color-text-tertiary);
-  border: none;
-  margin-left: 30rpx;
-  min-width: 140rpx;
+  flex-shrink: 0;
+  width: 240rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
   text-align: center;
-  transition: all 0.2s ease;
-  font-weight: 500;
+  border-radius: 44rpx;
+  border: none;
+  color: var(--color-text-disabled);
+  background: var(--color-bg-tertiary);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
 }
 
 .confirm-btn.active {
-  background-color: var(--color-primary);
   color: #fff;
-  box-shadow: 0 4rpx 12rpx rgba(22, 119, 255, 0.3);
+  background: linear-gradient(135deg, #1677ff 0%, #4a90e2 100%);
+  box-shadow:
+    0 6rpx 20rpx rgba(22, 119, 255, 0.35),
+    0 2rpx 6rpx rgba(22, 119, 255, 0.2);
 }
 
 .confirm-btn.active:active {
-  background-color: #0958d9;
   transform: scale(0.96);
-  box-shadow: 0 2rpx 8rpx rgba(22, 119, 255, 0.3);
+  box-shadow:
+    0 2rpx 10rpx rgba(22, 119, 255, 0.3);
 }
 
 .confirm-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  opacity: 0.45;
+  pointer-events: none;
 }

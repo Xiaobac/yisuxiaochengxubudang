@@ -28,7 +28,7 @@
   border-radius: 24rpx;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8rpx 30rpx rgba(0,0,0,0.2);
+  box-shadow: var(--shadow-lg);
   z-index: 1000;
   overflow: hidden;
 }

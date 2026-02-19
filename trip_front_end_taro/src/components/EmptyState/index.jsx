@@ -1,14 +1,26 @@
 import React from 'react';
 import { View, Text, Button } from '@tarojs/components';
+import Icon from '../Icon';
 import './index.css';
 
 /**
- * 空状态组件
- * @param {string} image - 图片表情
- * @param {string} title - 标题
- * @param {string} description - 描述
- * @param {string} buttonText - 按钮文本
- * @param {function} onButtonClick - 按钮点击回调
+ * Map of emoji/text hints to Phosphor icon names
+ */
+const ICON_MAP = {
+  '🏨': 'buildings',
+  '📋': 'clipboardText',
+  '❤️': 'heart',
+  '📝': 'noteBlank',
+  '⭐': 'star',
+};
+
+/**
+ * Empty state component with Phosphor SVG icons
+ * @param {string} image - Emoji hint (mapped to icon) or icon name directly
+ * @param {string} title - Title text
+ * @param {string} description - Description text
+ * @param {string} buttonText - Action button text
+ * @param {function} onButtonClick - Button click handler
  */
 function EmptyState({
   image = '🏨',
@@ -17,13 +29,17 @@ function EmptyState({
   buttonText = '',
   onButtonClick
 }) {
+  const iconName = ICON_MAP[image] || image;
+
   return (
     <View className='empty-state-container'>
-      <Text className='empty-state-image'>{image}</Text>
+      <View className='empty-state-icon-wrapper'>
+        <Icon name={iconName} size={120} color='#bfbfbf' />
+      </View>
       <Text className='empty-state-title'>{title}</Text>
       {description && <Text className='empty-state-description'>{description}</Text>}
       {buttonText && (
-        <Button className='empty-state-button' onClick={onButtonClick}>
+        <Button className='empty-state-button' hoverClass='empty-state-button-hover' onClick={onButtonClick}>
           {buttonText}
         </Button>
       )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, Image, Input, Map, ScrollView } from '@tarojs/components';
 import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
 import dayjs from 'dayjs';
@@ -9,15 +9,16 @@ import { formatStars, formatPrice } from '../../utils/format';
 import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
 import { getImageUrl } from '../../config/images';
 import FilterPanel from '../../components/FilterPanel';
-import LoadingSpinner from '../../components/LoadingSpinner';
+import Skeleton from '../../components/Skeleton';
 import EmptyState from '../../components/EmptyState';
 import Calendar from '../../components/Calendar';
+import Icon from '../../components/Icon';
 import { useTheme } from '../../utils/useTheme';
 import AiChatWidget from '../../components/AiChatWidget';
 import './index.css';
 
 function HotelList() {
-  const { cssVars } = useTheme();
+  const { cssVars, tokens } = useTheme();
 
   // ---------- 原有酒店列表状态 ----------
   const [hotelList, setHotelList] = useState([]);
@@ -46,21 +47,30 @@ function HotelList() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  // ---------- 新增：城市选择状态 ----------
+  // ---------- 城市选择状态 ----------
   const [locations, setLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isCitySelectorVisible, setIsCitySelectorVisible] = useState(false);
 
-  // ---------- 新增：日期选择状态 ----------
+  // ---------- 日期选择状态 ----------
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // 辅助：今天/明天
+  // ---------- 滚动位置保持 ----------
+  const [savedScrollTop, setSavedScrollTop] = useState(0);
+  const scrollTopRef = useRef(0);
+
+  // ---------- 搜索防抖 ----------
+  const searchTimerRef = useRef(null);
+
   const today = dayjs();
   const tomorrow = today.add(1, 'day');
 
-  // ---------- 辅助函数：根据type获取城市ID范围（与Home保持一致）----------
+  const iconColor = tokens['--color-text-primary'];
+  const iconSecondaryColor = tokens['--color-text-secondary'];
+
+  // ---------- 辅助函数 ----------
   const getCityIdsByType = (type) => {
     if (type === 'hotel') return { min: 1, max: 10 };
     if (type === 'homestay') return { min: 1, max: 10 };
@@ -68,11 +78,10 @@ function HotelList() {
     return { min: 1, max: 10 };
   };
 
-  // ---------- 新增：加载城市列表 ----------
+  // ---------- 加载城市列表 ----------
   const loadLocations = async () => {
     try {
       const res = await getLocations();
-      console.log('原始位置响应:', res);
       let locationsData = [];
       if (res) {
         if (Array.isArray(res)) {
@@ -99,7 +108,7 @@ function HotelList() {
     }
   };
 
-  // ---------- 新增：城市选择处理 ----------
+  // ---------- 城市选择处理 ----------
   const handleSelectCity = (location) => {
     setSelectedLocation(location);
     setIsCitySelectorVisible(false);
@@ -108,14 +117,12 @@ function HotelList() {
     loadHotels(newParams);
   };
 
-  // ---------- 新增：日期选择处理 ----------
+  // ---------- 日期选择处理 ----------
   const handleOpenCalendar = () => {
     setIsCalendarVisible(true);
   };
 
   const handleCalendarConfirm = (start, end) => {
-    console.log('日历返回:', { start, end });
-    // Calendar 组件自己负责关闭，这里只处理数据
     if (start) setStartDate(start);
     if (end) setEndDate(end);
     let newParams = { ...searchParams };
@@ -128,7 +135,7 @@ function HotelList() {
     loadHotels(newParams);
   };
 
-  // ---------- 辅助函数：日期显示 ----------
+  // ---------- 日期显示 ----------
   const getDisplayDate = (date, isToday = false, isTomorrow = false) => {
     if (date) return dayjs(date).format('MM月DD日');
     if (isTomorrow) return tomorrow.format('MM月DD日');
@@ -144,7 +151,7 @@ function HotelList() {
     return '共1晚';
   };
 
-  // ---------- 辅助：将接口返回的原始酒店数据格式化并获取最低价格 ----------
+  // ---------- 格式化酒店数据 ----------
   const formatHotelsWithPrice = async (rawList) => {
     const baseHotels = rawList.map(hotel => {
       let images = [];
@@ -191,7 +198,7 @@ function HotelList() {
     );
   };
 
-  // ---------- 修改：加载酒店列表（首次/重置），并获取每个酒店的最低价格 ----------
+  // ---------- 加载酒店列表 ----------
   const loadHotels = async (params = {}) => {
     setLoading(true);
     setCurrentPage(1);
@@ -215,7 +222,6 @@ function HotelList() {
         const hotelsWithPrice = await formatHotelsWithPrice(res.data);
         setHotelList(hotelsWithPrice);
         generateMapMarkers(hotelsWithPrice);
-        // 判断是否还有更多
         const total = res.total ?? res.data.length;
         setHasMore(hotelsWithPrice.length < total);
       } else {
@@ -233,7 +239,7 @@ function HotelList() {
     }
   };
 
-  // ---------- 新增：上滑加载下一页 ----------
+  // ---------- 上滑加载下一页 ----------
   const loadMoreHotels = async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
@@ -273,7 +279,7 @@ function HotelList() {
     }
   };
 
-  // ---------- 原有：生成地图标记 ----------
+  // ---------- 生成地图标记 ----------
   const generateMapMarkers = (hotels) => {
     const mapMarkers = hotels
       .filter(hotel => hotel.latitude && hotel.longitude)
@@ -302,27 +308,19 @@ function HotelList() {
     }
   };
 
-  // ---------- 修改：筛选和排序 ----------
-  // 注意：如果分页后数据量较大，建议将筛选和排序逻辑移至后端处理。
-  // 当前前端逻辑仅对已加载的数据生效。
+  // ---------- 筛选和排序 ----------
   const filterAndSortHotels = () => {
     let filtered = [...hotelList];
     if (filterParams.priceRange) {
       const [min, max] = filterParams.priceRange;
       filtered = filtered.filter(h => h.priceNum >= min && h.priceNum <= max);
     }
-
-    // 评分筛选
     if (filterParams.minScore) {
       filtered = filtered.filter(h => parseFloat(h.score) >= filterParams.minScore);
     }
-
-    // 星级筛选
     if (filterParams.minStars) {
       filtered = filtered.filter(h => (h.starRating || 0) >= filterParams.minStars);
     }
-
-    // 设施筛选
     if (filterParams.facilities && filterParams.facilities.length > 0) {
       filtered = filtered.filter(h =>
         filterParams.facilities.every(f => h.facilities.includes(f))
@@ -336,7 +334,6 @@ function HotelList() {
         filtered.sort((a, b) => b.priceNum - a.priceNum);
         break;
       case 'distance':
-        // 按综合热度排序（评分 × 点评数），无 GPS 时作为"好评优先"替代
         filtered.sort((a, b) => {
           const scoreA = parseFloat(a.score) || 0;
           const scoreB = parseFloat(b.score) || 0;
@@ -353,8 +350,24 @@ function HotelList() {
     setFilteredHotels(filtered);
   };
 
-  // ---------- 原有：其他处理函数 ----------
+  // ---------- 搜索（带防抖）----------
+  const handleSearchInput = useCallback((e) => {
+    const val = e.detail.value;
+    setLocalSearchKeyword(val);
+
+    // 防抖：300ms 后执行搜索
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      if (val.trim()) {
+        const newParams = { ...searchParams, keyword: val.trim() };
+        setSearchParams(newParams);
+        loadHotels(newParams);
+      }
+    }, 300);
+  }, [searchParams]);
+
   const handleSearch = (keyword) => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     const newParams = { ...searchParams, keyword };
     setSearchParams(newParams);
     loadHotels(newParams);
@@ -379,27 +392,22 @@ function HotelList() {
     setFilterParams(filters);
     setShowFilter(false);
 
-    // 构建筛选信息提示
     let filterInfo = [];
     if (filters.priceRange) {
       const [min, max] = filters.priceRange;
       filterInfo.push(`价格${min}-${max}元`);
     }
-    if (filters.minScore) {
-      filterInfo.push(`${filters.minScore}分以上`);
-    }
-    if (filters.minStars) {
-      filterInfo.push(`${filters.minStars}星及以上`);
-    }
-    if (filters.facilities && filters.facilities.length > 0) {
-      filterInfo.push(`${filters.facilities.length}个设施`);
-    }
+    if (filters.minScore) filterInfo.push(`${filters.minScore}分以上`);
+    if (filters.minStars) filterInfo.push(`${filters.minStars}星及以上`);
+    if (filters.facilities && filters.facilities.length > 0) filterInfo.push(`${filters.facilities.length}个设施`);
 
     const message = filterInfo.length > 0 ? `已应用: ${filterInfo.join(', ')}` : '筛选已应用';
     Taro.showToast({ title: message, icon: 'success', duration: 2000 });
   };
 
   const handleHotelClick = (hotelId) => {
+    // 保存滚动位置
+    Taro.setStorageSync('hotelListScrollTop', scrollTopRef.current);
     Taro.navigateTo({
       url: `/pages/hotelDetail/index?id=${hotelId}&checkIn=${searchParams.checkIn || ''}&checkOut=${searchParams.checkOut || ''}`
     });
@@ -421,6 +429,11 @@ function HotelList() {
 
   const handleCloseCard = () => setSelectedHotel(null);
 
+  // 记录滚动位置
+  const handleScroll = useCallback((e) => {
+    scrollTopRef.current = e.detail.scrollTop;
+  }, []);
+
   // ---------- 生命周期 ----------
   useDidShow(() => {
     const params = Taro.getStorageSync('hotelSearchParams');
@@ -430,8 +443,16 @@ function HotelList() {
       if (params.checkOut) setEndDate(params.checkOut);
       loadHotels(params);
       Taro.removeStorageSync('hotelSearchParams');
+      setSavedScrollTop(0); // 新搜索，回到顶部
     } else if (hotelList.length === 0) {
       loadHotels({});
+    } else {
+      // 从详情返回，恢复滚动位置
+      const saved = Taro.getStorageSync('hotelListScrollTop');
+      if (saved) {
+        setSavedScrollTop(saved);
+        Taro.removeStorageSync('hotelListScrollTop');
+      }
     }
   });
 
@@ -448,13 +469,22 @@ function HotelList() {
     Taro.stopPullDownRefresh();
   });
 
+  // 清理防抖定时器
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
+
   return (
     <View className='list-page-container' style={cssVars}>
       {/* 顶部搜索条 */}
       <View className='header-nav-section'>
-        <View className='back-arrow-icon' onClick={handleBack}>{'<'}</View>
+        <View className='back-btn-circle' hoverClass='back-btn-hover' onClick={handleBack}>
+          <Icon name='arrowLeft' size={36} color={iconColor} />
+        </View>
         <View className='search-pill-box'>
-          <View className='pill-city-info' onClick={() => setIsCitySelectorVisible(true)}>
+          <View className='pill-city-info' hoverClass='pill-city-hover' onClick={() => setIsCitySelectorVisible(true)}>
             <Text className='pill-city-name'>{selectedLocation?.name || searchParams.locationName || '上海'}</Text>
             <View className='pill-date-box' onClick={(e) => { e.stopPropagation(); handleOpenCalendar(); }}>
               <Text className='p-date'>住 {getDisplayDate(startDate, true).replace('月', '-').replace('日', '')}</Text>
@@ -468,29 +498,30 @@ function HotelList() {
               placeholder={searchParams.keyword || '位置/品牌/酒店'}
               placeholderStyle='color:#999;font-size:26rpx;'
               value={localSearchKeyword}
-              onInput={(e) => setLocalSearchKeyword(e.detail.value)}
+              onInput={handleSearchInput}
               onConfirm={(e) => handleSearch(e.detail.value)}
               confirmType='search'
             />
           </View>
         </View>
-        <View className='map-entry-box' onClick={toggleViewMode}>
-          <View className='map-icon-dot'></View>
+        <View className='map-entry-box' hoverClass='map-entry-hover' onClick={toggleViewMode}>
+          <Icon name={viewMode === 'list' ? 'mapTrifold' : 'listBullets'} size={36} color={iconColor} />
           <Text className='map-text-small'>{viewMode === 'list' ? '地图' : '列表'}</Text>
         </View>
       </View>
 
       {/* 筛选栏 */}
       <View className='filter-tab-bar'>
-        <View className='filter-tab-item active' onClick={handleOpenSortMenu}>
+        <View className='filter-tab-item active' hoverClass='filter-tab-hover' onClick={handleOpenSortMenu}>
           {sortBy === 'recommend' && '推荐排序'}
           {sortBy === 'distance' && '好评优先'}
           {sortBy === 'priceAsc' && '价格升序'}
           {sortBy === 'priceDesc' && '价格降序'}
-          <View className='s-arrow'></View>
+          <Icon name='caretDown' size={20} color={iconSecondaryColor} style={{ marginLeft: '8rpx' }} />
         </View>
-        <View className='filter-tab-item' onClick={handleOpenFilter}>
-          筛选 <View className='f-icon'></View>
+        <View className='filter-tab-item' hoverClass='filter-tab-hover' onClick={handleOpenFilter}>
+          筛选
+          <Icon name='funnel' size={24} color={iconSecondaryColor} style={{ marginLeft: '8rpx' }} />
           {(filterParams.priceRange || filterParams.minScore || filterParams.minStars || filterParams.facilities.length > 0) && (
             <View className='filter-badge'></View>
           )}
@@ -509,8 +540,9 @@ function HotelList() {
           )}
         </View>
       )}
+
       {loading ? (
-        <LoadingSpinner text='加载中...' />
+        <Skeleton type='hotelCard' count={4} />
       ) : filteredHotels.length === 0 ? (
         <EmptyState
           image='🏨'
@@ -523,13 +555,26 @@ function HotelList() {
         <ScrollView
           className='hotel-list-body'
           scrollY
+          scrollTop={savedScrollTop}
+          onScroll={handleScroll}
           onScrollToLower={loadMoreHotels}
           lowerThreshold={100}
         >
           {filteredHotels.map((hotel) => (
-            <View key={hotel.id} className='hotel-card-box' onClick={() => handleHotelClick(hotel.id)}>
+            <View
+              key={hotel.id}
+              className='hotel-card-box'
+              hoverClass='hotel-card-hover'
+              hoverStayTime={100}
+              onClick={() => handleHotelClick(hotel.id)}
+            >
               <View className='hotel-card-left'>
-                <Image className='hotel-card-img' src={getImageUrl(hotel.img)} mode='aspectFill' />
+                <Image
+                  className='hotel-card-img'
+                  src={getImageUrl(hotel.img)}
+                  mode='aspectFill'
+                  lazyLoad
+                />
               </View>
               <View className='hotel-card-right'>
                 <View className='h-name-row'>
@@ -568,11 +613,24 @@ function HotelList() {
               </View>
             </View>
           ))}
+
+          {/* 加载更多状态 */}
           {loadingMore && (
-            <View className='load-more-tip'><Text>加载更多...</Text></View>
+            <View className='load-more-tip'>
+              <View className='load-more-spinner'>
+                <View className='spinner-dot' />
+                <View className='spinner-dot' />
+                <View className='spinner-dot' />
+              </View>
+              <Text className='load-more-text'>加载更多...</Text>
+            </View>
           )}
           {!hasMore && filteredHotels.length > 0 && (
-            <View className='load-more-tip'><Text>— 已加载全部酒店 —</Text></View>
+            <View className='load-more-tip load-more-end'>
+              <View className='end-line' />
+              <Text className='load-more-text'>已加载全部酒店</Text>
+              <View className='end-line' />
+            </View>
           )}
         </ScrollView>
       ) : (
@@ -588,9 +646,11 @@ function HotelList() {
           />
           {selectedHotel && (
             <View className='hotel-card-popup'>
-              <View className='card-close' onClick={handleCloseCard}>✕</View>
+              <View className='card-close' hoverClass='card-close-hover' onClick={handleCloseCard}>
+                <Icon name='x' size={28} color={iconSecondaryColor} />
+              </View>
               <View className='card-content' onClick={() => handleHotelClick(selectedHotel.id)}>
-                <Image className='card-image' src={selectedHotel.img} mode='aspectFill' />
+                <Image className='card-image' src={selectedHotel.img} mode='aspectFill' lazyLoad />
                 <View className='card-info'>
                   <Text className='card-name'>{selectedHotel.name}</Text>
                   <View className='card-rating'>
@@ -623,7 +683,9 @@ function HotelList() {
           <View className='city-selector-content' onClick={e => e.stopPropagation()}>
             <View className='city-selector-header'>
               选择城市
-              <View className='city-selector-close' onClick={() => setIsCitySelectorVisible(false)}>×</View>
+              <View className='city-selector-close' onClick={() => setIsCitySelectorVisible(false)}>
+                <Icon name='x' size={36} color={iconSecondaryColor} />
+              </View>
             </View>
             <ScrollView scrollY className='city-selector-scroll'>
               {locations
@@ -635,6 +697,7 @@ function HotelList() {
                   <View
                     key={loc.id}
                     className={`city-select-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
+                    hoverClass='city-select-hover'
                     onClick={() => handleSelectCity(loc)}
                   >
                     {loc.name}

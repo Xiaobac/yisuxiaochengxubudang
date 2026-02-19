@@ -98,6 +98,16 @@ export function getThemeCssVars(resolvedTheme) {
 }
 
 /**
+ * 获取已解析主题的 token 值对象
+ * 用于 JS 层面需要主题色的场景（如 Icon 的 SVG data URI 不支持 CSS 变量）
+ * @param {'light'|'dark'} resolvedTheme
+ * @returns {Record<string, string>} 如 { '--color-primary': '#1677ff', ... }
+ */
+export function getResolvedTokens(resolvedTheme) {
+  return TOKENS[resolvedTheme] || TOKENS.light;
+}
+
+/**
  * 应用原生 UI 主题（NavigationBar + TabBar）
  * 必须在每个页面 useDidShow 中调用，因为 setNavigationBarColor 是页面级 API
  * @param {'light'|'dark'} resolvedTheme
