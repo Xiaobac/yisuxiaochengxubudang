@@ -32,6 +32,34 @@ export async function POST(
       return NextResponse.json({ success: false, message: '优惠券不在有效期内' }, { status: 400 });
     }
 
+    // 处理积分兑换逻辑
+    if (coupon.points > 0) {
+      return await prisma.$transaction(async (tx) => {
+        // 1. 检查用户积分
+        const user = await tx.user.findUnique({
+          where: { id: userId },
+          select: { points: true }
+        });
+
+        if (!user || user.points < coupon.points) {
+           throw new Error('INSUFFICIENT_POINTS');
+        }
+
+        // 2. 扣除积分
+        await tx.user.update({
+          where: { id: userId },
+          data: { points: { decrement: coupon.points } }
+        });
+
+        // 3. 发放优惠券
+        const userCoupon = await tx.userCoupon.create({
+          data: { userId, couponId },
+        });
+
+        return NextResponse.json({ success: true, message: '兑换成功', data: userCoupon }, { status: 201 });
+      });
+    }
+
     // 创建领取记录（复合主键，重复领取会报 P2002）
     const userCoupon = await prisma.userCoupon.create({
       data: { userId, couponId },
@@ -39,6 +67,9 @@ export async function POST(
 
     return NextResponse.json({ success: true, data: userCoupon }, { status: 201 });
   } catch (error: any) {
+    if (error.message === 'INSUFFICIENT_POINTS') {
+      return NextResponse.json({ success: false, message: '积分不足' }, { status: 400 });
+    }
     if (error.code === 'P2002') {
       return NextResponse.json({ success: false, message: '已领取过该优惠券' }, { status: 400 });
     }

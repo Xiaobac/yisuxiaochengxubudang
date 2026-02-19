@@ -259,6 +259,7 @@ model Coupon {
   description String?
   discount    Decimal      @db.Decimal(10, 2)
   minSpend    Decimal?     @db.Decimal(10, 2)
+  points      Int          @default(0) // 兑换所需积分
   validFrom   DateTime
   validTo     DateTime
   createdAt   DateTime     @default(now())

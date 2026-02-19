@@ -13,6 +13,7 @@ interface Coupon {
   description: string;
   discount: number;
   minSpend: number;
+  points: number;
   validFrom: string;
   validTo: string;
 }
@@ -32,6 +33,7 @@ export default function CouponManagement() {
     description: '',
     discount: '',
     minSpend: '',
+    points: '',
     validFrom: '',
     validTo: ''
   });
@@ -84,6 +86,7 @@ export default function CouponManagement() {
         description: coupon.description || '',
         discount: coupon.discount.toString(),
         minSpend: coupon.minSpend ? coupon.minSpend.toString() : '',
+        points: coupon.points ? coupon.points.toString() : '0',
         validFrom: new Date(coupon.validFrom).toISOString().split('T')[0],
         validTo: new Date(coupon.validTo).toISOString().split('T')[0],
       });
@@ -94,6 +97,7 @@ export default function CouponManagement() {
         name: '',
         description: '',
         discount: '',
+        points: '',
         minSpend: '',
         validFrom: '',
         validTo: ''
@@ -108,6 +112,7 @@ export default function CouponManagement() {
       const payload = {
         ...formData,
         discount: parseFloat(formData.discount),
+        points: formData.points ? parseInt(formData.points) : 0,
         minSpend: formData.minSpend ? parseFloat(formData.minSpend) : 0
       } as CouponPayload;
 
@@ -153,6 +158,7 @@ export default function CouponManagement() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">代码</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">所需积分</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">折扣</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">有效期</th>
@@ -165,7 +171,8 @@ export default function CouponManagement() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{coupon.code}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{coupon.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {coupon.discount}元 (满{coupon.minSpend}可用)
+                  {coupon.discount}元 (满{coupon.minSpend}可用){coupon.points || 0}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                    {new Date(coupon.validFrom).toLocaleDateString()} - {new Date(coupon.validTo).toLocaleDateString()}
@@ -235,7 +242,15 @@ export default function CouponManagement() {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                   />
                 </div>
+                <label className="block text-sm font-medium text-gray-700">兑换所需积分</label>
+                <input
+                  type="number"
+                  value={formData.points}
+                  onChange={e => setFormData({...formData, points: e.target.value})}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                />
               </div>
+              <div className="h-4"></div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">开始时间</label>
