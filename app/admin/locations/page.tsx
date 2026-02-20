@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Table,
   Button,
@@ -12,8 +12,7 @@ import {
   Popconfirm,
   App,
   Card,
-  Row,
-  Col
+  Tag
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
@@ -25,6 +24,12 @@ import {
 import { getLocations, createLocation, updateLocation, deleteLocation } from '@/app/services/admin';
 import type { Location } from '@/app/types';
 
+interface LocationNode extends Location {
+  key: string | number;
+  children?: LocationNode[];
+  isRoot?: boolean;
+}
+
 export default function LocationManagementPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(false);
@@ -33,6 +38,9 @@ export default function LocationManagementPage() {
   const [form] = Form.useForm();
   const [searchForm] = Form.useForm();
   const { message } = App.useApp();
+  
+  // Watch for type changes to control parentId field visibility
+  const typeValue = Form.useWatch('type', form);
 
   useEffect(() => {
     fetchLocations();
@@ -44,10 +52,12 @@ export default function LocationManagementPage() {
         form.setFieldsValue({
             name: editingLocation.name,
             description: editingLocation.description,
-            type: editingLocation.type
+            type: editingLocation.type,
+            parentId: editingLocation.parentId
         });
       } else {
         form.resetFields();
+        // Default to domestic city
         form.setFieldValue('type', 'domestic');
       }
     }
@@ -66,6 +76,83 @@ export default function LocationManagementPage() {
     }
   };
 
+  // Build the tree structure
+  const treeData = useMemo(() => {
+    if (!locations.length) return [];
+
+    // Separate locations by type
+    const provinces = locations.filter(l => l.type === 'province');
+    const domesticCities = locations.filter(l => l.type === 'domestic');
+    const overseasCities = locations.filter(l => l.type === 'overseas');
+
+    // Build Domestic Tree
+    const domesticTree: LocationNode[] = [];
+    
+    // 1. Add Provinces
+    provinces.forEach(province => {
+      const provinceNode: LocationNode = {
+        ...province,
+        key: province.id,
+        children: []
+      };
+      
+      // Find cities belonging to this province
+      const provinceCities = domesticCities.filter(c => c.parentId === province.id);
+      if (provinceCities.length > 0) {
+        provinceNode.children = provinceCities.map(city => ({
+          ...city,
+          key: city.id,
+          children: undefined // Explicitly set children to undefined to match LocationNode type or avoid conflict
+        }));
+      }
+      
+      domesticTree.push(provinceNode);
+    });
+
+    // 2. Add Domestic Cities without parent (or invalid parent)
+    const orphanedDomestic = domesticCities.filter(c => !c.parentId || !provinces.find(p => p.id === c.parentId));
+    orphanedDomestic.forEach(city => {
+      domesticTree.push({
+        ...city,
+        key: city.id,
+        children: undefined // Explicitly set children to undefined
+      });
+    });
+
+    // Build Overseas Tree
+    const overseasTree: LocationNode[] = overseasCities.map(city => ({
+      ...city,
+      key: city.id,
+      children: undefined // Explicitly set children to undefined
+    }));
+
+    // Construct Root Nodes
+    const roots: LocationNode[] = [
+      {
+        id: -1, // Virtual ID
+        name: '国内',
+        type: 'root',
+        key: 'domestic_root',
+        children: domesticTree,
+        description: '国内城市及省份'
+      },
+      {
+        id: -2, // Virtual ID
+        name: '海外',
+        type: 'root',
+        key: 'overseas_root',
+        children: overseasTree,
+        description: '海外国家及城市'
+      }
+    ];
+
+    return roots;
+  }, [locations]);
+
+  const availableProvinces = useMemo(() => {
+    return locations.filter(l => l.type === 'province');
+  }, [locations]);
+
   const handleSearch = async () => {
     const values = await searchForm.validateFields();
     fetchLocations(values);
@@ -81,8 +168,11 @@ export default function LocationManagementPage() {
     setModalVisible(true);
   };
 
-  const handleEdit = (record: Location) => {
-    setEditingLocation(record);
+  const handleEdit = (record: LocationNode) => {
+    // Prevent editing root nodes
+    if (record.isRoot || typeof record.key === 'string') return;
+    
+    setEditingLocation(record as Location);
     setModalVisible(true);
   };
 
@@ -100,11 +190,16 @@ export default function LocationManagementPage() {
   const handleSubmit = async () => {
     try {
         const values = await form.validateFields();
+        // If type is not domestic, clear parentId just in case
+        if (values.type !== 'domestic') {
+          values.parentId = undefined;
+        }
+
         if (editingLocation) {
-            await updateLocation(editingLocation.id, values.name, values.description, values.type);
+            await updateLocation(editingLocation.id, values.name, values.description, values.type, values.parentId);
             message.success('更新成功');
         } else {
-            await createLocation(values.name, values.description, values.type);
+            await createLocation(values.name, values.description, values.type, values.parentId);
             message.success('创建成功');
         }
         setModalVisible(false);
@@ -116,18 +211,27 @@ export default function LocationManagementPage() {
     }
   };
 
-  const columns: TableColumnsType<Location> = [
-    {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 80,
-    },
+  const columns: TableColumnsType<LocationNode> = [
     {
       title: '城市/区域名称',
       dataIndex: 'name',
       key: 'name',
-      width: 200,
+      width: 300,
+    },
+    {
+      title: '类型',
+      dataIndex: 'type',
+      key: 'type',
+      width: 150,
+      render: (type: string) => {
+        switch(type) {
+            case 'root': return <Tag color="blue">区域分类</Tag>;
+            case 'province': return <Tag color="geekblue">省份</Tag>;
+            case 'domestic': return <Tag color="green">国内城市</Tag>;
+            case 'overseas': return <Tag color="purple">海外城市</Tag>;
+            default: return type;
+        }
+      }
     },
     {
         title: '描述',
@@ -136,37 +240,36 @@ export default function LocationManagementPage() {
         ellipsis: true,
     },
     {
-      title: '区域类型',
-      dataIndex: 'type',
-      key: 'type',
-      width: 120,
-      render: (type: string) => type === 'overseas' ? '海外' : '国内',
-    },
-    {
       title: '操作',
       key: 'action',
       width: 200,
-      render: (_, record) => (
-        <Space>
-          <Button 
-            type="text" 
-            icon={<EditOutlined />} 
-            onClick={() => handleEdit(record)}
-          >
-            编辑
-          </Button>
-          <Popconfirm
-            title="确定要删除这个位置吗？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button type="text" danger icon={<DeleteOutlined />}>
-              删除
+      render: (_, record) => {
+        // Don't show actions for virtual root nodes
+        if (typeof record.key === 'string' && record.key.endsWith('_root')) return null;
+        
+        return (
+          <Space>
+            <Button 
+              type="text" 
+              icon={<EditOutlined />} 
+              onClick={() => handleEdit(record)}
+            >
+              编辑
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+            <Popconfirm
+              title="确定要删除这个位置吗？"
+              description={record.type === 'province' && record.children && record.children.length > 0 ? "删除省份将同时影响其下属城市，确定继续？" : "确定要删除这个位置吗？"}
+              onConfirm={() => handleDelete(record.id)}
+              okText="确定"
+              cancelText="取消"
+            >
+              <Button type="text" danger icon={<DeleteOutlined />}>
+                删除
+              </Button>
+            </Popconfirm>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -182,14 +285,8 @@ export default function LocationManagementPage() {
 
         <Card size="small" style={{ marginBottom: 16 }}>
           <Form form={searchForm} layout="inline" onFinish={handleSearch}>
-            <Form.Item name="name" label="城市名称">
-              <Input placeholder="请输入城市名称" allowClear />
-            </Form.Item>
-            <Form.Item name="type" label="区域类型">
-              <Select placeholder="请选择区域类型" allowClear style={{ width: 120 }}>
-                <Select.Option value="domestic">国内</Select.Option>
-                <Select.Option value="overseas">海外</Select.Option>
-              </Select>
+            <Form.Item name="name" label="名称">
+              <Input placeholder="请输入名称" allowClear />
             </Form.Item>
             <Form.Item>
               <Space>
@@ -205,10 +302,11 @@ export default function LocationManagementPage() {
 
       <Table
         columns={columns}
-        dataSource={locations}
-        rowKey="id"
+        dataSource={treeData}
+        rowKey="key"
         loading={loading}
-        pagination={{ pageSize: 10 }}
+        pagination={false}
+        defaultExpandAllRows={true}
       />
 
       <Modal
@@ -224,7 +322,7 @@ export default function LocationManagementPage() {
                 label="名称" 
                 rules={[{ required: true, message: '请输入位置名称' }]}
             >
-                <Input placeholder="例如：北京" />
+                <Input placeholder="例如：北京、广东省" />
             </Form.Item>
             <Form.Item
                 name="type"
@@ -232,15 +330,31 @@ export default function LocationManagementPage() {
                 rules={[{ required: true, message: '请选择区域类型' }]}
             >
                 <Select>
-                    <Select.Option value="domestic">国内</Select.Option>
-                    <Select.Option value="overseas">海外</Select.Option>
+                    <Select.Option value="domestic">国内城市</Select.Option>
+                    <Select.Option value="province">省份</Select.Option>
+                    <Select.Option value="overseas">海外城市</Select.Option>
                 </Select>
             </Form.Item>
+            
+            {typeValue === 'domestic' && (
+                <Form.Item
+                    name="parentId"
+                    label="所属省份"
+                    rules={[{ required: true, message: '请选择所属省份' }]}
+                >
+                    <Select placeholder="请选择所属省份" allowClear>
+                        {availableProvinces.map(p => (
+                            <Select.Option key={p.id} value={p.id}>{p.name}</Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+            )}
+
             <Form.Item 
                 name="description" 
                 label="描述" 
             >
-                <Input.TextArea rows={3} placeholder="例如：中华人民共和国首都" />
+                <Input.TextArea rows={3} placeholder="备注信息" />
             </Form.Item>
         </Form>
       </Modal>

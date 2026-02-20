@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     // 3. 处理请求
     const body = await request.json();
-    const { name, description, type } = body;
+    const { name, description, type, parentId } = body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return NextResponse.json({ success: false, error: '位置名称不能为空' }, { status: 400 });
@@ -115,6 +115,7 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         description: description?.trim(),
         type: type || 'domestic',
+        parentId: parentId ? Number(parentId) : undefined,
       },
     });
 

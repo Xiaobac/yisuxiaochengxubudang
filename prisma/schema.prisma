@@ -45,8 +45,11 @@ model Location {
   id        Int      @id @default(autoincrement())
   name      String
   description String?
-  // 区域类型: domestic-国内, overseas-海外
+  // 区域类型: domestic-国内, overseas-海外, province-省份
   type      String   @default("domestic")
+  parentId  Int?
+  parent    Location? @relation("LocationToLocation", fields: [parentId], references: [id])
+  children  Location[] @relation("LocationToLocation")
   createdAt DateTime @default(now())
   hotels    Hotel[]
 

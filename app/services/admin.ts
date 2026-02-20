@@ -25,12 +25,12 @@ export const getLocations = (params?: { name?: string; type?: string }) => {
   return get<ApiResponse<Location[]>>('/locations', { params });
 };
 
-export const createLocation = (name: string, description?: string, type?: string) => {
-  return post<ApiResponse<Location>>('/locations', { name, description, type });
+export const createLocation = (name: string, description?: string, type?: string, parentId?: number) => {
+  return post<ApiResponse<Location>>('/locations', { name, description, type, parentId });
 };
 
-export const updateLocation = (id: number, name: string, description?: string, type?: string) => {
-  return put<ApiResponse<Location>>(`/locations/${id}`, { name, description, type });
+export const updateLocation = (id: number, name: string, description?: string, type?: string, parentId?: number) => {
+  return put<ApiResponse<Location>>(`/locations/${id}`, { name, description, type, parentId });
 };
 
 export const deleteLocation = (id: number) => {

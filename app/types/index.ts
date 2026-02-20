@@ -44,6 +44,8 @@ export interface Location {
   name: string;
   description?: string;
   type?: string;
+  parentId?: number | null;
+  children?: Location[];
 }
 
 export interface Tag {
