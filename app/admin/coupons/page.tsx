@@ -169,9 +169,10 @@ export default function CouponManagement() {
             {coupons.map((coupon) => (
               <tr key={coupon.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{coupon.code}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{coupon.points || 0}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{coupon.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {coupon.discount}元 (满{coupon.minSpend}可用){coupon.points || 0}</td>
+                  {coupon.discount}元 (满{coupon.minSpend}可用)</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

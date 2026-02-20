@@ -47,7 +47,8 @@ export async function PUT(
       name, 
       description, 
       discount, 
-      minSpend, 
+      minSpend,
+      points, 
       validFrom, 
       validTo 
     } = body;
@@ -60,6 +61,7 @@ export async function PUT(
         description,
         discount,
         minSpend,
+        points: points !== undefined ? parseInt(points) : undefined,
         validFrom: validFrom ? new Date(validFrom) : undefined,
         validTo: validTo ? new Date(validTo) : undefined,
       },

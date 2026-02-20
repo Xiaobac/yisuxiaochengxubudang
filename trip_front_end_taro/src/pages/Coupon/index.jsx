@@ -107,7 +107,6 @@ function Coupons() {
             <Text className='expire-date-text'>
               {item.validTo ? `${dayjs(item.validTo).format('YYYY-MM-DD')} 到期` : ''}
             </Text>
-            {item.points > 0 && <Text className='points-cost-text'>需 {item.points} 积分</Text>}
           </View>
         </View>
 
@@ -131,7 +130,7 @@ function Coupons() {
               className={`coupon-primary-btn ${isClaiming ? 'coupon-btn-loading' : ''}`}
               onClick={() => handleClaim(item.id)}
             >
-              {isClaiming ? '领取中' : (item.points > 0 ? '积分兑换' : '立即领取')}
+              {isClaiming ? '领取中' : (item.points > 0 ? `${item.points}积分兑换` : '立即领取')}
             </View>
           )}
         </View>

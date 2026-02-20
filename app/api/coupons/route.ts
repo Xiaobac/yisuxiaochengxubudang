@@ -9,6 +9,7 @@ const createCouponSchema = z.object({
   description: z.string().max(500).optional(),
   discount:    z.number().positive(),
   minSpend:    z.number().nonnegative().optional(),
+  points:      z.number().int().nonnegative().optional().default(0),
   validFrom:   z.coerce.date({ message: 'validFrom 须为有效日期时间' }),
   validTo:     z.coerce.date({ message: 'validTo 须为有效日期时间' }),
 }).refine(d => d.validTo > d.validFrom, {
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ success: false, message: parsed.error.issues[0].message }, { status: 400 });
     }
-    const { code, name, description, discount, minSpend, validFrom, validTo } = parsed.data;
+    const { code, name, description, discount, minSpend, validFrom, validTo, points } = parsed.data;
 
     const coupon = await prisma.coupon.create({
       data: {
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
         description,
         discount,
         minSpend,
+        points,
         validFrom: new Date(validFrom),
         validTo: new Date(validTo),
       },
