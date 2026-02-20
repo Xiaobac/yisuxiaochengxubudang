@@ -720,8 +720,8 @@ trip_front_end_project/
   align: (left, left, left),
   table.header([*表名*], [*核心字段*], [*设计要点*]),
   [`users`],
-  [`id`, `email`(unique), `password`, `roleId`→Role],
-  [密码经 bcryptjs（salt=10）哈希存储，明文不落库；`roleId` 驱动三角色权限体系],
+  [`id`, `email`(unique), `password`, `roleId`→Role, `points`(Int)],
+  [密码经 bcryptjs（salt=10）哈希存储，明文不落库；`roleId` 驱动三角色权限体系；`points` 为用户积分余额（默认 0），用于兑换优惠券],
 
   [`roles`],
   [`id`, `name`(unique)],
@@ -776,8 +776,8 @@ trip_front_end_project/
   [多对多中间表；级联删除：酒店删除时自动清理关联标签记录],
 
   [`coupons`],
-  [`code`(unique), `discount`(Decimal), `minSpend`?, `validFrom`, `validTo`],
-  [优惠券定义表；`code` 全局唯一供展示；领取时服务端校验 `validFrom ≤ now ≤ validTo`],
+  [`code`(unique), `discount`(Decimal), `minSpend`?, `validFrom`, `validTo`, `points`(Int)],
+  [优惠券定义表；`code` 全局唯一供展示；领取时服务端校验 `validFrom ≤ now ≤ validTo`；`points` 为兑换所需积分（默认 0 表示免费领取，> 0 表示积分兑换）],
 
   [`user_coupons`],
   [复合主键 `(userId, couponId)`, `isUsed`, `usedAt`?],
@@ -1750,13 +1750,15 @@ await prisma.$transaction(async (tx) => {
 
 === 做了什么
 
-优惠券页展示系统内所有可用优惠券卡片，每张卡片显示优惠金额、使用条件、有效期等信息，并根据状态呈现不同的操作按钮：可领取 / 已领取 / 已失效。用户点击"立即领取"后按钮状态实时更新，防止重复提交。
+优惠券页展示系统内所有可用优惠券卡片，每张卡片显示优惠金额、使用条件、有效期、所需积分等信息，并根据状态呈现不同的操作按钮：可领取 / 积分兑换 / 已领取 / 已失效。用户点击"立即领取"或"积分兑换"后按钮状态实时更新，防止重复提交。支持免费领取（points = 0）和积分兑换（points > 0）两种模式。
 
 === 怎么做的
 
 页面挂载时通过 `Promise.allSettled` 并发调用 `getCoupons()`（全量优惠券）和 `getUserCoupons()`（当前用户已领取记录），将已领取券的 ID 构建为 `Set<claimedIds>`，渲染时以 O(1) 查询判断每张券是否已领取。
 
-点击领取时，前端首先通过 `storage.isAuthenticated()` 检查登录态，未登录则弹出 `Taro.showToast` 提示"请先登录后领取"并直接返回，不发起请求。已登录则调用 `claimCoupon(couponId)` 发送 `POST /api/coupons/{id}/claim`；请求期间按钮切换为加载态（`coupon-btn-loading`）防止重复点击；成功后将该 ID 追加进 `claimedIds` Set 并触发重新渲染，按钮变为已领取态（`coupon-btn-claimed`）。后端服务端校验优惠券有效期，写入 `UserCoupon` 关联表，Prisma 复合主键 `@@id([userId, couponId])` 保证幂等，重复领取返回 400。
+点击领取时，前端首先通过 `storage.isAuthenticated()` 检查登录态，未登录则弹出 `Taro.showToast` 提示"请先登录后领取"并直接返回，不发起请求。已登录则调用 `claimCoupon(couponId)` 发送 `POST /api/coupons/{id}/claim`；请求期间按钮切换为加载态（`coupon-btn-loading`）防止重复点击；成功后将该 ID 追加进 `claimedIds` Set 并触发重新渲染，按钮变为已领取态（`coupon-btn-claimed`）。
+
+*积分兑换事务处理*：后端服务端校验优惠券有效期后，若该券 `points > 0`，则启动 `prisma.$transaction` 事务：① 查询用户当前积分余额，积分不足则抛出 `INSUFFICIENT_POINTS` 异常并返回 400；② 通过 `user.update({ data: { points: { decrement: coupon.points } } })` 原子扣减积分；③ 写入 `UserCoupon` 关联表发放优惠券。三步操作在同一事务内原子完成，保证积分扣减与优惠券发放的强一致性。若 `points = 0`，则直接写入 `UserCoupon` 表，Prisma 复合主键 `@@id([userId, couponId])` 保证幂等，重复领取返回 400。
 
 == 地图导航实现
 
@@ -1893,12 +1895,12 @@ await prisma.$transaction(async (tx) => {
   columns: (auto, auto, auto, 1fr, 1fr),
   align: (center, left, center, left, left),
   table.header([*方法*], [*路径*], [*权限*], [*参数*], [*说明*]),
-  [GET], [`/coupons`], [公开], [—], [返回全部优惠券列表，含 `id`、`code`、`name`、`discount`、`type`（固定金额/百分比）、`minOrderAmount`、`validFrom`、`validTo`、`usageLimit`、`usageCount` 等字段],
-  [POST], [`/coupons`], [ADMIN], [Body: `code`、`name`、`discount`、`type`（必填）；`minOrderAmount?`、`validFrom?`、`validTo?`、`usageLimit?`], [管理员创建优惠券，`code` 全局唯一],
+  [GET], [`/coupons`], [公开], [—], [返回全部优惠券列表，含 `id`、`code`、`name`、`discount`、`minSpend`、`validFrom`、`validTo`、`points`（兑换所需积分）等字段],
+  [POST], [`/coupons`], [ADMIN], [Body: `code`、`name`、`discount`（必填）；`minSpend?`、`validFrom?`、`validTo?`、`points?`（所需积分，默认 0）], [管理员创建优惠券，`code` 全局唯一；`points > 0` 表示积分兑换券],
   [GET], [`/coupons/[id]`], [公开], [—], [单张优惠券详情],
   [PUT], [`/coupons/[id]`], [ADMIN], [Body: 任意优惠券字段], [更新优惠券信息],
   [DELETE], [`/coupons/[id]`], [ADMIN], [—], [删除优惠券及关联的用户领取记录],
-  [POST], [`/coupons/[id]/claim`], [AUTH], [—], [用户领取指定优惠券；服务端校验优惠券是否存在及是否在有效期内（`validFrom`/`validTo`），写入 `UserCoupon` 关联表；重复领取返回 400（Prisma P2002 唯一约束冲突）],
+  [POST], [`/coupons/[id]/claim`], [AUTH], [—], [用户领取或积分兑换优惠券；服务端校验有效期（`validFrom`/`validTo`），若优惠券 `points > 0` 则启动事务：① 检查用户积分余额，不足返回 400；② 原子扣减 `user.points`；③ 写入 `UserCoupon` 发放券。免费券（`points = 0`）直接写入。重复领取返回 400（Prisma P2002）],
   [GET], [`/user/coupons`], [AUTH], [—], [返回当前用户已领取的优惠券列表，含 `isUsed`、`usedAt` 及完整优惠券信息（内联 `coupon` 对象）],
 )
 
