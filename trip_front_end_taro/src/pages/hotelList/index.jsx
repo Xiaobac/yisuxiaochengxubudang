@@ -51,6 +51,7 @@ function HotelList() {
   const [locations, setLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isCitySelectorVisible, setIsCitySelectorVisible] = useState(false);
+  const [citySearchKeyword, setCitySearchKeyword] = useState('');
 
   // ---------- 日期选择状态 ----------
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
@@ -687,26 +688,44 @@ function HotelList() {
                 <Icon name='x' size={36} color={iconSecondaryColor} />
               </View>
             </View>
+
+             {/* 城市搜索框 */}
+            <View className='city-search-box'>
+              <Icon name='search' size={32} color={iconSecondaryColor} />
+              <Input
+                className='city-search-input'
+                placeholder='搜索城市'
+                placeholderStyle='color:var(--color-text-disabled);'
+                value={citySearchKeyword}
+                onInput={(e) => setCitySearchKeyword(e.detail.value)}
+              />
+            </View>
+
             <ScrollView scrollY className='city-selector-scroll'>
+              <View className='city-grid-container'>
               {locations
                 .filter(loc => {
                   const { min, max } = getCityIdsByType(searchParams.type);
                   return loc.id >= min && loc.id <= max;
                 })
+                .filter(loc => !citySearchKeyword || loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase()))
                 .map((loc) => (
                   <View
                     key={loc.id}
-                    className={`city-select-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
+                    className={`city-grid-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
                     hoverClass='city-select-hover'
                     onClick={() => handleSelectCity(loc)}
                   >
                     {loc.name}
                   </View>
                 ))}
-              {locations.filter(loc => {
+            </View>
+              {locations
+              .filter(loc => {
                 const { min, max } = getCityIdsByType(searchParams.type);
                 return loc.id >= min && loc.id <= max;
-              }).length === 0 && (
+              })
+              .filter(loc => !citySearchKeyword || loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase())).length === 0 && (
                 <View className='empty-city-tip'>当前无城市可选</View>
               )}
             </ScrollView>

@@ -612,6 +612,53 @@
   background-color: var(--color-bg-tertiary);
 }
 
+/* 城市搜索框 */
+.city-search-box {
+  margin: 20rpx 30rpx;
+  background-color: var(--color-bg-secondary);
+  border-radius: 12rpx;
+  padding: 16rpx 24rpx;
+  display: flex;
+  align-items: center;
+}
+
+.city-search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: var(--color-text-primary);
+  margin-left: 12rpx;
+}
+
+/* 城市网格布局 (替换原列表布局) */
+.city-grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+  padding: 20rpx 30rpx;
+}
+
+.city-grid-item {
+  background-color: var(--color-bg-secondary);
+  border-radius: 12rpx;
+  padding: 24rpx 0;
+  text-align: center;
+  color: var(--color-text-primary);
+  font-size: 28rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 2rpx solid transparent;
+}
+
+.city-grid-item.active {
+  background-color: rgba(var(--color-primary-rgb), 0.1); /* 假如没有 --color-bg-tertiary, 用 primary */
+  color: var(--color-primary);
+  font-weight: bold;
+  border-color: var(--color-primary);
+  background-color: var(--color-bg-tertiary); /* 优先使用 */
+}
+
+
 /* 标签筛选入口行 — 与 price-filter-row 统一 */
 .tag-filter-row {
   display: flex;

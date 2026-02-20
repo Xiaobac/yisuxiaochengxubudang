@@ -6,11 +6,21 @@ import { get } from './request';
 
 /**
  * 获取所有位置（城市）列表
+ * @param {Object} params - 查询参数 { name, type }
  * @returns {Promise} 返回位置列表
  */
-export const getLocations = async () => {
+export const getLocations = async (params = {}) => {
   try {
-    const res = await get('/locations');
+    let url = '/locations';
+    const queryList = [];
+    if (params.name) queryList.push(`name=${encodeURIComponent(params.name)}`);
+    if (params.type) queryList.push(`type=${encodeURIComponent(params.type)}`);
+    
+    if (queryList.length > 0) {
+      url += `?${queryList.join('&')}`;
+    }
+
+    const res = await get(url);
 
     console.log('✅ 获取位置列表成功:', res);
 

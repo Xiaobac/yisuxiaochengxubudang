@@ -24,6 +24,7 @@ function Home() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [tags, setTags] = useState([]);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [citySearchKeyword, setCitySearchKeyword] = useState(''); // 城市搜索关键词
 
   // --- 筛选条件 ---
   const [minPriceInput, setMinPriceInput] = useState('');
@@ -684,18 +685,35 @@ function Home() {
               <Icon name='x' size={36} color={tokens['--color-text-tertiary']} />
             </View>
           </View>
+
+          {/* 城市搜索框 */}
+          <View className='city-search-box'>
+            <Icon name='search' size={32} color={tokens['--color-text-tertiary']} />
+            <Input
+              className='city-search-input'
+              placeholder='搜索城市'
+              placeholderStyle='color:var(--color-text-disabled);'
+              value={citySearchKeyword}
+              onInput={(e) => setCitySearchKeyword(e.detail.value)}
+            />
+          </View>
+
           <ScrollView scrollY className='city-selector-scroll'>
-            {filterCitiesByTab(currentTab, locations).map((loc) => (
-              <View
-                key={loc.id}
-                className={`city-select-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
-                hoverClass='city-select-hover'
-                onClick={() => handleSelectCity(loc)}
-              >
-                {loc.name}
-              </View>
-            ))}
-            {filterCitiesByTab(currentTab, locations).length === 0 && (
+            <View className='city-grid-container'>
+              {filterCitiesByTab(currentTab, locations)
+                .filter(loc => !citySearchKeyword || loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase()))
+                .map((loc) => (
+                <View
+                  key={loc.id}
+                  className={`city-grid-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
+                  hoverClass='city-select-hover'
+                  onClick={() => handleSelectCity(loc)}
+                >
+                  {loc.name}
+                </View>
+              ))}
+            </View>
+            {filterCitiesByTab(currentTab, locations).filter(loc => !citySearchKeyword || loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase())).length === 0 && (
               <View className='empty-city-tip'>当前标签下无城市可选</View>
             )}
           </ScrollView>
