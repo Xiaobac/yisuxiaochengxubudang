@@ -162,7 +162,7 @@ export default function CouponManagement() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">折扣</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">有效期</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -174,11 +174,9 @@ export default function CouponManagement() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {coupon.discount}元 (满{coupon.minSpend}可用)</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                    {new Date(coupon.validFrom).toLocaleDateString()} - {new Date(coupon.validTo).toLocaleDateString()}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
                     onClick={() => handleOpenModal(coupon)}
                     className="text-indigo-600 hover:text-indigo-900 mr-4"
