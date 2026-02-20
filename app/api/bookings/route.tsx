@@ -10,7 +10,7 @@ const createBookingSchema = z.object({
   checkInDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD'),
   checkOutDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式应为 YYYY-MM-DD'),
   guestCount:  z.number().int().min(1).max(20).optional().default(1),
-  guestInfo:   z.record(z.unknown()).optional(),
+  guestInfo:   z.record(z.string(), z.any()).optional(),
   couponId:    z.number().int().positive().optional(),
 });
 

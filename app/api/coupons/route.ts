@@ -9,9 +9,9 @@ const createCouponSchema = z.object({
   description: z.string().max(500).optional(),
   discount:    z.number().positive(),
   minSpend:    z.number().nonnegative().optional(),
-  validFrom:   z.string().datetime({ message: 'validFrom 须为 ISO 日期时间' }),
-  validTo:     z.string().datetime({ message: 'validTo 须为 ISO 日期时间' }),
-}).refine(d => new Date(d.validTo) > new Date(d.validFrom), {
+  validFrom:   z.coerce.date({ message: 'validFrom 须为有效日期时间' }),
+  validTo:     z.coerce.date({ message: 'validTo 须为有效日期时间' }),
+}).refine(d => d.validTo > d.validFrom, {
   message: 'validTo 必须晚于 validFrom',
   path: ['validTo'],
 });
