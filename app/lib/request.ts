@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import { getRefreshToken, setToken, clearAuth } from './token';
+import { authStorage } from './auth-storage';
+import { API_ENDPOINTS } from '@/app/constants';
 
 // 创建 axios 实例
 const request = axios.create({
@@ -30,12 +31,10 @@ const processQueue = (error: any, token: string | null = null) => {
 // 请求拦截器
 request.interceptors.request.use(
   (config) => {
-    // 从 localStorage 获取 token（客户端）
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    // 使用统一的 authStorage 获取 token
+    const token = authStorage.getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -85,14 +84,14 @@ request.interceptors.response.use(
         isRefreshing = true;
 
         try {
-          const refreshToken = getRefreshToken();
-          
+          const refreshToken = authStorage.getRefreshToken();
+
           if (!refreshToken) {
             throw new Error('No refresh token');
           }
 
           // 手动调用刷新接口，避免走拦截器逻辑
-          const response = await fetch('/api/auth/refresh', {
+          const response = await fetch(API_ENDPOINTS.AUTH.REFRESH, {
              method: 'POST',
              headers: {
                'Content-Type': 'application/json',
@@ -108,16 +107,16 @@ request.interceptors.response.use(
           const { accessToken } = data;
 
           if (accessToken) {
-            setToken(accessToken);
-            
+            authStorage.setToken(accessToken);
+
             // 更新当前请求的 Header
             if (originalRequest.headers) {
                originalRequest.headers['Authorization'] = 'Bearer ' + accessToken;
             }
-            
+
             // 处理队列中的等待请求
             processQueue(null, accessToken);
-            
+
             // 重试当前请求
             return request(originalRequest);
           } else {
@@ -126,8 +125,8 @@ request.interceptors.response.use(
 
         } catch (refreshError) {
           processQueue(refreshError, null);
-          clearAuth();
-          window.location.href = '/auth/login';
+          authStorage.clearAuth();
+          window.location.href = API_ENDPOINTS.AUTH.LOGIN;
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;
@@ -136,9 +135,9 @@ request.interceptors.response.use(
     }
     
     // 如果不是 401 或者 是登录/刷新接口的错误，或者重试失败
-    if (error.response?.status === 401 && typeof window !== 'undefined' && !error.config?.url?.includes('/auth/login')) {
-         clearAuth();
-         window.location.href = '/auth/login';
+    if (error.response?.status === 401 && typeof window !== 'undefined' && !error.config?.url?.includes(API_ENDPOINTS.AUTH.LOGIN)) {
+         authStorage.clearAuth();
+         window.location.href = API_ENDPOINTS.AUTH.LOGIN;
     }
 
     return Promise.reject(error);

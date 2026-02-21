@@ -1,4 +1,6 @@
 import { post, get } from '@/app/lib/request';
+import { authStorage } from '@/app/lib/auth-storage';
+import { API_ENDPOINTS } from '@/app/constants';
 import type {
   LoginData,
   RegisterData,
@@ -8,31 +10,49 @@ import type {
 } from '@/app/types';
 
 /**
+ * 登录表单数据类型（支持 username 或 email 字段）
+ */
+interface LoginFormData {
+  username?: string;
+  email?: string;
+  password: string;
+}
+
+/**
+ * 后端登录响应类型
+ */
+interface LoginApiResponse {
+  success?: boolean;
+  accessToken?: string;
+  token?: string;
+  refreshToken: string;
+  user: User;
+}
+
+/**
  * 用户注册
  */
 export const register = (data: RegisterData) => {
-  return post<ApiResponse<User>>('/auth/register', data);
+  return post<ApiResponse<User>>(API_ENDPOINTS.AUTH.REGISTER, data);
 };
 
 /**
  * 用户登录
  */
-export const login = async (data: LoginData) => {
+export const login = async (data: LoginData | LoginFormData) => {
   // 后端期望接收 { email, password }，前端表单使用的是 username 字段。
+  const formData = data as LoginFormData;
   const payload = {
-    email: (data as any).username ?? (data as any).email,
+    email: formData.username ?? formData.email ?? (data as LoginData).email,
     password: data.password,
   };
 
   // 后端返回 { success, accessToken, refreshToken, user }，这里做兼容处理并返回统一结构
-  const res = await post<any>('/auth/login', payload);
-
-  console.log('登录响应:', res); // 调试日志
-  console.log('用户角色:', res.user?.role); // 调试日志
+  const res = await post<LoginApiResponse>(API_ENDPOINTS.AUTH.LOGIN, payload);
 
   return {
     success: res.success ?? true,
-    accessToken: res.accessToken || res.token,
+    accessToken: res.accessToken || res.token || '',
     refreshToken: res.refreshToken,
     user: res.user,
   } as AuthResponse;
@@ -42,18 +62,16 @@ export const login = async (data: LoginData) => {
  * 获取当前用户信息
  */
 export const getCurrentUser = () => {
-  return get<ApiResponse<User>>('/users/profile');
+  return get<ApiResponse<User>>(API_ENDPOINTS.USERS.PROFILE);
 };
 
 /**
  * 退出登录（客户端）
  */
 export const logout = () => {
+  authStorage.clearAuth();
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    window.location.href = '/auth/login';
+    window.location.href = API_ENDPOINTS.AUTH.LOGIN;
   }
 };
 
@@ -61,52 +79,36 @@ export const logout = () => {
  * 获取存储的用户信息
  */
 export const getStoredUser = (): User | null => {
-  if (typeof window === 'undefined') return null;
-
-  const userStr = localStorage.getItem('user');
-  if (!userStr) return null;
-
-  try {
-    return JSON.parse(userStr);
-  } catch {
-    return null;
-  }
+  return authStorage.getUser();
 };
 
 /**
  * 保存用户信息和 token
  */
 export const saveAuth = (token: string, refreshToken: string, user: User) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('token', token);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('user', JSON.stringify(user));
-  }
+  authStorage.saveAuth(token, refreshToken, user);
 };
 
 /**
  * 获取刷新 Token
+ * @deprecated 请使用 authStorage.getRefreshToken()
  */
 export const getRefreshToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('refreshToken');
+  return authStorage.getRefreshToken();
 };
 
 /**
  * 刷新 Access Token
+ * 注意：这个函数现在主要由 lib/request.ts 的拦截器调用
+ * 大多数情况下，token 刷新是自动进行的，不需要手动调用
  */
 export const refreshAccessToken = async () => {
-  const refreshToken = getRefreshToken();
+  const refreshToken = authStorage.getRefreshToken();
   if (!refreshToken) {
     throw new Error('No refresh token available');
   }
-  
-  // Directly call axios to avoid circular dependency loop with interceptors if we used 'post' wrapper
-  // passing full url since instance baseurl might be relative or handled by interceptor
-  // Actually, we can just use fetch or a separate axios instance, or simple post but with care
-  // To keep it simple and safe, I will use fetch here to avoid interceptor complexity for the refresh call itself
-  
-  const response = await fetch('/api/auth/refresh', {
+
+  const response = await fetch(API_ENDPOINTS.AUTH.REFRESH, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -120,13 +122,10 @@ export const refreshAccessToken = async () => {
 
   const data = await response.json();
   if (data.accessToken) {
-    // Update local storage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('token', data.accessToken);
-    }
+    authStorage.setToken(data.accessToken);
     return data.accessToken;
   }
-  
+
   throw new Error('No access token returned');
 };
 
@@ -135,6 +134,5 @@ export const refreshAccessToken = async () => {
  * 检查是否已登录
  */
 export const isAuthenticated = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  return !!localStorage.getItem('token');
+  return authStorage.isAuthenticated();
 };
