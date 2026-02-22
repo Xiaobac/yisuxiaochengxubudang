@@ -4,6 +4,7 @@ import Taro, { useDidShow } from '@tarojs/taro';
 import { logout } from '../../services/auth';
 import { getMyFavorites } from '../../services/favorite';
 import { getMyBookings } from '../../services/booking';
+import { getUserCoupons } from '../../services/coupon';
 import { getUserProfile } from '../../services/user';
 import { storage } from '../../utils/storage';
 import { useTheme } from '../../utils/useTheme';
@@ -33,6 +34,7 @@ function Mine() {
   // 统计数据
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
+  const [couponCount, setCouponCount] = useState(0);
   const [points, setPoints] = useState(0);
   const [statsLoading, setStatsLoading] = useState(false);
 
@@ -55,20 +57,23 @@ function Mine() {
       setUser(userInfo);
     } else {
       setFavoriteCount(0);
-      setPoints(0);
+      setCouponCount(0);
     }
   };
 
   const loadUserStats = async () => {
     setStatsLoading(true);
     try {
-      const [favoritesRes, bookingsRes, profileRes] = await Promise.all([
+      const [favoritesRes, bookingsRes, profileRes, couponsRes] = await Promise.all([
         getMyFavorites(),
         getMyBookings(),
-        getUserProfile()
+        getUserProfile(),
+        getUserCoupons()
       ]);
       if (favoritesRes.success && favoritesRes.data) setFavoriteCount(favoritesRes.data.length);
       if (bookingsRes.success && bookingsRes.data) setOrderCount(bookingsRes.data.length);
+      if (profileRes.success && profileRes.data) setPoints(profileRes.data.points || 0);
+      if (couponsRes.success && couponsRes.data) setCouponCount(couponsRes.data.length);
       if (profileRes.success && profileRes.data) setPoints(profileRes.data.points || 0);
     } catch (error) {
       console.error('加载用户统计数据失败:', error);
@@ -165,8 +170,8 @@ function Mine() {
           <Text className='nav-val-num'>{points}</Text>
           <Text className='nav-label-text'>积分</Text>
         </View>
-        <View className='nav-menu-item' hoverClass='nav-menu-hover' onClick={() => Taro.navigateTo({ url: '/pages/Coupon/index' })}>
-          <Text className='nav-val-num'>0</Text>
+        <View className='nav-menu-item' hoverClass='nav-menu-hover' onClick={() => Taro.navigateTo({ url: '/pages/myCoupons/index' })}>
+          <Text className='nav-val-num'>{couponCount}</Text>
           <Text className='nav-label-text'>优惠券</Text>
         </View>
       </View>

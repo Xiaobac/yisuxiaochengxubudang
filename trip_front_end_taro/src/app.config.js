@@ -13,7 +13,8 @@ export default {
     'pages/mine/index',
     'pages/reviewList/index',
     'pages/submitReview/index',
-    'pages/Coupon/index'
+    'pages/Coupon/index',
+    'pages/myCoupons/index'
   ],
   window: {
     navigationBarBackgroundColor: '#1677ff',

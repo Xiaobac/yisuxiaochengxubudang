@@ -1,3 +1,3 @@
 export default definePageConfig({
-  navigationBarTitleText: '我的券包'
+  navigationBarTitleText: '优惠券中心',
 })
