@@ -1,0 +1,19 @@
+<lint-module
+    format="1"
+    dir="C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app"
+    name=":app"
+    type="APP"
+    maven="taroDemo:app:"
+    agpVersion="8.1.1"
+    buildFolder="build"
+    bootClassPath="E:\sdk\platforms\android-34\android.jar;E:\sdk\build-tools\34.0.0\core-lambda-stubs.jar"
+    javaSourceLevel="17"
+    compileTarget="android-34"
+    neverShrinking="true">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>

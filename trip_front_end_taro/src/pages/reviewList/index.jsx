@@ -46,12 +46,6 @@ function ReviewList() {
   };
 
   const handleEdit = (review) => {
-    // Ideally navigate to an edit page or show modal
-    // For simplicity here, let's use a very simple inline edit mode or modal simulation
-    // Since Taro modals are limited for inputs, we might need a custom View overlay
-    // But user asked for "capability", let's assume navigating to a new page is better UX
-    // OR we can implement a simple edit state here if the UI allows.
-    // Let's use a simple state toggle for now.
     setEditingId(review.id);
     setEditContent(review.content || '');
     setEditRating(review.rating || 5);

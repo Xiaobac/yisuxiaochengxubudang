@@ -30,14 +30,15 @@
     "next-swagger-doc": "^0.4.1",
     "next-themes": "^0.4.6",
     "openai": "^6.18.0",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "recharts": "^3.7.0",
     "swagger-ui-react": "^5.31.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@tarojs/plugin-framework-react": "^4.1.11",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",

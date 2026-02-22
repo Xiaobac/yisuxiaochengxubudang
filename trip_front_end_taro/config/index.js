@@ -79,6 +79,10 @@ export default defineConfig(async (merge, { command, mode }) => {
     },
     rn: {
       appName: 'taroDemo',
+      output: {
+      android: './android/app/src/main/assets/index.android.bundle',   
+      ios: './ios/main.jsbundle'                                       
+    },
       postcss: {
         cssModules: {
           enable: false, // 默认为 false，如需使用 css modules 功能，则设为 true

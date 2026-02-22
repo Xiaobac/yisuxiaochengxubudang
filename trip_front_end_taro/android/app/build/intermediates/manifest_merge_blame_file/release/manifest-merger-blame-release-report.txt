@@ -1,0 +1,155 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.tarodemo"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="21"
+9        android:targetSdkVersion="34" />
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:3:5-67
+11-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:3:22-64
+12    <uses-permission android:name="android.permission.CAMERA" />
+12-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:4:5-65
+12-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:4:22-62
+13    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+13-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:5:5-71
+13-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:5:22-68
+14    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+14-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:6:5-80
+14-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:6:22-77
+15    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+15-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:7:5-81
+15-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:7:22-78
+16    <uses-permission android:name="android.permission.VIBRATE" />
+16-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:8:5-66
+16-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:8:22-63
+17
+18    <queries>
+18-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:10:5-14:15
+19        <intent>
+19-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:11:7-13:16
+20            <action android:name="android.intent.action.DIAL" />
+20-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:12:9-61
+20-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:12:17-58
+21        </intent>
+22        <!-- Query open documents -->
+23        <intent>
+23-->[:expo-file-system] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-file-system\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:15:9-17:18
+24            <action android:name="android.intent.action.OPEN_DOCUMENT_TREE" />
+24-->[:expo-file-system] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-file-system\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:16:13-79
+24-->[:expo-file-system] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-file-system\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:16:21-76
+25        </intent>
+26    </queries>
+27
+28    <permission
+28-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\37090c8cbd1dedc6ee2ba619cf52b6bb\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
+29        android:name="com.tarodemo.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+29-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\37090c8cbd1dedc6ee2ba619cf52b6bb\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
+30        android:protectionLevel="signature" />
+30-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\37090c8cbd1dedc6ee2ba619cf52b6bb\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
+31
+32    <uses-permission android:name="com.tarodemo.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+32-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\37090c8cbd1dedc6ee2ba619cf52b6bb\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
+32-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\37090c8cbd1dedc6ee2ba619cf52b6bb\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
+33
+34    <application
+34-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:16:5-35:19
+35        android:name="com.tarodemo.MainApplication"
+35-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:17:7-38
+36        android:allowBackup="false"
+36-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:21:7-34
+37        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+37-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\37090c8cbd1dedc6ee2ba619cf52b6bb\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
+38        android:extractNativeLibs="true"
+39        android:icon="@mipmap/ic_launcher"
+39-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:19:7-41
+40        android:label="@string/app_name"
+40-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:18:7-39
+41        android:roundIcon="@mipmap/ic_launcher_round"
+41-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:20:7-52
+42        android:theme="@style/AppTheme" >
+42-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:22:7-38
+43        <activity
+43-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:23:7-34:18
+44            android:name="com.tarodemo.MainActivity"
+44-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:24:9-37
+45            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+45-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:26:9-118
+46            android:exported="true"
+46-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:29:9-32
+47            android:label="@string/app_name"
+47-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:25:9-41
+48            android:launchMode="singleTask"
+48-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:27:9-40
+49            android:windowSoftInputMode="adjustResize" >
+49-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:28:9-51
+50            <intent-filter>
+50-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:30:9-33:25
+51                <action android:name="android.intent.action.MAIN" />
+51-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:31:13-65
+51-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:31:21-62
+52
+53                <category android:name="android.intent.category.LAUNCHER" />
+53-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:32:13-73
+53-->C:\Users\Administrator\Desktop\taro\trip_front_end_taro\android\app\src\main\AndroidManifest.xml:32:23-70
+54            </intent-filter>
+55        </activity>
+56
+57        <provider
+57-->[:expo-file-system] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-file-system\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:21:9-30:20
+58            android:name="expo.modules.filesystem.FileSystemFileProvider"
+58-->[:expo-file-system] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-file-system\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:22:13-74
+59            android:authorities="com.tarodemo.FileSystemFileProvider"
+59-->[:expo-file-system] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-file-system\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:23:13-74
+60            android:exported="false"
+60-->[:expo-file-system] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-file-system\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:24:13-37
+61            android:grantUriPermissions="true" >
+61-->[:expo-file-system] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-file-system\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:25:13-47
+62            <meta-data
+62-->[:expo-file-system] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-file-system\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:27:13-29:70
+63                android:name="android.support.FILE_PROVIDER_PATHS"
+63-->[:expo-file-system] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-file-system\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:28:17-67
+64                android:resource="@xml/file_system_provider_paths" />
+64-->[:expo-file-system] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-file-system\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:29:17-67
+65        </provider>
+66
+67        <meta-data
+67-->[:expo-modules-core] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:9:9-11:89
+68            android:name="org.unimodules.core.AppLoader#react-native-headless"
+68-->[:expo-modules-core] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:10:13-79
+69            android:value="expo.modules.adapters.react.apploader.RNHeadlessAppLoader" />
+69-->[:expo-modules-core] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:11:13-86
+70        <meta-data
+70-->[:expo-modules-core] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:12:9-15:45
+71            android:name="com.facebook.soloader.enabled"
+71-->[:expo-modules-core] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:13:13-57
+72            android:value="true" />
+72-->[:expo-modules-core] C:\Users\Administrator\Desktop\taro\trip_front_end_taro\node_modules\expo-modules-core\android\build\intermediates\merged_manifest\release\AndroidManifest.xml:14:13-33
+73
+74        <provider
+74-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\faa3592d2fc203d6c74b9a5f601058a1\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
+75            android:name="androidx.startup.InitializationProvider"
+75-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\faa3592d2fc203d6c74b9a5f601058a1\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:25:13-67
+76            android:authorities="com.tarodemo.androidx-startup"
+76-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\faa3592d2fc203d6c74b9a5f601058a1\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:26:13-68
+77            android:exported="false" >
+77-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\faa3592d2fc203d6c74b9a5f601058a1\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:27:13-37
+78            <meta-data
+78-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\faa3592d2fc203d6c74b9a5f601058a1\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
+79                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+79-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\faa3592d2fc203d6c74b9a5f601058a1\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:30:17-75
+80                android:value="androidx.startup" />
+80-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\faa3592d2fc203d6c74b9a5f601058a1\transformed\jetified-emoji2-1.2.0\AndroidManifest.xml:31:17-49
+81            <meta-data
+81-->[androidx.lifecycle:lifecycle-process:2.4.1] C:\Users\Administrator\.gradle\caches\transforms-3\71b91ea8216105cda74b0317da307340\transformed\jetified-lifecycle-process-2.4.1\AndroidManifest.xml:31:13-33:52
+82                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+82-->[androidx.lifecycle:lifecycle-process:2.4.1] C:\Users\Administrator\.gradle\caches\transforms-3\71b91ea8216105cda74b0317da307340\transformed\jetified-lifecycle-process-2.4.1\AndroidManifest.xml:32:17-78
+83                android:value="androidx.startup" />
+83-->[androidx.lifecycle:lifecycle-process:2.4.1] C:\Users\Administrator\.gradle\caches\transforms-3\71b91ea8216105cda74b0317da307340\transformed\jetified-lifecycle-process-2.4.1\AndroidManifest.xml:33:17-49
+84        </provider>
+85    </application>
+86
+87</manifest>

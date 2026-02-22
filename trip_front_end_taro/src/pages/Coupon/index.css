@@ -37,7 +37,7 @@
 }
 
 .tag-item {
-  font-size: 20rpx;    /* 统一标签字体大小，可根据需要调整 */
+  font-size: 20rpx;  
   padding: 2rpx 12rpx;
   border-radius: 6rpx;
   font-weight: bold;

@@ -246,9 +246,9 @@ function Mine() {
         </View>
       </View>
 
-      {/* AI 助手悬浮按钮 */}
-      <AiChatWidget />
-    </View>
+{/* AI 助手悬浮按钮 */}
+<AiChatWidget />
+</View>
   );
 }
 

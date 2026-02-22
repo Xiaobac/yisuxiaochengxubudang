@@ -39,10 +39,13 @@ const AiChatWidget = () => {
 
   // 初始化屏幕尺寸和默认位置
   useEffect(() => {
-    const info = Taro.getWindowInfo();
-    screenRef.current = { w: info.windowWidth, h: info.windowHeight };
-    setPos({ x: info.windowWidth - BTN_SIZE - 16, y: info.windowHeight - BTN_SIZE - 100 });
-  }, []);
+  // 使用 getSystemInfoSync 获取窗口信息（兼容旧版 Taro）
+  const info = Taro.getSystemInfoSync();
+  // 注意：返回的对象中宽度/高度字段为 windowWidth / windowHeight
+  const { windowWidth, windowHeight } = info;
+  screenRef.current = { w: windowWidth, h: windowHeight };
+  setPos({ x: windowWidth - BTN_SIZE - 16, y: windowHeight - BTN_SIZE - 100 });
+}, []);
 
   // 检查并启动隐藏定时器
   const checkAndStartHideTimer = () => {
