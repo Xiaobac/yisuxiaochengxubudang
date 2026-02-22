@@ -71,14 +71,6 @@ function HotelList() {
   const iconColor = tokens['--color-text-primary'];
   const iconSecondaryColor = tokens['--color-text-secondary'];
 
-  // ---------- 辅助函数 ----------
-  const getCityIdsByType = (type) => {
-    if (type === 'hotel') return { min: 1, max: 10 };
-    if (type === 'homestay') return { min: 1, max: 10 };
-    if (type === 'hourly') return { min: 1, max: 10 };
-    return { min: 1, max: 10 };
-  };
-
   // ---------- 加载城市列表 ----------
   const loadLocations = async () => {
     try {
@@ -93,15 +85,17 @@ function HotelList() {
           locationsData = res.data.data;
         }
       }
+
+      // 仅展示 domestic 和 overseas 类型的城市
+      locationsData = locationsData.filter(loc => ['domestic', 'overseas'].includes(loc.type));
       setLocations(locationsData);
 
       if (searchParams.locationId) {
         const found = locationsData.find(loc => loc.id === searchParams.locationId);
         setSelectedLocation(found || null);
       } else if (locationsData.length > 0) {
-        const { min, max } = getCityIdsByType(searchParams.type);
-        const defaultCity = locationsData.find(loc => loc.id >= min && loc.id <= max) || locationsData[0];
-        setSelectedLocation(defaultCity);
+        // 默认选中第一个
+        setSelectedLocation(locationsData[0]);
       }
     } catch (error) {
       console.error('获取位置失败:', error);
@@ -440,14 +434,47 @@ function HotelList() {
   // ---------- 生命周期 ----------
   useDidShow(() => {
     const params = Taro.getStorageSync('hotelSearchParams');
+    
+    // 如果存在搜索参数，则使用参数搜索
     if (params) {
-      setSearchParams(params);
+      // 1. 设置搜索参数状态
+      setSearchParams(prev => ({
+        ...prev,
+        ...params
+      }));
+
+      // 2. 恢复日期
       if (params.checkIn) setStartDate(params.checkIn);
       if (params.checkOut) setEndDate(params.checkOut);
+
+      // 3. 恢复筛选面板状态 (价格区间)
+      if (typeof params.minPrice === 'number' || typeof params.maxPrice === 'number') {
+        const min = typeof params.minPrice === 'number' ? params.minPrice : 0;
+        const max = typeof params.maxPrice === 'number' ? params.maxPrice : 99999;
+        
+        setFilterParams(prev => ({
+          ...prev,
+          priceRange: [min, max]
+        }));
+      }
+
+      // 4. 加载酒店列表
       loadHotels(params);
+      
+      // 5. 清除Storage中的临时参数
       Taro.removeStorageSync('hotelSearchParams');
-      setSavedScrollTop(0); // 新搜索，回到顶部
+      setSavedScrollTop(0); 
+
+      // 6. 更新选中的位置
+      // 注意：locations可能还在加载中，或者是之前加载过的。
+      // 我们需要在这里尝试匹配。如果locations为空，loadLocations会在加载完后处理（但这依赖于loadLocations读取最新的searchParams - 可是它闭包了旧的）
+      // 所以最好的办法是：在这里单纯根据params.locationId去匹配 current locations
+      if (locations.length > 0 && params.locationId) {
+        const found = locations.find(loc => loc.id === params.locationId);
+        if (found) setSelectedLocation(found);
+      }
     } else if (hotelList.length === 0) {
+      // 没有参数且列表为空 (首次进入且无参数，或刷新)
       loadHotels({});
     } else {
       // 从详情返回，恢复滚动位置
@@ -458,6 +485,14 @@ function HotelList() {
       }
     }
   });
+
+  // 当 locations 或 searchParams 变化时，如果还没有选中的位置，尝试同步
+  useEffect(() => {
+    if (locations.length > 0 && !selectedLocation && searchParams.locationId) {
+       const found = locations.find(loc => loc.id === searchParams.locationId);
+       if (found) setSelectedLocation(found);
+    }
+  }, [locations, searchParams.locationId]);
 
   useEffect(() => {
     loadLocations();
@@ -706,10 +741,6 @@ function HotelList() {
             <ScrollView scrollY className='city-selector-scroll'>
               <View className='city-grid-container'>
               {locations
-                .filter(loc => {
-                  const { min, max } = getCityIdsByType(searchParams.type);
-                  return loc.id >= min && loc.id <= max;
-                })
                 .filter(loc => !citySearchKeyword || loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase()))
                 .map((loc) => (
                   <View
@@ -723,10 +754,6 @@ function HotelList() {
                 ))}
             </View>
               {locations
-              .filter(loc => {
-                const { min, max } = getCityIdsByType(searchParams.type);
-                return loc.id >= min && loc.id <= max;
-              })
               .filter(loc => !citySearchKeyword || loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase())).length === 0 && (
                 <View className='empty-city-tip'>当前无城市可选</View>
               )}
