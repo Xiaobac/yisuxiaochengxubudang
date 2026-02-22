@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
+import { verifyAuth } from '@/app/api/utils/auth';
 
 /**
  * @swagger
  * /api/upload:
  *   post:
  *     summary: 上传图片
- *     description: 上传单个图片文件，保存到服务器并返回可访问的静态资源URL。目前仅支持单文件上传。
+ *     description: 上传单个图片文件，保存到服务器并返回可访问的静态资源URL。需要登录认证。
  *     tags:
  *       - Upload
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -40,10 +43,18 @@ import fs from 'fs';
  *                   example: "/uploads/hotel-1-123456789.jpg"
  *       400:
  *         description: 请求无效 (未找到文件)
+ *       401:
+ *         description: 未认证
  *       500:
  *         description: 服务器内部错误
  */
 export async function POST(request: NextRequest) {
+  // 鉴权：仅登录用户可上传
+  const auth = verifyAuth(request);
+  if (!auth.success) {
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;

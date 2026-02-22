@@ -3,8 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const address = searchParams.get('address');
-  // 建议将Key放入环境变量
-  const key = 'KZ5BZ-BTSCJ-GOMF7-D5F7X-FVVJF-RXB4D'; 
+  const key = process.env.QQ_MAP_KEY;
+
+  if (!key) {
+    return NextResponse.json({ status: 500, message: 'QQ_MAP_KEY 环境变量未配置' }, { status: 500 });
+  }
 
   if (!address) {
     return NextResponse.json({ status: 400, message: 'Address is required' }, { status: 400 });
