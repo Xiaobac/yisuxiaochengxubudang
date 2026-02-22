@@ -402,7 +402,9 @@ function HotelList() {
     if (filters.minStars) filterInfo.push(`${filters.minStars}星及以上`);
     if (filters.facilities && filters.facilities.length > 0) filterInfo.push(`${filters.facilities.length}个设施`);
 
-    const message = filterInfo.length > 0 ? `已应用: ${filterInfo.join(', ')}` : '筛选已应用';
+    const message = filterInfo.length > 0 
+      ? `已应用筛选条件` 
+      : '筛选已应用';
     Taro.showToast({ title: message, icon: 'success', duration: 2000 });
   };
 
