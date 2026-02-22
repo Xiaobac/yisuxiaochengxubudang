@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Input, Button } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { register } from '../../services/auth';
+import { register, login } from '../../services/auth';
 import { useTheme } from '../../utils/useTheme'
 import './index.css';
 
@@ -82,17 +82,45 @@ function Register() {
 
       if (res.success) {
         Taro.showToast({
-          title: '注册成功',
-          icon: 'success',
+          title: '注册成功，正在为您自动登录...',
+          icon: 'none',
           duration: 1500
         });
 
-        // 延迟跳转到登录页
-        setTimeout(() => {
-          Taro.redirectTo({
-            url: '/pages/login/index'
+        // 自动登录
+        try {
+          const loginRes = await login({
+            username: email,
+            password: password
           });
-        }, 1500);
+
+          if (loginRes.success) {
+            Taro.showToast({
+              title: '自动登录成功',
+              icon: 'success',
+              duration: 1500
+            });
+            // 延迟跳转
+            setTimeout(() => {
+              // 跳转到首页 (因为是 TabBar 页面，需使用 switchTab)
+              Taro.switchTab({
+                url: '/pages/home/index'
+              });
+            }, 1000);
+          } else {
+             throw new Error('自动登录失败');
+          }
+        } catch (loginError) {
+          console.error('自动登录失败:', loginError);
+          Taro.showToast({
+            title: '注册成功，请手动登录',
+            icon: 'none',
+            duration: 1500
+          });
+          setTimeout(() => {
+            Taro.navigateBack();
+          }, 1500);
+        }
       }
     } catch (error) {
       console.error('注册失败:', error);

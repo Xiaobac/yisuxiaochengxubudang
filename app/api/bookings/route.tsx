@@ -3,6 +3,7 @@ import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
 import { z } from 'zod';
+import { handleApiError } from '@/app/lib/error-handler';
 
 const createBookingSchema = z.object({
   hotelId:     z.number().int().positive(),
@@ -170,8 +171,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: bookings });
   } catch (error) {
-    console.error('Fetch bookings error:', error);
-    return NextResponse.json({ success: false, error: '获取预订列表失败' }, { status: 500 });
+    const err = handleApiError(error, '获取预订列表失败');
+    return NextResponse.json({ success: false, error: err.error }, { status: err.status });
   }
 }
 
@@ -220,67 +221,50 @@ export async function POST(request: NextRequest) {
       let totalPrice = 0;
 
       while (currentDate < end) {
-        // 查找当天的可用性记录
-        // 注意：Prisma Date 比较需要精确匹配，建议统一时区或仅用 Date部分。
-        // 这里假设数据库存的是 UTC 0点，或者我们会 Upsert
-        // 简化起见，我们先查询
         const dateKey = new Date(currentDate);
+        const dateStr = currentDate.toISOString().split('T')[0];
 
-        let availability = await tx.roomAvailability.findUnique({
+        // 3.2.1 确保 RoomAvailability 记录存在（upsert 不修改已有记录）
+        await tx.roomAvailability.upsert({
           where: {
-            roomTypeId_date: {
-              roomTypeId: roomTypeId,
-              date: dateKey,
-            },
+            roomTypeId_date: { roomTypeId, date: dateKey },
+          },
+          update: {}, // 已存在则不修改
+          create: {
+            roomTypeId,
+            date: dateKey,
+            booked: 0,
+            quota: roomType.stock,
+            price: roomType.price,
           },
         });
 
-        // 如果没有可用性记录，通常意味着使用默认配置
-        // 需要判断是否创建记录? 为了由数据库保证并发安全，最好是 Upsert 或者 Lock。
-        // 但 findUnique 没法 Lock。
-        // 策略：如果不存在，则基于 RoomType 默认值计算。
-        // 但为了记录 'booked' 数量，我们需要这条记录存在。
-        
-        let price = availability?.price ?? roomType.price;
-        const totalQuota = availability?.quota ?? roomType.stock;
-        
-        // 检查是否关闭
-        if (availability?.isClosed) {
-            throw new Error(`日期 ${currentDate.toISOString().split('T')[0]} 房间已关闭`);
-        }
-
-        // 检查库存
-        // 当前已定数量。如果 availability 不存在，booked = 0
-        const currentBooked = availability?.booked ?? 0;
-        
-        if (currentBooked >= totalQuota) {
-             throw new Error(`日期 ${currentDate.toISOString().split('T')[0]} 房间已售罄`);
-        }
-
-        totalPrice += Number(price); // Decimal 转 Number 计算 (需注意精度，这里简化)
-        
-        // 3.3 更新库存 (自增 booked)
-        // 使用 upsert 确保记录存在并原子更新
-        await tx.roomAvailability.upsert({
-            where: {
-                roomTypeId_date: {
-                    roomTypeId: roomTypeId,
-                    date: dateKey
-                }
-            },
-            update: {
-                booked: { increment: 1 }
-            },
-            create: {
-                roomTypeId: roomTypeId,
-                date: dateKey,
-                booked: 1,
-                quota: roomType.stock,
-                price: roomType.price
-            }
+        // 3.2.2 查询当天状态
+        const availability = await tx.roomAvailability.findUnique({
+          where: { roomTypeId_date: { roomTypeId, date: dateKey } },
         });
 
-        // 下一天
+        if (availability?.isClosed) {
+          throw new Error(`日期 ${dateStr} 房间已关闭`);
+        }
+
+        const price = availability?.price ?? roomType.price;
+        totalPrice += Number(price);
+
+        // 3.2.3 原子条件更新：仅当 booked < quota 时才扣减库存，防止并发超卖
+        const updated = await tx.roomAvailability.updateMany({
+          where: {
+            roomTypeId,
+            date: dateKey,
+            booked: { lt: availability?.quota ?? roomType.stock },
+          },
+          data: { booked: { increment: 1 } },
+        });
+
+        if (updated.count === 0) {
+          throw new Error(`日期 ${dateStr} 房间已售罄`);
+        }
+
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
@@ -338,8 +322,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: result }, { status: 201 });
 
-  } catch (error: any) {
-    console.error('Create booking error:', error);
-    return NextResponse.json({ success: false, error: error.message || '预订失败' }, { status: 500 });
+  } catch (error) {
+    const err = handleApiError(error, '预订失败');
+    return NextResponse.json({ success: false, error: err.error }, { status: err.status });
   }
 }

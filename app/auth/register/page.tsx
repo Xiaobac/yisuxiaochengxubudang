@@ -5,7 +5,7 @@ import { Form, Input, Button, Card, Typography, Select, App } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { register } from '@/app/services/auth';
+import { register, login, saveAuth } from '@/app/services/auth';
 import type { RegisterData } from '@/app/types';
 
 const { Title } = Typography;
@@ -28,11 +28,34 @@ export default function RegisterPage() {
       const { confirmPassword, ...registerData } = values;
       await register(registerData);
 
-      message.success('注册成功，请使用新账号登录');
-      router.push('/auth/login');
+      message.success('注册成功，正在为您自动登录...');
+
+      // 注册成功后直接登录
+      const loginResult = await login({
+        email: registerData.email,
+        password: registerData.password,
+      });
+
+      if (loginResult.success && loginResult.accessToken) {
+        saveAuth(loginResult.accessToken, loginResult.refreshToken, loginResult.user);
+        message.success('自动登录成功');
+
+        // 根据角色跳转
+        const roleName = loginResult.user.role?.name?.toLowerCase();
+        if (roleName === 'merchant') {
+          router.push('/merchant/hotels');
+        } else if (roleName === 'admin' || roleName === 'administrator') {
+          router.push('/admin/review');
+        } else {
+          router.push('/');
+        }
+      } else {
+        message.warning('自动登录失败，请手动登录');
+        router.push('/auth/login');
+      }
     } catch (error: any) {
-      console.error('注册失败:', error);
-      message.error(error.response?.data?.error || '注册失败，请检查填写信息');
+      console.error('注册或登录失败:', error);
+      message.error(error.response?.data?.error || '注册或登录失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -87,17 +110,6 @@ export default function RegisterPage() {
             <Input
               prefix={<MailOutlined />}
               placeholder="邮箱"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="phone"
-            rules={[
-              { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号' },
-            ]}
-          >
-            <Input
-              placeholder="手机号（选填）"
             />
           </Form.Item>
 
@@ -165,7 +177,7 @@ export default function RegisterPage() {
           >
             <Select placeholder="选择角色">
               <Option value="merchant">商户</Option>
-              <Option value="user">普通用户</Option>
+              <Option value="admin">管理员</Option>
             </Select>
           </Form.Item>
 

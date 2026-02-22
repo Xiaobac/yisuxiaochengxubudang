@@ -9,7 +9,7 @@ const createRoomTypeSchema = z.object({
   description: z.string().max(1000).optional(),
   price:       z.number().positive(),
   stock:       z.number().int().nonnegative().optional().default(0),
-  amenities:   z.record(z.unknown()).optional(),
+  amenities:   z.record(z.string(), z.unknown()).optional(),
   images:      z.array(z.string().url()).optional(),
   discount:    z.number().min(0).max(1).optional().default(1.0),
 });
@@ -178,7 +178,7 @@ export async function GET(
 
           // 最小剩余量（关闭的日期算0）
           const minRemaining = items.reduce((min, item) => {
-            if (item.isClosed) return 0;
+            if (item.isClosed || item.quota === null) return 0;
             const remaining = item.quota - item.booked;
             return Math.min(min, remaining);
           }, Infinity);
@@ -251,8 +251,10 @@ export async function POST(
         description,
         price,
         stock,
-        amenities: amenities ?? {},
-        images: images ?? [],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        amenities: (amenities ?? {}) as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        images: (images ?? []) as any,
         discount,
       }
     });

@@ -6,8 +6,8 @@ import type { Dayjs } from 'dayjs';
 import type { BadgeProps } from 'antd';
 import dayjs from 'dayjs';
 import { getMyHotels } from '@/app/services/hotel';
-import { getHotelRoomTypes, getRoomAvailability, updateRoomAvailability, getRoomAvailabilityByDate, type RoomType, type RoomAvailability as ApiRoomAvailability } from '@/app/services/room';
-import type { Hotel } from '@/app/types';
+import { getHotelRoomTypes, getRoomAvailability, updateRoomAvailability, getRoomAvailabilityByDate } from '@/app/services/room';
+import type { Hotel, RoomType, RoomAvailability as ApiRoomAvailability } from '@/app/types';
 
 const { Option } = Select;
 
@@ -80,8 +80,8 @@ export default function CalendarPage() {
     if (!selectedHotel) return;
     try {
         const roomTypesData = await getHotelRoomTypes(selectedHotel);
-        setRoomTypes(roomTypesData);
-        if (roomTypesData.length > 0) {
+        setRoomTypes(roomTypesData || []);
+        if (roomTypesData && roomTypesData.length > 0) {
             setSelectedRoomTypeId(roomTypesData[0].id);
         } else {
             setSelectedRoomTypeId(null);
@@ -106,24 +106,24 @@ export default function CalendarPage() {
 
       const availabilityList = await getRoomAvailability(selectedRoomTypeId, startDate, endDate);
       const roomType = roomTypes.find(r => r.id === selectedRoomTypeId);
-      
-      if (!roomType) return;
+
+      if (!roomType || !availabilityList) return;
 
       const data = new Map<string, RoomAvailability>();
 
       // 构建日期映射
       // 这里的逻辑稍微调整：不需要遍历每一天填充，只处理有数据的，或者在渲染时处理默认值
       // 为了日历渲染方便，我们还是预处理一下更好，或者只存有数据的Map
-      
+
       availabilityList.forEach((a: ApiRoomAvailability) => {
          const date = dayjs(a.date).format('YYYY-MM-DD');
          data.set(date, {
             roomTypeId: roomType.id,
             room_type: roomType.name,
-            total_count: a.quota,
-            available_count: a.quota - a.booked,
+            total_count: a.quota ?? 0,
+            available_count: (a.quota ?? 0) - a.booked,
             booked_count: a.booked,
-            price: a.price,
+            price: a.price ?? 0,
             isClosed: a.isClosed
          });
       });
@@ -230,7 +230,19 @@ export default function CalendarPage() {
         try {
             setLoading(true);
             const data = await getRoomAvailabilityByDate(selectedHotel, date.format('YYYY-MM-DD'));
-            setDailyRoomDetails(data);
+
+            // Transform API response to local RoomAvailability format
+            const transformedData: RoomAvailability[] = (data || []).map(item => ({
+                roomTypeId: item.roomTypeId,
+                room_type: item.roomType?.name || '',
+                total_count: item.quota ?? 0,
+                available_count: (item.quota ?? 0) - item.booked,
+                booked_count: item.booked,
+                price: item.price ?? 0,
+                isClosed: item.isClosed,
+            }));
+
+            setDailyRoomDetails(transformedData);
         } catch (e) {
             message.error('加载详情失败');
         } finally {
@@ -271,11 +283,23 @@ export default function CalendarPage() {
       
       // Refresh calendar view
       fetchAvailability();
-      
+
       // Refresh daily details list if open
       if (selectedDate && selectedHotel) {
         const data = await getRoomAvailabilityByDate(selectedHotel, selectedDate.format('YYYY-MM-DD'));
-        setDailyRoomDetails(data);
+
+        // Transform API response to local RoomAvailability format
+        const transformedData: RoomAvailability[] = (data || []).map(item => ({
+            roomTypeId: item.roomTypeId,
+            room_type: item.roomType?.name || '',
+            total_count: item.quota ?? 0,
+            available_count: (item.quota ?? 0) - item.booked,
+            booked_count: item.booked,
+            price: item.price ?? 0,
+            isClosed: item.isClosed,
+        }));
+
+        setDailyRoomDetails(transformedData);
       }
     } catch (error) {
       console.error('更新失败:', error);
