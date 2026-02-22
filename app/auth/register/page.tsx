@@ -177,7 +177,7 @@ export default function RegisterPage() {
           >
             <Select placeholder="选择角色">
               <Option value="merchant">商户</Option>
-              <Option value="admin">管理员</Option>
+              <Option value="user">普通用户</Option>
             </Select>
           </Form.Item>
 

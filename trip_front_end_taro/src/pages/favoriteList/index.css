@@ -173,54 +173,6 @@
   color: #FF6B00;
 }
 
-/* 收藏夹分类标签 */
-.folder-tabs {
-  background: var(--color-card-bg);
-  border-bottom: 1px solid var(--color-border-base);
-  padding: 16rpx 0;
-}
-
-.folder-scroll {
-  display: flex;
-  gap: 16rpx;
-  padding: 0 32rpx;
-  overflow-x: auto;
-  white-space: nowrap;
-}
-
-.folder-tab {
-  display: flex;
-  align-items: center;
-  gap: 4rpx;
-  padding: 12rpx 24rpx;
-  background: var(--color-bg-secondary);
-  border-radius: 40rpx;
-  font-size: 26rpx;
-  color: var(--color-text-secondary);
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-}
-
-.folder-tab.active {
-  background: #FF6B00;
-  color: #fff;
-}
-
-.folder-tab.add-folder {
-  background: transparent;
-  border: 1rpx dashed var(--color-text-tertiary);
-  color: var(--color-text-tertiary);
-}
-
-.folder-name {
-  font-size: 26rpx;
-}
-
-.folder-count {
-  font-size: 22rpx;
-  opacity: 0.8;
-}
-
 /* 操作栏 */
 .favorite-actions {
   background: var(--color-card-bg);
@@ -229,50 +181,4 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 12rpx;
-}
-
-.action-btn {
-  font-size: 24rpx;
-  padding: 8rpx 20rpx;
-  border-radius: 40rpx;
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  border: none;
-}
-
-.action-btn.danger {
-  background: #ffebee;
-  color: #f44336;
-}
-
-/* 选择框 */
-.select-checkbox {
-  position: absolute;
-  top: 16rpx;
-  left: 16rpx;
-  z-index: 10;
-}
-
-.checkbox {
-  width: 40rpx;
-  height: 40rpx;
-  border-radius: 50%;
-  border: 2rpx solid var(--color-border-base);
-  background: var(--color-card-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28rpx;
-  color: #fff;
-  transition: all 0.2s ease;
-}
-
-.checkbox.checked {
-  background: #FF6B00;
-  border-color: #FF6B00;
 }

@@ -10,7 +10,7 @@
   position: relative;
   height: 320rpx;
   background-color: var(--color-card-bg);
-  margin-bottom: 80rpx; 
+  margin-bottom: 80rpx; /* 为悬浮卡片留出空间 */
 }
 
 .banner-swiper {
@@ -58,8 +58,8 @@
   padding: 40rpx 30rpx;
   background-color: var(--color-card-bg);
   border-radius: 24rpx;
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.06);
-  z-index: 10; 
+  box-shadow: var(--shadow-lg);
+  z-index: 10; /* 确保在轮播图之上 */
 }
 
 /* 标签切换 */
