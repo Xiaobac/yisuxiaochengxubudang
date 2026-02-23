@@ -357,8 +357,8 @@ function Home() {
           className='banner-swiper'
         >
           {BANNER_IMAGES.map((item, index) => (
-            <SwiperItem key={index} onClick={() => Taro.navigateTo({ url: `/pages/hotelDetail/index?id=${item.hotelId}` })}>
-              <Image className='banner-img' src={item.src} mode='aspectFill' lazyLoad />
+            <SwiperItem key={index} onClick={() => Taro.navigateTo({ url: item.url })}>
+              <Image className='banner-img' src={item.src} mode='scaleToFill' lazyLoad />
             </SwiperItem>
           ))}
         </Swiper>

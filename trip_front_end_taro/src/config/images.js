@@ -10,11 +10,11 @@ const API_BASE = 'http://localhost:3000';    // 开发环境
 export const DEFAULT_HOTEL_IMAGE = `${API_BASE}/uploads/1770189062477-9-2026-02-03185959.png`;
 export const DEFAULT_AVATAR = 'https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png'; // Adding a default avatar
 
-// Banner轮播图（src 为展示图片，hotelId 为点击后跳转的酒店详情）
+// Banner轮播图（src 为展示图片，url 为点击后跳转的页面路径）
 export const BANNER_IMAGES = [
-  { src: `${API_BASE}/uploads/1770189062477-9-2026-02-03185959.png`, hotelId: 1 },
-  { src: `${API_BASE}/uploads/1770189498058-967-2026-02-03185959.png`, hotelId: 2 },
-  { src: `${API_BASE}/uploads/1770189524279-198-2026-01-12155024.png`, hotelId: 3 },
+  { src: `${API_BASE}/home1.png`, url: '/pages/Coupon/index' },
+  { src: `${API_BASE}/home2.png`, url: '/pages/hotelDetail/index?id=1' },
+  { src: `${API_BASE}/home3.png`, url: '/pages/hotelDetail/index?id=2' },
 ];
 
 // 获取图片URL（如果已经是完整URL则直接返回，否则拼接）
