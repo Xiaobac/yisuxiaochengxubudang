@@ -143,7 +143,7 @@
   border-radius: 16rpx;
   padding: 6rpx 16rpx;
   font-size: 22rpx;
-  color: #e6a23c;
+  color: var(--color-star);
   font-weight: bold;
   box-shadow: var(--shadow-sm);
 }
@@ -175,7 +175,7 @@
 }
 
 .hotel-stars {
-  color: #ff9a03;
+  color: var(--color-star);
   font-size: 24rpx;
 }
 
@@ -223,9 +223,7 @@
   min-width: 80rpx;
 }
 
-.icon-placeholder {
-  font-size: 28rpx;
-  color: var(--color-primary);
+.facility-item .icon-base {
   margin-bottom: 6rpx;
 }
 
@@ -293,7 +291,8 @@
   flex-direction: row;          /* 水平排列左右两列 */
   align-items: center;          /* 垂直居中两列内容 */
   justify-content: space-between; /* 左右分开，左侧贴左，右侧贴右 */
-  width: 60%;
+  flex: 0 0 auto;
+  max-width: 60%;
   /* 如果之前添加了背景、圆角、内边距等，可以保留 */
   background-color: var(--color-card-bg); /* 可选 */
   border-radius: 16rpx;
@@ -475,7 +474,7 @@
 /* 评分（靠右） */
 .comment-score {
   font-size: 26rpx;
-  color: #ff6b00;
+  color: var(--color-price);
   font-weight: bold;
   margin-left: auto;
 }
@@ -659,7 +658,7 @@
 .room-price-large {
   font-size: 40rpx;
   font-weight: bold;
-  color: #ff4d4f;
+  color: var(--color-error);
   line-height: 1;
 }
 
@@ -684,6 +683,11 @@
   min-width: 140rpx;
   text-align: center;
    margin-right: 4rpx;
+}
+
+.room-detail-btn:active {
+  transform: scale(0.95);
+  opacity: 0.85;
 }
 
 .room-detail-btn.selected {
@@ -711,7 +715,7 @@
 
 /* 剩余房数紧急提示 */
 .room-remaining-urgent {
-  color: #ff4d4f;
+  color: var(--color-error);
 }
 
 
@@ -730,7 +734,7 @@
   padding: 16rpx 12rpx;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
   z-index: 200;
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   gap: 12rpx;
 }
 
@@ -777,11 +781,11 @@
 
 .footer-collect-btn.active {
   background-color: var(--color-bg-tertiary);
-  border-color: #FF6B00;
+  border-color: var(--color-secondary);
 }
 
 .footer-collect-btn.active text {
-  color: #FF6B00;
+  color: var(--color-secondary);
 }
 
 .footer-collect-btn:active {
@@ -797,12 +801,12 @@
 }
 
 .footer-collect-btn.active .collect-icon {
-  color: #FF6B00;
+  color: var(--color-secondary);
 }
 
 .footer-price-symbol {
   font-size: 24rpx;
-  color: #FF6B00;
+  color: var(--color-price);
   font-weight: 600;
   line-height: 1;
 }
@@ -810,13 +814,13 @@
 .footer-price-val {
   font-size: 40rpx;
   font-weight: 700;
-  color: #FF6B00;
+  color: var(--color-price);
   line-height: 1;
 }
 
 /* 按钮：立即预订 */
 .footer-action-btn {
-  background: linear-gradient(135deg, #FF6B00 0%, #FF8E53 100%);
+  background: var(--color-price-gradient);
   color: #ffffff;
   border-radius: 40rpx;
   font-size: 26rpx;
@@ -826,24 +830,24 @@
   line-height: 60rpx;
   border: none;
   text-align: center;
-  box-shadow: 0 4rpx 12rpx rgba(255, 107, 0, 0.3);
+  box-shadow: var(--shadow-md);
   transition: all 0.2s ease;
 }
 
 .footer-action-btn:active {
   transform: scale(0.98);
-  box-shadow: 0 2rpx 8rpx rgba(255, 107, 0, 0.4);
+  box-shadow: var(--shadow-sm);
 }
 /* 剩余房间数 */
 .room-remaining {
   font-size: 20rpx;
-  color: #52c41a; /* 绿色保留，深浅模式均可辨认 */
+  color: var(--color-success);
   margin-left: 8rpx;
   font-weight: 500;
 }
 
 .room-remaining-urgent {
-  color: #ff4d4f;
+  color: var(--color-error);
 }
 
 .room-detail-btn.disabled {
@@ -873,12 +877,12 @@
 
 .footer-price-per {
   font-size: 20rpx;
-  color: #ff6b00;
+  color: var(--color-price);
   margin-left: 4rpx;
 }
 
 .footer-price-total {
   font-size: 20rpx;
-  color: #ff6b00;
+  color: var(--color-price);
   display: block;
 }

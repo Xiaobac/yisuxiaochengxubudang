@@ -450,44 +450,38 @@ function HotelDetail() {
   };
 
   const FACILITY_MAP = {
-    '2020开业': '🏢',
-    '免费WiFi': '📶',
-    '度假胜地': '🏖️',
-    '含早餐': '🍳',
-    '免费停车': '🅿️',
-    '温泉酒店': '♨️',
-    '海景房': '🌊',
-    '游泳池': '🏊',
-    '靠近地铁': '🚇',
-    '健身房': '🏋️',
-    '亲子友好': '👨‍👩‍👧‍👦',
-    '商务出差': '💼',
-    '情侣约会': '💑',
-    '接送机服务': '🚗',
-    '宠物友好': '🐾',
-    '24小时前台': '🕐',
-    '无烟房': '🚭',
-    '行政酒廊': '🥂',
-    '会议室': '📊',
-    '洗衣服务': '🧺',
-    '行李寄存': '🧳'
+    '2020开业': 'buildings',
+    '免费WiFi': 'wifiHigh',
+    '度假胜地': 'umbrella',
+    '含早餐': 'cookingPot',
+    '免费停车': 'car',
+    '温泉酒店': 'thermometerHot',
+    '海景房': 'waves',
+    '游泳池': 'swimmingPool',
+    '靠近地铁': 'train',
+    '健身房': 'barbell',
+    '亲子友好': 'usersThree',
+    '商务出差': 'briefcase',
+    '情侣约会': 'heartStraight',
+    '接送机服务': 'car',
+    '宠物友好': 'pawPrint',
+    '24小时前台': 'clock',
+    '无烟房': 'prohibit',
+    '行政酒廊': 'wine',
+    '会议室': 'presentationChart',
+    '洗衣服务': 'tShirt',
+    '行李寄存': 'suitcase'
   };
 
   const getFacilities = () => {
     if (!hotel || !hotel.tags) return [];
-    
-    // 从tags中筛选出有对应图标的设施
-    // 同时也包含services中的设施
+
     const allTags = new Set([...(hotel.tags || []), ...(hotel.services || [])]);
-    
+
     return Array.from(allTags).map(tag => {
-      // 模糊匹配或者精确匹配
-      const icon = FACILITY_MAP[tag] || '✨'; // 默认图标
-      return {
-        icon,
-        text: tag
-      };
-    }).slice(0, 8); // 最多显示8个
+      const iconName = FACILITY_MAP[tag] || 'sparkle';
+      return { iconName, text: tag };
+    }).slice(0, 8);
   };
 
   const facilities = getFacilities();
@@ -608,7 +602,7 @@ function HotelDetail() {
           <View className='facility-icon-row'>
             {facilities.map((item, index) => (
               <View key={index} className='facility-item'>
-                <Text className='icon-placeholder'>{item.icon}</Text>
+                <Icon name={item.iconName} size={36} color={tokens['--color-primary']} />
                 <Text className='facility-text'>{item.text}</Text>
               </View>
             ))}
@@ -630,7 +624,9 @@ function HotelDetail() {
             
             {/* 右侧：图标 + 地图文字（垂直排列） */}
               <View className='map-vertical'>
-                <View className='map-icon-small'>📍</View>
+                <View className='map-icon-small'>
+                  <Icon name='mapPin' size={28} color={tokens['--color-text-secondary']} />
+                </View>
                 <Text className='map-text'>地图</Text>
               </View>
             </View>
@@ -805,7 +801,7 @@ function HotelDetail() {
             className={`footer-collect-btn ${isFavorite ? 'active' : ''}`}
             onClick={handleCollect}
           >
-            <Icon name={isFavorite ? 'heartFill' : 'heart'} size={28} color={isFavorite ? '#FF6B00' : (tokens['--color-border-base'])} />
+            <Icon name={isFavorite ? 'heartFill' : 'heart'} size={28} color={isFavorite ? tokens['--color-secondary'] : tokens['--color-border-base']} />
             <Text>{isFavorite ? '已收藏' : '收藏'}</Text>
           </View>
           <Button className='footer-action-btn' hoverClass='footer-action-btn-hover' onClick={handleBookNow}>
