@@ -45,13 +45,13 @@
 
 /* 蓝色标签（神券） */
 .tag-blue {
-  background-color: #1890ff;
+  background-color: var(--color-info);
   color: #ffffff;
 }
 
 /* 橙色标签（特惠等） */
 .tag-orange {
-  background-color: #ff6000;
+  background-color: var(--color-secondary);
   color: #ffffff;
 }
 
@@ -101,7 +101,7 @@
 .amount-display-box {
   display: flex;
   align-items: baseline;
-  color: #ff4d4f;
+  color: var(--color-error);
 }
 
 .amount-value {
@@ -124,8 +124,8 @@
 
 /* 黄色去使用按钮 */
 .coupon-primary-btn {
-  background-color: #ffda00;
-  color: #333333;
+  background-color: var(--color-coupon-accent);
+  color: var(--color-text-primary);
   width: 160rpx;
   height: 54rpx;
   line-height: 54rpx;

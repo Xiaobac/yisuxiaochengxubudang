@@ -11,7 +11,7 @@ import './index.css';
 import AiChatWidget from '../../components/AiChatWidget';
 
 function OrderDetail() {
-  const { cssVars } = useTheme()
+  const { cssVars, tokens } = useTheme()
   const router = useRouter();
   const orderId = router.params.id;
 
@@ -108,12 +108,12 @@ function OrderDetail() {
 
   const getStatusColor = (status) => {
     const colorMap = {
-      'pending': '#ff9800',
-      'confirmed': '#4caf50',
-      'cancelled': '#999',
-      'completed': '#2196f3'
+      'pending': tokens['--color-warning'],
+      'confirmed': tokens['--color-success'],
+      'cancelled': tokens['--color-text-tertiary'],
+      'completed': tokens['--color-info']
     };
-    return colorMap[status] || '#999';
+    return colorMap[status] || tokens['--color-text-tertiary'];
   };
 
   const getNightCount = () => {
@@ -300,7 +300,7 @@ function OrderDetail() {
             </View>
             <View className='info-row'>
               <Text className='info-label'>优惠券抵扣</Text>
-              <Text className='info-value' style={{ color: '#f44336' }}>-¥{order.discountAmount.toFixed(2)}</Text>
+              <Text className='info-value' style={{ color: tokens['--color-error'] }}>-¥{order.discountAmount.toFixed(2)}</Text>
             </View>
           </>
         )}

@@ -56,14 +56,14 @@
 
 .review-stars {
   font-size: 34rpx;
-  color: #ff9a03;
+  color: var(--color-star);
   letter-spacing: 4rpx;
   margin-right: 12rpx;
 }
 
 .review-rating-num {
   font-size: 24rpx;
-  color: #ff9a03;
+  color: var(--color-star);
   font-weight: bold;
 }
 
@@ -95,13 +95,13 @@
 
 .review-delete-btn {
   font-size: 24rpx;
-  color: #ff4d4f;
+  color: var(--color-error);
   padding: 6rpx 16rpx;
 }
 
 .review-edit-btn {
   font-size: 24rpx;
-  color: #1976d2;
+  color: var(--color-primary);
   padding: 6rpx 16rpx;
   margin-right: 16rpx;
 }

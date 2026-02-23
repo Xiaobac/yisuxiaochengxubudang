@@ -10,7 +10,7 @@
   position: relative;
   height: 320rpx;
   background-color: var(--color-card-bg);
-  margin-bottom: 80rpx; /* 为悬浮卡片留出空间 */
+  margin-bottom: 0; /* 搜索卡片通过负 margin 悬浮覆盖 */
 }
 
 .banner-swiper {
@@ -54,7 +54,7 @@
 /* 搜索卡片主体 - 悬浮效果优化 */
 .search-main-card {
   position: relative;
-  margin: -60rpx 30rpx 30rpx;
+  margin: var(--overlap-offset) var(--page-gutter) var(--page-gutter);
   padding: 40rpx 30rpx;
   background-color: var(--color-card-bg);
   border-radius: 24rpx;
@@ -117,6 +117,7 @@
   background-color: var(--color-bg-secondary);
   border-radius: 16rpx;
   padding: 20rpx;
+  border: 1rpx solid var(--color-border-base);
 }
 
 .city-wrap-box {
@@ -163,6 +164,7 @@
   background-color: var(--color-bg-secondary);
   border-radius: 16rpx;
   padding: 24rpx;
+  border: 1rpx solid var(--color-border-base);
   cursor: pointer;
 }
 
@@ -223,7 +225,7 @@
   text-align: center;
   background-color: var(--color-bg-secondary);
   border-radius: 12rpx;
-  border: 2rpx solid transparent;
+  border: 2rpx solid var(--color-border-base);
   transition: all 0.2s ease;
   cursor: pointer;
 }
@@ -275,6 +277,7 @@
   background-color: var(--color-bg-secondary);
   border-radius: 16rpx;
   padding: 24rpx;
+  border: 1rpx solid var(--color-border-base);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -667,6 +670,7 @@
   background-color: var(--color-bg-secondary);
   border-radius: 16rpx;
   padding: 24rpx;
+  border: 1rpx solid var(--color-border-base);
   cursor: pointer;
   transition: all 0.2s ease;
 }

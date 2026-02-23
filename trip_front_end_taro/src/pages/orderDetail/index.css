@@ -6,7 +6,7 @@
 
 /* 订单状态卡片 */
 .status-card {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #4A90E2 100%);
+  background: var(--color-primary-gradient);
   padding: 60rpx 40rpx;
   text-align: center;
   color: #fff;
@@ -175,14 +175,14 @@
 
 .price-symbol {
   font-size: 28rpx;
-  color: #FF6B00;
+  color: var(--color-price);
   margin-right: 4rpx;
 }
 
 .price-amount {
   font-size: 40rpx;
   font-weight: 600;
-  color: #FF6B00;
+  color: var(--color-price);
 }
 
 /* 时间信息 */
@@ -226,12 +226,12 @@
 }
 
 .contact-btn {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #4A90E2 100%);
+  background: var(--color-primary-gradient);
   color: #fff;
 }
 
 .review-btn {
-  background: linear-gradient(135deg, #FF6B00 0%, #FF8E53 100%);
+  background: var(--color-price-gradient);
   color: #fff;
 }
 
@@ -290,12 +290,12 @@
 }
 
 .star-active {
-  color: #ff9a03;
+  color: var(--color-star);
 }
 
 .star-score {
   font-size: 26rpx;
-  color: #ff9a03;
+  color: var(--color-star);
   margin-left: 10rpx;
 }
 
@@ -329,7 +329,7 @@
 .review-submit-btn {
   flex: 2;
   height: 80rpx;
-  background: linear-gradient(135deg, #FF6B00 0%, #FF8E53 100%);
+  background: var(--color-price-gradient);
   color: #fff;
   border-radius: 40rpx;
   font-size: 28rpx;

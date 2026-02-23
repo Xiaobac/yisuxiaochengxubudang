@@ -71,7 +71,7 @@
 
 .hotel-stars {
   font-size: 22rpx;
-  color: #FF9800;
+  color: var(--color-star);
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -83,7 +83,7 @@
 }
 
 .score-badge {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #4A90E2 100%);
+  background: var(--color-primary-gradient);
   color: #fff;
   font-size: 24rpx;
   font-weight: 600;
@@ -122,19 +122,19 @@
 
 .price-symbol {
   font-size: 24rpx;
-  color: #FF6B00;
+  color: var(--color-price);
   margin-right: 4rpx;
 }
 
 .price-value {
   font-size: 36rpx;
   font-weight: 600;
-  color: #FF6B00;
+  color: var(--color-price);
 }
 
 .price-unit {
   font-size: 24rpx;
-  color: #FF6B00;
+  color: var(--color-price);
   margin-left: 4rpx;
 }
 
@@ -159,7 +159,7 @@
 
 .favorite-icon {
   font-size: 28rpx;
-  color: #FF6B00;
+  color: var(--color-secondary);
   line-height: 1;
   transition: all 0.2s ease;
 }
@@ -170,7 +170,7 @@
 }
 
 .favorite-btn.active .favorite-text {
-  color: #FF6B00;
+  color: var(--color-secondary);
 }
 
 /* 操作栏 */

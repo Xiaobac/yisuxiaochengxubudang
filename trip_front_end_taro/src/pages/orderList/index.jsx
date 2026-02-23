@@ -11,7 +11,7 @@ import './index.css';
 import AiChatWidget from '../../components/AiChatWidget';
 
 function OrderList() {
-  const { cssVars } = useTheme();
+  const { cssVars, tokens } = useTheme();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -72,10 +72,10 @@ function OrderList() {
 
   const getStatusColor = (status) => {
     const colorMap = {
-      'pending': '#ff9800', 'confirmed': '#4caf50',
-      'cancelled': '#999', 'completed': '#2196f3'
+      'pending': tokens['--color-warning'], 'confirmed': tokens['--color-success'],
+      'cancelled': tokens['--color-text-tertiary'], 'completed': tokens['--color-info']
     };
-    return colorMap[status] || '#999';
+    return colorMap[status] || tokens['--color-text-tertiary'];
   };
 
   const handleCancelOrder = (orderId, hotelName) => {

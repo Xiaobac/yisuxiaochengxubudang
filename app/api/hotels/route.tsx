@@ -1,6 +1,7 @@
 // app/api/hotels/route.ts
-import { prisma } from '@/app/lib/prisma'; 
+import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth } from '@/app/api/utils/auth';
 
 /**
  * @swagger
@@ -319,6 +320,11 @@ export async function GET(request: NextRequest) {
  */
 // POST - 创建新酒店
 export async function POST(request: NextRequest) {
+  const auth = verifyAuth(request);
+  if (!auth.success) {
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+  }
+
   try {
     const body = await request.json();
 

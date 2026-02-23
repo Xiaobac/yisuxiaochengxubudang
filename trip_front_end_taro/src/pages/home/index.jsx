@@ -454,7 +454,7 @@ function Home() {
         {/* 凌晨提示条 */}
         {isEarlyMorning && (
           <View className='night-notice-bar'>
-            <Icon name='info' size={32} color='#faad14' style={{ marginRight: '12rpx' }} />
+            <Icon name='info' size={32} color={tokens['--color-warning']} style={{ marginRight: '12rpx' }} />
             <Text className='notice-content-text'>
               当前已过0点，如需今天凌晨6点前入住，请选择"今天凌晨"
             </Text>

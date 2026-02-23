@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Button } from '@tarojs/components';
 import Icon from '../Icon';
+import { useTheme } from '../../utils/useTheme';
 import './index.css';
 
 /**
@@ -30,11 +31,12 @@ function EmptyState({
   onButtonClick
 }) {
   const iconName = ICON_MAP[image] || image;
+  const { isDark } = useTheme();
 
   return (
     <View className='empty-state-container'>
       <View className='empty-state-icon-wrapper'>
-        <Icon name={iconName} size={120} color='#bfbfbf' />
+        <Icon name={iconName} size={120} color={isDark ? '#555555' : '#bfbfbf'} />
       </View>
       <Text className='empty-state-title'>{title}</Text>
       {description && <Text className='empty-state-description'>{description}</Text>}

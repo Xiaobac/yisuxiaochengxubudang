@@ -138,7 +138,7 @@
 
 .rating-score {
   font-size: 24rpx;
-  color: #FF6B00;
+  color: var(--color-price);
   font-weight: 600;
 }
 
@@ -163,19 +163,19 @@
 
 .price-label {
   font-size: 24rpx;
-  color: #FF6B00;
+  color: var(--color-price);
   margin-right: 4rpx;
 }
 
 .price-value {
   font-size: 40rpx;
   font-weight: 600;
-  color: #FF6B00;
+  color: var(--color-price);
 }
 
 .price-unit {
   font-size: 24rpx;
-  color: #FF6B00;
+  color: var(--color-price);
   margin-left: 4rpx;
 }
 

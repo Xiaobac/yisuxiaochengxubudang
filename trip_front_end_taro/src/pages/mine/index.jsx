@@ -189,7 +189,7 @@ function Mine() {
       ) : (
         <View className='auth-action-group'>
           <Button className='mine-btn-logout' hoverClass='mine-btn-logout-hover' onClick={handleLogout}>
-            <Icon name='signOut' size={32} color='#ff4d4f' style={{ marginRight: '12rpx' }} />
+            <Icon name='signOut' size={32} color={tokens['--color-error']} style={{ marginRight: '12rpx' }} />
             退出登录
           </Button>
         </View>

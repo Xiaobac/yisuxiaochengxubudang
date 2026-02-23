@@ -39,12 +39,12 @@
 }
 
 .star-icon.active {
-  color: #ff9800;
+  color: var(--color-star);
 }
 
 .rating-val {
   margin-left: 10px;
-  color: #ff9800;
+  color: var(--color-star);
   font-weight: bold;
 }
 

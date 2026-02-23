@@ -46,13 +46,13 @@
 
 /* 蓝色标签（神券） */
 .tag-blue {
-  background-color: #1890ff;
+  background-color: var(--color-info);
   color: #ffffff;
 }
 
 /* 灰色标签（已过期/已使用） */
 .tag-gray {
-  background-color: #cccccc;
+  background-color: var(--color-text-disabled);
   color: #ffffff;
 }
 
@@ -106,7 +106,7 @@
 .amount-display-box {
   display: flex;
   align-items: baseline;
-  color: #ff4d4f;
+  color: var(--color-error);
 }
 
 .amount-value {
@@ -131,8 +131,8 @@
 
 /* 黄色去使用按钮 */
 .coupon-primary-btn {
-  background-color: #ffda00;
-  color: #333333;
+  background-color: var(--color-coupon-accent);
+  color: var(--color-text-primary);
   width: 140rpx;
   height: 54rpx;
   line-height: 54rpx;
@@ -150,8 +150,8 @@
 
 /* 禁用状态按钮（已过期/已使用） */
 .coupon-btn-disabled {
-  background-color: #f5f5f5;
-  color: #bbbbbb;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-disabled);
   width: 140rpx;
   height: 54rpx;
   line-height: 54rpx;
@@ -163,11 +163,11 @@
 /* 过期卡片整体变灰效果 */
 .coupon-card-expired .coupon-main-title,
 .coupon-card-expired .amount-display-box {
-  color: #cccccc;
+  color: var(--color-text-disabled);
 }
 
 .loading-text, .empty-text {
-  text-align: center; 
-  margin-top: 100rpx; 
-  color: #999;
+  text-align: center;
+  margin-top: 100rpx;
+  color: var(--color-text-tertiary);
 }

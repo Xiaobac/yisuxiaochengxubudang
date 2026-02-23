@@ -19,6 +19,13 @@
   --color-error: #FF4D4F;
   --color-info: #1890FF;
 
+  /* 语义化颜色别名 */
+  --color-price: #FF6B00;
+  --color-price-light: #FF8E53;
+  --color-price-gradient: linear-gradient(135deg, #FF6B00 0%, #FF8E53 100%);
+  --color-star: #FF9A03;
+  --color-coupon-accent: #FFDA00;
+
   /* 中性色 */
   --color-text-primary: #1A1A1A;
   --color-text-secondary: #666666;
@@ -42,6 +49,11 @@
   /* 顶部 Header 背景（深色模式下换成深色，不再是蓝色） */
   --color-header-bg: #1677ff;
 
+  /* ==================== 行高系统 ==================== */
+  --line-height-tight: 1.2;
+  --line-height-base: 1.5;
+  --line-height-relaxed: 1.7;
+
   /* ==================== 间距系统 ==================== */
   --spacing-xs: 8rpx;
   --spacing-sm: 16rpx;
@@ -49,6 +61,11 @@
   --spacing-lg: 32rpx;
   --spacing-xl: 48rpx;
   --spacing-xxl: 64rpx;
+
+  /* 语义化间距 */
+  --card-padding: 24rpx;
+  --page-gutter: 30rpx;
+  --overlap-offset: -60rpx;
 
   /* ==================== 圆角系统 ==================== */
   --radius-xs: 4rpx;
@@ -92,11 +109,14 @@
 @media (prefers-color-scheme: dark) {
   :root, page {
     --color-primary: #4a90e2;
+    --color-primary-light: #6BA5E7;
+    --color-primary-dark: #3A7BD5;
+    --color-primary-gradient: linear-gradient(135deg, #4a90e2 0%, #6BA5E7 100%);
     --color-bg-base: #1a1a1a;
     --color-bg-secondary: #242424;
     --color-bg-tertiary: #2a2a2a;
     --color-bg-overlay: rgba(0, 0, 0, 0.65);
-    --color-card-bg: #242424;
+    --color-card-bg: #2c2c2c;
     --color-text-primary: #e0e0e0;
     --color-text-secondary: #a0a0a0;
     --color-text-tertiary: #666666;
@@ -105,6 +125,17 @@
     --color-border-light: #2a2a2a;
     --color-border-dark: #444444;
     --color-header-bg: #1a2332;
+    --color-secondary: #FF8E53;
+    --color-secondary-light: #FFB088;
+    --color-success: #73D13D;
+    --color-warning: #FFC53D;
+    --color-error: #FF7875;
+    --color-info: #40A9FF;
+    --color-price: #FF8E53;
+    --color-price-light: #FFB088;
+    --color-price-gradient: linear-gradient(135deg, #FF8E53 0%, #FFB088 100%);
+    --color-star: #FFB347;
+    --color-coupon-accent: #FFE566;
     --shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.5);
@@ -180,26 +211,71 @@
 
 /* ==================== 通用按钮样式 ==================== */
 .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--radius-xl);
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 var(--spacing-lg);
   transition: all var(--duration-base) var(--ease-in-out);
   border: none;
   outline: none;
 }
 
+.btn::after {
+  border: none;
+}
+
 .btn:active {
   transform: scale(0.96);
+  opacity: 0.9;
 }
 
 .btn-primary {
   background: var(--color-primary-gradient);
-  color: var(--color-bg-base);
+  color: #fff;
   box-shadow: 0 4rpx 12rpx rgba(0, 102, 255, 0.3);
 }
 
 .btn-secondary {
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
+}
+
+.btn-danger {
+  background: var(--color-card-bg);
+  color: var(--color-error);
+  border: 2rpx solid var(--color-error);
+}
+
+.btn-accent {
+  background: var(--color-price-gradient);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 0, 0.3);
+}
+
+.btn-sm {
+  height: 60rpx;
+  line-height: 60rpx;
+  font-size: var(--font-size-sm);
+  padding: 0 var(--spacing-md);
+}
+
+.btn-lg {
+  height: 96rpx;
+  line-height: 96rpx;
+  font-size: var(--font-size-lg);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-round {
+  border-radius: 44rpx;
 }
 
 /* ==================== 通用文本样式 ==================== */
@@ -237,4 +313,26 @@
   backdrop-filter: blur(20rpx);
   -webkit-backdrop-filter: blur(20rpx);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ==================== 骨架屏脉冲动画 ==================== */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.skeleton-pulse {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+/* ==================== 交互工具类 ==================== */
+.press-scale:active {
+  transform: scale(0.96);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+/* ==================== 价格文字工具类 ==================== */
+.text-price {
+  color: var(--color-price);
+  font-weight: var(--font-weight-bold);
 }
