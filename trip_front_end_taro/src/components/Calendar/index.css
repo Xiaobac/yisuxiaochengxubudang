@@ -31,7 +31,7 @@
   background-color: var(--color-card-bg);
   border-top-left-radius: 20rpx;
   border-top-right-radius: 20rpx;
-  max-height: 80vh;
+  height: 80vh;
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease-out;
@@ -82,69 +82,32 @@
   font-weight: 300;
 }
 
-/* 月份切换栏 */
-.month-switcher {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20rpx 30rpx;
-  border-bottom: 1rpx solid var(--color-border-base);
-  flex-shrink: 0;
+/* 月份区块 */
+.month-section {
+  margin-bottom: 0;
 }
 
-.current-month-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.month-title-bar {
+  padding: 8rpx 30rpx 4rpx;
+  position: sticky;
+  top: 0;
+  background-color: var(--color-card-bg);
+  z-index: 10;
 }
 
-.current-month-title {
-  font-size: 32rpx;
+.month-title {
+  font-size: 30rpx;
   font-weight: 600;
   color: var(--color-text-primary);
-  margin-bottom: 4rpx;
+  text-align: center;
 }
 
-.month-status-label {
-  font-size: 22rpx;
-  color: var(--color-text-secondary);
-}
-
-.prev-month-btn, .next-month-btn {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  background-color: var(--color-bg-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.prev-month-btn:active, .next-month-btn:active {
-  background-color: var(--color-border-base);
-  transform: scale(0.95);
-}
-
-.prev-month-btn.disabled, .next-month-btn.disabled {
-  opacity: 0.3;
-  background-color: var(--color-bg-tertiary);
-  pointer-events: none;
-}
-
-.arrow-icon {
-  font-size: 40rpx;
-  color: var(--color-text-primary);
-  font-weight: bold;
-  line-height: 1;
-}
-
-/* 预约提示 */
+/* 预约提示 - 固定在顶部 */
 .booking-notice {
   padding: 16rpx 30rpx;
   background-color: var(--color-bg-secondary);
   border-bottom: 1rpx solid var(--color-border-base);
+  flex-shrink: 0;
 }
 
 .notice-text {
@@ -153,11 +116,16 @@
   line-height: 1.4;
 }
 
-/* 星期标题 */
+/* 星期标题 - 固定在提示下方 */
 .weekdays {
   display: flex;
   padding: 20rpx 0;
   background-color: var(--color-bg-secondary);
+  border-bottom: 1rpx solid var(--color-border-base);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 .weekday {
@@ -168,28 +136,39 @@
   font-weight: 500;
 }
 
-/* 可滚动内容区（日期网格） */
+/* 可滚动内容区 - ScrollView */
 .calendar-scroll-body {
   flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  min-height: 0;
 }
 
 /* 日期网格 */
 .dates-grid {
   display: flex;
   flex-wrap: wrap;
-  padding: 0 20rpx;
+  padding: 0 20rpx 4rpx;
+}
+
+/* 加载更多提示 */
+.loading-more {
+  padding: 40rpx 30rpx;
+  text-align: center;
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
 }
 
 .date-cell {
   width: calc(100% / 7);
-  height: 110rpx;
+  height: 96rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 8rpx 0;
+  padding: 4rpx 0;
 }
 
 .day-content {
