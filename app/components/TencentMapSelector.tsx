@@ -44,10 +44,7 @@ export default function TencentMapSelector({ latitude, longitude, onSelect }: Te
                  markerRef.current.setGeometries([{
                     id: 'main',
                     styleId: 'marker',
-                    position: {
-                        lat: newLat,
-                        lng: newLng
-                    },
+                    position: new window.TMap.LatLng(newLat, newLng),
                  }]);
              }
           }
@@ -111,7 +108,7 @@ export default function TencentMapSelector({ latitude, longitude, onSelect }: Te
               geometries: [{
                  id: 'main',
                  styleId: 'marker',
-                 position: center,
+                 position: new window.TMap.LatLng(validLat, validLng),
               }]
           });
           markerRef.current = newMarker;
@@ -133,10 +130,7 @@ export default function TencentMapSelector({ latitude, longitude, onSelect }: Te
              markerRef.current.setGeometries([{
                 id: 'main',
                 styleId: 'marker',
-                position: {
-                    lat: clickLat,
-                    lng: clickLng
-                },
+                position: clickPosition,
              }]);
          }
          
@@ -184,7 +178,7 @@ export default function TencentMapSelector({ latitude, longitude, onSelect }: Te
       
       try {
           const res = await fetch(`/api/map/geocoder?address=${encodeURIComponent(searchKeyword)}`);
-          if (!res.ok) throw new Error('Network response was not ok');
+          if (!res.ok) throw new Error(res.json ? (await res.json()).message : 'Network response was not ok');
           const data = await res.json();
           
           if (data.status === 0) {
@@ -204,10 +198,7 @@ export default function TencentMapSelector({ latitude, longitude, onSelect }: Te
                       markerRef.current.setGeometries([{
                           id: 'main',
                           styleId: 'marker',
-                          position: {
-                            lat: latNum,
-                            lng: lngNum
-                          }
+                          position: center
                       }]);
                   }
               }
