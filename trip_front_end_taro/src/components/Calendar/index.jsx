@@ -3,6 +3,7 @@ import Taro from '@tarojs/taro'
 import { View, Text, Button, ScrollView } from '@tarojs/components'
 import dayjs from 'dayjs'
 import { useTheme } from '../../utils/useTheme'
+import { getDayExtraInfo } from '../../utils/lunarHelper'
 import './index.css'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
@@ -17,7 +18,11 @@ const Calendar = ({
   today: propToday = '',
   mode = 'range', // 模式：'range'区间选择，'single'单日期选择
   maxDate: propMaxDate = null, // 可选的最大日期限制，null表示不限制
-  maxDays = null // 可选的最大天数限制，null表示不限制
+  maxDays = null, // 可选的最大天数限制，null表示不限制
+  showLunar = true, // 是否显示农历/节假日
+  showPrice = false, // 是否显示价格
+  priceData = null, // 价格数据 { '2024-03-01': 299, '2024-03-02': 399 }
+  priceFormatter = (price) => `¥${price}` // 价格格式化函数
 }) => {
   const { tokens } = useTheme()
 
@@ -203,6 +208,38 @@ const Calendar = ({
     if (!tempStart || !tempEnd) return 0
     return dayjs(tempEnd).diff(dayjs(tempStart), 'day')
   }
+
+  // 获取日期价格
+  const getDayPrice = useCallback((day) => {
+    if (!showPrice || !priceData || !day) return null
+
+    const dayStr = day.format('YYYY-MM-DD')
+    const price = priceData[dayStr]
+    return price !== undefined && price !== null ? price : null
+  }, [showPrice, priceData])
+
+  // 缓存农历信息（性能优化）
+  const lunarCache = useMemo(() => {
+    if (!showLunar) return new Map()
+
+    const cache = new Map()
+    availableMonths.forEach(month => {
+      const grid = generateMonthGrid(month)
+      grid.forEach(day => {
+        if (day) {
+          const dayStr = day.format('YYYY-MM-DD')
+          cache.set(dayStr, getDayExtraInfo(day))
+        }
+      })
+    })
+    return cache
+  }, [showLunar, availableMonths, generateMonthGrid])
+
+  // 从缓存获取农历信息
+  const getLunarFromCache = useCallback((day) => {
+    if (!day) return null
+    return lunarCache.get(day.format('YYYY-MM-DD'))
+  }, [lunarCache])
 
   // 获取区间日期的位置类（用于胶囊效果）
   const getRangePositionClass = (day, index) => {
@@ -391,6 +428,10 @@ const Calendar = ({
                     const isEndDate = mode === 'range' && day ? day.format('YYYY-MM-DD') === tempEnd : false
                     const isWeekend = day ? (day.day() === 0 || day.day() === 6) : false
 
+                    // 获取价格和农历信息（独立获取，不互斥）
+                    const dayPrice = getDayPrice(day)
+                    const lunarInfo = showLunar && day ? getLunarFromCache(day) : null
+
                     return (
                       <View
                         key={index}
@@ -402,15 +443,37 @@ const Calendar = ({
                             <Text className={`day-number ${isToday ? 'today' : ''}`}>
                               {day.date()}
                             </Text>
-                            {isStartDate && isInCurrentMonth ? (
-                              <Text className='day-label start-label'>入住</Text>
-                            ) : isEndDate && isInCurrentMonth ? (
-                              <Text className='day-label end-label'>离店</Text>
-                            ) : isToday && isInCurrentMonth ? (
-                              <Text className='day-label today-label'>今天</Text>
-                            ) : !isSelectable && isInCurrentMonth ? (
-                              <Text className='day-label disabled-label'>不可选</Text>
-                            ) : null}
+                            {/* 标签显示：入住/离店/今天优先，其他信息可同时显示 */}
+                            <View className='day-labels'>
+                              {isStartDate && isInCurrentMonth ? (
+                                <Text className='day-label start-label'>入住</Text>
+                              ) : isEndDate && isInCurrentMonth ? (
+                                <Text className='day-label end-label'>离店</Text>
+                              ) : isToday && isInCurrentMonth ? (
+                                <Text className='day-label today-label'>今天</Text>
+                              ) : (
+                                <>
+                                  {/* 价格在第一行（固定位置） */}
+                                  {dayPrice !== null && isInCurrentMonth && (
+                                    <Text className='day-label price-label'>
+                                      {priceFormatter(dayPrice)}
+                                    </Text>
+                                  )}
+
+                                  {/* 节日在第二行（如果有） */}
+                                  {lunarInfo?.display && isInCurrentMonth && (
+                                    <Text className={`day-label lunar-label ${lunarInfo.isSpecial ? 'festival-label' : ''}`}>
+                                      {lunarInfo.display}
+                                    </Text>
+                                  )}
+
+                                  {/* 没有任何信息时显示不可选 */}
+                                  {!dayPrice && !lunarInfo?.display && !isSelectable && isInCurrentMonth && (
+                                    <Text className='day-label disabled-label'>不可选</Text>
+                                  )}
+                                </>
+                              )}
+                            </View>
                           </View>
                         ) : null}
                       </View>

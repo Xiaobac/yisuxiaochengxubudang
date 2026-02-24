@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Image, ScrollView, Button, Swiper, SwiperItem } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import dayjs from 'dayjs';
-import { getHotelById, getHotelRoomTypes } from '../../services/hotel';
+import { getHotelById, getHotelRoomTypes, getRoomAvailability } from '../../services/hotel';
 // import { getComments } from '../../services/comment';
 import { getHotelCommentsCombined } from '../../services/comments';
 // import { getReviewsByHotelId } from '../../services/review';
@@ -44,7 +44,8 @@ function HotelDetail() {
   const [comments, setComments] = useState([]);
   const [showAllComments, setShowAllComments] = useState(false);
   const COMMENT_PREVIEW_COUNT = 3;
-  
+  const [roomPriceData, setRoomPriceData] = useState(null); // 存储选中房型的每日价格数据
+
   // 加载酒店详情和房型数据
   useEffect(() => {
     if (hotelId) {
@@ -430,6 +431,67 @@ function HotelDetail() {
     return 1;
   }, [startDate, endDate]);
 
+  // 根据房型基础价格生成默认价格映射（与PC端逻辑一致：没有单独记录的日期使用基础价格）
+  const buildBasePriceMap = useCallback((room) => {
+    if (!room) return {};
+    const basePrice = Number(room.dynamicPrice ?? room.price);
+    if (!basePrice && basePrice !== 0) return {};
+    const priceMap = {};
+    const today = dayjs();
+    for (let i = 0; i < 90; i++) {
+      priceMap[today.add(i, 'day').format('YYYY-MM-DD')] = basePrice;
+    }
+    return priceMap;
+  }, []);
+
+  // 当选中房型变化时，立即用基础价格填充，然后异步获取商家设置的价格覆盖
+  useEffect(() => {
+    if (!selectedRoomTypeId) {
+      setRoomPriceData(null);
+      return;
+    }
+
+    const selectedRoom = roomTypes.find(r => r.id === selectedRoomTypeId);
+    // 立即用基础价格填充（用户打开日历时一定能看到价格）
+    const basePriceMap = buildBasePriceMap(selectedRoom);
+    setRoomPriceData(basePriceMap);
+
+    // 异步获取商家在PC端设置的具体价格，覆盖基础价格
+    let cancelled = false;
+    const fetchPrices = async () => {
+      try {
+        const today = dayjs();
+        const res = await getRoomAvailability(
+          selectedRoomTypeId,
+          today.format('YYYY-MM-DD'),
+          today.add(90, 'day').format('YYYY-MM-DD')
+        );
+        if (cancelled) return;
+
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+          const mergedMap = { ...basePriceMap };
+          res.data.forEach(item => {
+            if (item.date && item.price !== undefined && item.price !== null) {
+              const dateKey = dayjs(item.date).format('YYYY-MM-DD');
+              if (item.isClosed) {
+                delete mergedMap[dateKey];
+              } else {
+                mergedMap[dateKey] = Number(item.price);
+              }
+            }
+          });
+          setRoomPriceData(mergedMap);
+        }
+      } catch (error) {
+        // API失败时保留基础价格，不清空
+        console.error('获取房型价格详情失败:', error);
+      }
+    };
+
+    fetchPrices();
+    return () => { cancelled = true; };
+  }, [selectedRoomTypeId, roomTypes, buildBasePriceMap]);
+
   const handleCalendarSelect = (start, end) => {
     setStartDate(start || '');
     setEndDate(end || '');
@@ -811,6 +873,10 @@ function HotelDetail() {
           endDate={endDate}
           today={dayjs()}
           mode="range"
+          showLunar={true}
+          showPrice={true}
+          priceData={roomPriceData}
+          priceFormatter={(price) => `¥${price}`}
         />
       )}
 

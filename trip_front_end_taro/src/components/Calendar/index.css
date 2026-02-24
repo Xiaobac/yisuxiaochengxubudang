@@ -195,7 +195,7 @@
 
 .date-cell {
   width: calc(100% / 7);
-  height: 96rpx;
+  height: 130rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -209,7 +209,7 @@
   align-items: center;
   justify-content: center;
   width: 70rpx;
-  height: 90rpx;
+  height: 110rpx;
   position: relative;
 }
 
@@ -227,13 +227,33 @@
   transition: all 0.2s ease;
 }
 
+.day-labels {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 4rpx;
+  height: 40rpx;
+  width: 100%;
+}
+
 .day-label {
   font-size: 20rpx;
   color: var(--color-text-secondary);
-  line-height: 22rpx;
-  height: 22rpx;
-  margin-top: 2rpx;
+  line-height: 20rpx;
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 价格标签固定在第一行 */
+.price-label {
+  height: 20rpx;
+  margin-bottom: 2rpx;
+}
+
+/* 节日标签固定在第二行 */
+.lunar-label {
+  height: 20rpx;
 }
 
 .day-number.today {
@@ -368,6 +388,54 @@
 
 .date-cell.weekend.disabled .day-number {
   color: var(--color-text-disabled) !important;
+}
+
+/* 农历标签样式 */
+.lunar-label {
+  color: var(--color-text-tertiary);
+  font-size: 20rpx;
+  transform: scale(0.9);
+}
+
+/* 节日标签样式 */
+.festival-label {
+  color: var(--color-error);
+  font-weight: 600;
+  transform: scale(1);
+}
+
+/* 周末的农历标签 */
+.date-cell.weekend .lunar-label {
+  color: var(--color-text-tertiary);
+}
+
+/* 选中日期的农历标签 */
+.date-cell.selected .lunar-label,
+.date-cell.selected .festival-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 价格标签样式 */
+.price-label {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  font-size: 20rpx;
+}
+
+/* 周末的价格标签（与周中保持一致） */
+.date-cell.weekend .price-label {
+  color: var(--color-text-secondary);
+}
+
+/* 选中日期的价格标签 */
+.date-cell.selected .price-label {
+  color: #fff;
+}
+
+/* 禁用日期的价格标签 */
+.date-cell.disabled .price-label {
+  color: var(--color-text-disabled);
+  opacity: 0.6;
 }
 
 /* 可选日期 - 增强点击区域 */
