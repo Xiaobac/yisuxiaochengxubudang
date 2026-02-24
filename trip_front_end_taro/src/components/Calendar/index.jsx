@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import Taro from '@tarojs/taro'
 import { View, Text, Button, ScrollView } from '@tarojs/components'
 import dayjs from 'dayjs'
 import { useTheme } from '../../utils/useTheme'
@@ -115,6 +116,13 @@ const Calendar = ({
       return
     }
 
+    // 触觉反馈
+    try {
+      Taro.vibrateShort?.({ type: 'light' })
+    } catch (e) {
+      // 静默失败
+    }
+
     if (mode === 'single') {
       // 单日期模式：选中后等待用户点"确定"
       setTempStart(dayStr)
@@ -196,6 +204,27 @@ const Calendar = ({
     return dayjs(tempEnd).diff(dayjs(tempStart), 'day')
   }
 
+  // 获取区间日期的位置类（用于胶囊效果）
+  const getRangePositionClass = (day, index) => {
+    if (!day || mode !== 'range' || !tempStart || !tempEnd) return ''
+
+    const dayStr = day.format('YYYY-MM-DD')
+    const isStart = dayStr === tempStart
+    const isEnd = dayStr === tempEnd
+
+    const classes = []
+
+    if (isStart) {
+      classes.push('range-start')
+    }
+
+    if (isEnd) {
+      classes.push('range-end')
+    }
+
+    return classes.join(' ')
+  }
+
   // 滚动到底部时加载更多月份
   const handleLoadMore = useCallback(() => {
     setMonthsToShow(prev => prev + 3) // 每次加载3个月
@@ -203,6 +232,13 @@ const Calendar = ({
 
   // 确定按钮：提交选择并关闭
   const handleConfirm = () => {
+    // 触觉反馈
+    try {
+      Taro.vibrateShort?.({ type: 'medium' })
+    } catch (e) {
+      // 静默失败
+    }
+
     if (mode === 'range') {
       if (tempStart && tempEnd) {
         onSelect(tempStart, tempEnd)
@@ -353,11 +389,12 @@ const Calendar = ({
                     const isToday = day ? day.isSame(today, 'day') : false
                     const isStartDate = day ? day.format('YYYY-MM-DD') === tempStart : false
                     const isEndDate = mode === 'range' && day ? day.format('YYYY-MM-DD') === tempEnd : false
+                    const isWeekend = day ? (day.day() === 0 || day.day() === 6) : false
 
                     return (
                       <View
                         key={index}
-                        className={`date-cell ${status} ${isSelectable ? 'selectable' : 'disabled'} ${!isInCurrentMonth ? 'other-month' : ''}`}
+                        className={`date-cell ${status} ${isSelectable ? 'selectable' : 'disabled'} ${!isInCurrentMonth ? 'other-month' : ''} ${isWeekend ? 'weekend' : ''} ${getRangePositionClass(day, index)}`}
                         onClick={() => isSelectable && handleDayClick(day)}
                       >
                         {day ? (

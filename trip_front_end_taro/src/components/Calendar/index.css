@@ -42,6 +42,38 @@
   to { transform: translateY(0); }
 }
 
+@keyframes selectBounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes todayPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(22, 119, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6rpx rgba(22, 119, 255, 0);
+  }
+}
+
+@keyframes rangeHighlight {
+  from {
+    background-color: transparent;
+    opacity: 0;
+  }
+  to {
+    background-color: var(--color-bg-tertiary);
+    opacity: 1;
+  }
+}
+
 /* 头部 */
 .calendar-header {
   display: flex;
@@ -207,6 +239,7 @@
 .day-number.today {
   border: 2rpx solid var(--color-primary);
   color: var(--color-primary) !important;
+  animation: todayPulse 2s ease-in-out infinite;
 }
 
 .today-label {
@@ -241,9 +274,10 @@
   background-color: var(--color-primary) !important;
   color: #fff !important;
   font-weight: 500;
-  transform: scale(1.05);
   box-shadow: 0 2rpx 8rpx rgba(22, 119, 255, 0.3);
   border: none !important;
+  animation: selectBounce 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation-fill-mode: forwards;
 }
 
 .date-cell.selected .day-label {
@@ -253,12 +287,41 @@
 
 .date-cell.in-range {
   background-color: var(--color-bg-tertiary);
+  animation: rangeHighlight 0.3s ease-out forwards;
 }
 
 .date-cell.in-range .day-number {
   background-color: transparent !important;
   color: var(--color-primary) !important;
   font-weight: 500;
+}
+
+/* 区间胶囊效果 - 起始日期左圆角 */
+.date-cell.range-start {
+  border-top-left-radius: 32rpx;
+  border-bottom-left-radius: 32rpx;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-bg-tertiary) 50%
+  );
+}
+
+/* 区间胶囊效果 - 结束日期右圆角 */
+.date-cell.range-end {
+  border-top-right-radius: 32rpx;
+  border-bottom-right-radius: 32rpx;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-tertiary) 50%,
+    transparent 100%
+  );
+}
+
+/* 区间胶囊效果 - 起始和结束是同一天 */
+.date-cell.range-start.range-end {
+  border-radius: 32rpx;
+  background: var(--color-bg-tertiary);
 }
 
 /* 非当前月份的日期 */
@@ -288,6 +351,23 @@
 .date-cell.disabled {
   pointer-events: none;
   opacity: 0.4;
+}
+
+/* 周末日期样式 */
+.date-cell.weekend .day-number {
+  color: var(--color-error) !important;
+}
+
+.date-cell.weekend.selectable .day-number {
+  color: #ff7875 !important;
+}
+
+.date-cell.weekend.selected .day-number {
+  color: #fff !important;
+}
+
+.date-cell.weekend.disabled .day-number {
+  color: var(--color-text-disabled) !important;
 }
 
 /* 可选日期 - 增强点击区域 */
