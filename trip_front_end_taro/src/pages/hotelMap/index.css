@@ -64,6 +64,7 @@
   background: var(--color-card-bg);
   border-radius: 24rpx 24rpx 0 0;
   padding: 32rpx;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
   box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.15);
   z-index: 1000;
   animation: slideUp 0.3s ease-out;
