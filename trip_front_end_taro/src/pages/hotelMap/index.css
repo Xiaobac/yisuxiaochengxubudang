@@ -195,8 +195,9 @@
   z-index: 100;
 }
 
-.locate-icon {
-  font-size: 36rpx;
+.locate-icon-img {
+  width: 44rpx;
+  height: 44rpx;
 }
 
 /* 单酒店模式底部信息栏 */

@@ -3,9 +3,13 @@ import { View, Text, Button } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { getUserCoupons } from '../../services/coupon';
 import dayjs from 'dayjs';
+import EmptyState from '../../components/EmptyState';
+import Skeleton from '../../components/Skeleton';
+import { useTheme } from '../../utils/useTheme';
 import './index.css';
 
 function MyCoupons() {
+  const { cssVars } = useTheme();
   const [couponList, setCouponList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -102,16 +106,18 @@ function MyCoupons() {
   };
 
   return (
-    <View className='coupons-page-container'>
+    <View className='coupons-page-container' style={cssVars}>
       <View className='coupon-list-box'>
         {loading ? (
-          <View className='loading-text'>加载中...</View>
+          <Skeleton type='list' />
         ) : couponList.length > 0 ? (
           couponList.map(item => renderCouponCard(item))
         ) : (
-          <View className='empty-text' style={{ textAlign: 'center', marginTop: '100rpx', color: '#999' }}>
-            暂无优惠券
-          </View>
+          <EmptyState
+            image='📋'
+            title='暂无优惠券'
+            description='去首页看看有没有可领取的优惠券吧'
+          />
         )}
       </View>
     </View>

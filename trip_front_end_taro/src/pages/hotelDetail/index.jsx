@@ -96,10 +96,7 @@ function HotelDetail() {
 
   const loadComments = async () => {
     try {
-      console.log('🔍 loadComments start, hotelId:', hotelId);
       const merged = await getHotelCommentsCombined(hotelId);
-      
-      console.log('🔍 merged:', merged.length, '条');
       setComments(merged);
     } catch (error) {
       console.error('加载评论失败:', error);
@@ -109,11 +106,9 @@ function HotelDetail() {
   const loadHotelDetail = async () => {
     try {
       setLoading(true);
-      console.log('🏨 开始加载酒店详情, hotelId:', hotelId);
 
       // 加载酒店详情
       const hotelRes = await getHotelById(hotelId);
-      console.log('🏨 酒店详情API响应:', hotelRes);
 
       if (hotelRes.success && hotelRes.data) {
         const rawData = hotelRes.data;
@@ -168,7 +163,6 @@ function HotelDetail() {
           latitude: rawData.latitude || null,
           longitude: rawData.longitude || null,
         };
-        console.log('🏨 处理后的酒店数据:', hotelData);
         setHotel(hotelData);
 
         // 加载房型列表（带日期以获取库存和动态价格）
@@ -207,7 +201,6 @@ function HotelDetail() {
             const priceB = b.dynamicPrice ?? b.price;
             return priceA - priceB;
           });
-          console.log('🛏️ 处理后的房型数据:', transformedRoomTypes);
           setRoomTypes(transformedRoomTypes);
 
           // 默认选择第一个房型
@@ -215,7 +208,6 @@ function HotelDetail() {
             setSelectedRoomTypeId(transformedRoomTypes[0].id);
           }
         } else {
-          console.log('⚠️ 后端没有房型数据');
           setRoomTypes([]);
         }
       }
@@ -439,13 +431,11 @@ function HotelDetail() {
   }, [startDate, endDate]);
 
   const handleCalendarSelect = (start, end) => {
-    console.log('Calendar select:', { start, end });
     setStartDate(start || '');
     setEndDate(end || '');
   };
 
   const handleCalendarConfirm = () => {
-    console.log('Calendar confirm');
     // Calendar 组件自己负责关闭（onClose 已处理）
   };
 

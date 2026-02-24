@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Map, CoverView } from '@tarojs/components';
+import { View, Text, Map, CoverView, CoverImage } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { getHotels } from '../../services/hotel';
 import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useTheme } from '../../utils/useTheme';
+import { getIconUri } from '../../utils/icons';
 import './index.css';
 
 // 默认中心（上海）
@@ -216,7 +217,7 @@ function HotelMap() {
 
         {/* 定位到我的位置按钮 */}
         <CoverView className='locate-me-btn' onClick={handleLocateMe}>
-          <CoverView className='locate-icon'>📍</CoverView>
+          <CoverImage className='locate-icon-img' src={getIconUri('crosshair', '#0066FF')} />
         </CoverView>
 
         {/* 单酒店模式：底部酒店信息 */}

@@ -4,9 +4,13 @@ import Taro from '@tarojs/taro';
 import { getCoupons, getUserCoupons, claimCoupon } from '../../services/coupon';
 import { storage } from '../../utils/storage';
 import dayjs from 'dayjs';
+import EmptyState from '../../components/EmptyState';
+import Skeleton from '../../components/Skeleton';
+import { useTheme } from '../../utils/useTheme';
 import './index.css';
 
 function Coupons() {
+  const { cssVars } = useTheme();
   const [couponList, setCouponList] = useState([]);
   const [claimedIds, setClaimedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
@@ -140,19 +144,23 @@ function Coupons() {
 
   if (loading) {
     return (
-      <View className='coupons-page-container'>
-        <View className='coupon-loading-tip'>加载中...</View>
+      <View className='coupons-page-container' style={cssVars}>
+        <Skeleton type='list' />
       </View>
     );
   }
 
   return (
-    <View className='coupons-page-container'>
+    <View className='coupons-page-container' style={cssVars}>
       <View className='coupon-list-box'>
         {couponList.length > 0 ? (
           couponList.map(item => renderCouponCard(item))
         ) : (
-          <View className='coupon-empty-tip'>暂无可用优惠券</View>
+          <EmptyState
+            image='📋'
+            title='暂无可用优惠券'
+            description='暂时没有可领取的优惠券'
+          />
         )}
       </View>
     </View>
