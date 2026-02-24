@@ -377,10 +377,8 @@
 
 .confirm-btn.active {
   color: #fff;
-  background: linear-gradient(135deg, #1677ff 0%, #4a90e2 100%);
-  box-shadow:
-    0 6rpx 20rpx rgba(22, 119, 255, 0.35),
-    0 2rpx 6rpx rgba(22, 119, 255, 0.2);
+  background: var(--color-primary-gradient);
+  box-shadow: var(--shadow-lg);
 }
 
 .confirm-btn.active:active {

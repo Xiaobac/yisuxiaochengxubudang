@@ -13,7 +13,7 @@ const DEFAULT_LAT = 31.2304;
 const DEFAULT_LNG = 121.4737;
 
 function HotelMap() {
-  const { cssVars } = useTheme();
+  const { cssVars, tokens } = useTheme();
   const router = useRouter();
 
   // 判断是"单酒店详情模式"还是"搜索列表模式"
@@ -72,7 +72,7 @@ function HotelMap() {
           color: '#FFFFFF',
           fontSize: 13,
           borderRadius: 8,
-          bgColor: '#0066FF',
+          bgColor: tokens['--color-primary'],
           padding: 8,
           display: 'ALWAYS',
           textAlign: 'center'
@@ -123,7 +123,7 @@ function HotelMap() {
             color: '#FFFFFF',
             fontSize: 12,
             borderRadius: 8,
-            bgColor: '#0066FF',
+            bgColor: tokens['--color-primary'],
             padding: 8,
             display: 'ALWAYS',
             textAlign: 'center'

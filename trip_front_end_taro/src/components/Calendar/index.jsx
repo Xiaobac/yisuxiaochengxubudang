@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { View, Text, Button } from '@tarojs/components'
 import dayjs from 'dayjs'
+import { useTheme } from '../../utils/useTheme'
 import './index.css'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
@@ -15,6 +16,8 @@ const Calendar = ({
   today: propToday = '',
   mode = 'range' // 模式：'range'区间选择，'single'单日期选择
 }) => {
+  const { tokens } = useTheme()
+
   // 基础日期计算
   const today = useMemo(() => propToday || dayjs(), [propToday])
   const maxDate = useMemo(() => today.add(30, 'day'), [today])
@@ -332,17 +335,17 @@ const Calendar = ({
               📅 可选日期：今天至{maxDate.format('MM月DD日')}（共30天）
             </Text>
             {mode === 'range' && !tempStart && (
-              <Text className='notice-text' style={{ color: '#1677ff', fontWeight: 500 }}>
+              <Text className='notice-text' style={{ color: tokens['--color-primary'], fontWeight: 500 }}>
                 💡 请先选择入住日期
               </Text>
             )}
             {mode === 'range' && tempStart && !tempEnd && (
-              <Text className='notice-text' style={{ color: '#1677ff', fontWeight: 500 }}>
+              <Text className='notice-text' style={{ color: tokens['--color-primary'], fontWeight: 500 }}>
                 💡 请选择离店日期（系统会自动识别顺序）
               </Text>
             )}
             {mode === 'range' && tempStart && tempEnd && (
-              <Text className='notice-text' style={{ color: '#52c41a', fontWeight: 500 }}>
+              <Text className='notice-text' style={{ color: tokens['--color-success'], fontWeight: 500 }}>
                 ✅ 已选好，点"确定"确认，或重新点选更改
               </Text>
             )}

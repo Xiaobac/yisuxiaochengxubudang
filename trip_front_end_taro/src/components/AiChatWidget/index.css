@@ -2,12 +2,12 @@
 .ai-float-btn {
   position: fixed;
   z-index: 999;
-  background: #00b7ff;
+  background: var(--color-info);
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 4rpx 16rpx rgba(22, 119, 255, 0.4);
+  box-shadow: var(--shadow-md);
 }
 
 /* ai助手 */

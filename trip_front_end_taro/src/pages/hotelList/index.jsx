@@ -534,7 +534,7 @@ function HotelList() {
             <Input
               className='p-search-input'
               placeholder={searchParams.keyword || '位置/品牌/酒店'}
-              placeholderStyle='color:#999;font-size:26rpx;'
+              placeholderStyle={`color:${tokens['--color-text-disabled']};font-size:26rpx;`}
               value={localSearchKeyword}
               onInput={handleSearchInput}
               onConfirm={(e) => handleSearch(e.detail.value)}
