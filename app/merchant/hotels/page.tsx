@@ -599,10 +599,10 @@ export default function HotelManagementPage() {
                             latitude={getFieldValue('latitude')} 
                             longitude={getFieldValue('longitude')}
                             onSelect={(loc) => {
-                                console.log("Map Selected:", loc);
                                 setFieldsValue({
                                     latitude: loc.latitude,
-                                    longitude: loc.longitude
+                                    longitude: loc.longitude,
+                                    ...(loc.address ? { address: loc.address } : {}),
                                 });
                             }}
                         />

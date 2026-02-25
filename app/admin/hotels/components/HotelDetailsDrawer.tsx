@@ -1,5 +1,8 @@
+'use client';
+
 import { Drawer, Descriptions, Image, Space, Table, Tag } from 'antd';
 import type { Hotel } from '@/app/types';
+import TencentMapSelector from '@/app/components/TencentMapSelector';
 
 interface HotelDetailsDrawerProps {
   visible: boolean;
@@ -15,6 +18,7 @@ export function HotelDetailsDrawer({ visible, hotel, onClose }: HotelDetailsDraw
       size="large"
       onClose={onClose}
       open={visible}
+      destroyOnClose
     >
       {hotel && (
         <>
@@ -32,7 +36,13 @@ export function HotelDetailsDrawer({ visible, hotel, onClose }: HotelDetailsDraw
               {hotel.address}
             </Descriptions.Item>
             <Descriptions.Item label="地理位置">
-              {hotel.latitude && hotel.longitude ? `${hotel.latitude}, ${hotel.longitude}` : '未设置'}
+              {hotel.latitude && hotel.longitude ? (
+                <TencentMapSelector
+                  latitude={hotel.latitude}
+                  longitude={hotel.longitude}
+                  readOnly
+                />
+              ) : '未设置'}
             </Descriptions.Item>
             <Descriptions.Item label="星级">
               {hotel.starRating}星
