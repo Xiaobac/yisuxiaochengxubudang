@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, Image, Input, Map, ScrollView } from '@tarojs/components';
 import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
 import dayjs from 'dayjs';
@@ -14,6 +14,7 @@ import EmptyState from '../../components/EmptyState';
 import Calendar from '../../components/Calendar';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../utils/useTheme';
+import { groupByInitial } from '../../utils/pinyinMap';
 import AiChatWidget from '../../components/AiChatWidget';
 import './index.css';
 
@@ -52,6 +53,8 @@ function HotelList() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isCitySelectorVisible, setIsCitySelectorVisible] = useState(false);
   const [citySearchKeyword, setCitySearchKeyword] = useState('');
+  const [cityTab, setCityTab] = useState(0); // 0=国内, 1=国外
+  const [scrollIntoViewId, setScrollIntoViewId] = useState('');
 
   // ---------- 日期选择状态 ----------
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
@@ -93,9 +96,13 @@ function HotelList() {
       if (searchParams.locationId) {
         const found = locationsData.find(loc => loc.id === searchParams.locationId);
         setSelectedLocation(found || null);
-      } else if (locationsData.length > 0) {
-        // 默认选中第一个
-        setSelectedLocation(locationsData[0]);
+      } else {
+        // 尝试从同步的城市中恢复
+        const syncedCity = Taro.getStorageSync('selectedCitySync');
+        if (syncedCity) {
+          const found = locationsData.find(loc => loc.id === syncedCity.id);
+          if (found) setSelectedLocation(found);
+        }
       }
     } catch (error) {
       console.error('获取位置失败:', error);
@@ -107,9 +114,13 @@ function HotelList() {
   const handleSelectCity = (location) => {
     setSelectedLocation(location);
     setIsCitySelectorVisible(false);
+    setLocalSearchKeyword(''); // 选城市时清空搜索关键词
     const newParams = { ...searchParams, locationId: location.id, locationName: location.name };
+    delete newParams.keyword; // 移除关键词筛选
     setSearchParams(newParams);
     loadHotels(newParams);
+    // 同步城市选择到首页
+    Taro.setStorageSync('selectedCitySync', { id: location.id, name: location.name });
   };
 
   // ---------- 重置城市筛选（显示所有酒店） ----------
@@ -117,9 +128,29 @@ function HotelList() {
     setSelectedLocation(null);
     setIsCitySelectorVisible(false);
     setCitySearchKeyword('');
-    const { locationId, locationName, ...restParams } = searchParams;
+    setLocalSearchKeyword(''); // 重置时也清空搜索关键词
+    const { locationId, locationName, keyword, ...restParams } = searchParams;
     setSearchParams(restParams);
     loadHotels(restParams);
+    Taro.removeStorageSync('selectedCitySync');
+  };
+
+  // ---------- 城市分组（A-Z） ----------
+  const groupedCities = useMemo(() => {
+    const typeFilter = cityTab === 0 ? 'domestic' : 'overseas';
+    let filtered = locations.filter(loc => loc.type === typeFilter);
+    if (citySearchKeyword) {
+      filtered = filtered.filter(loc =>
+        loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase())
+      );
+    }
+    return groupByInitial(filtered);
+  }, [locations, cityTab, citySearchKeyword]);
+
+  const indexLetters = useMemo(() => groupedCities.map(g => g.letter), [groupedCities]);
+
+  const handleIndexTap = (letter) => {
+    setScrollIntoViewId(`city-group-${letter}`);
   };
 
   // ---------- 日期选择处理 ----------
@@ -364,18 +395,37 @@ function HotelList() {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     searchTimerRef.current = setTimeout(() => {
       if (val.trim()) {
-        const newParams = { ...searchParams, keyword: val.trim() };
+        // 有关键词 → 移除城市筛选，全局搜索
+        const { locationId, locationName, ...rest } = searchParams;
+        const newParams = { ...rest, keyword: val.trim() };
         setSearchParams(newParams);
+        setSelectedLocation(null);
         loadHotels(newParams);
+      } else {
+        // 清空关键词 → 移除 keyword，重新加载
+        const { keyword, ...rest } = searchParams;
+        setSearchParams(rest);
+        loadHotels(rest);
       }
     }, 300);
   }, [searchParams]);
 
   const handleSearch = (keyword) => {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    const newParams = { ...searchParams, keyword };
-    setSearchParams(newParams);
-    loadHotels(newParams);
+    if (keyword && keyword.trim()) {
+      // 有关键词 → 移除城市筛选，全局搜索
+      const { locationId, locationName, ...rest } = searchParams;
+      const newParams = { ...rest, keyword: keyword.trim() };
+      setSearchParams(newParams);
+      setSelectedLocation(null);
+      loadHotels(newParams);
+    } else {
+      // 空关键词 → 移除 keyword，重新加载
+      const { keyword: _, ...rest } = searchParams;
+      setSearchParams(rest);
+      setLocalSearchKeyword('');
+      loadHotels(rest);
+    }
   };
 
   const handleSortChange = (newSortBy) => {
@@ -533,7 +583,7 @@ function HotelList() {
         </View>
         <View className='search-pill-box'>
           <View className='pill-city-info' hoverClass='pill-city-hover' onClick={() => setIsCitySelectorVisible(true)}>
-            <Text className='pill-city-name'>{selectedLocation?.name || searchParams.locationName || '上海'}</Text>
+            <Text className='pill-city-name'>{selectedLocation?.name || searchParams.locationName || '全国'}</Text>
             <View className='pill-date-box' onClick={(e) => { e.stopPropagation(); handleOpenCalendar(); }}>
               <Text className='p-date'>住 {getDisplayDate(startDate, true).replace('月', '-').replace('日', '')}</Text>
               <Text className='p-date'>离 {getDisplayDate(endDate, false, true).replace('月', '-').replace('日', '')}</Text>
@@ -739,7 +789,23 @@ function HotelList() {
               </View>
             </View>
 
-             {/* 城市搜索框 */}
+            {/* 国内/国外 Tab */}
+            <View className='city-tab-bar'>
+              <View
+                className={`city-tab-item ${cityTab === 0 ? 'active' : ''}`}
+                onClick={() => { setCityTab(0); setCitySearchKeyword(''); }}
+              >
+                <Text>国内</Text>
+              </View>
+              <View
+                className={`city-tab-item ${cityTab === 1 ? 'active' : ''}`}
+                onClick={() => { setCityTab(1); setCitySearchKeyword(''); }}
+              >
+                <Text>国外</Text>
+              </View>
+            </View>
+
+            {/* 城市搜索框 */}
             <View className='city-search-box'>
               <Icon name='search' size={32} color={iconSecondaryColor} />
               <Input
@@ -751,26 +817,52 @@ function HotelList() {
               />
             </View>
 
-            <ScrollView scrollY className='city-selector-scroll'>
-              <View className='city-grid-container'>
-              {locations
-                .filter(loc => !citySearchKeyword || loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase()))
-                .map((loc) => (
-                  <View
-                    key={loc.id}
-                    className={`city-grid-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
-                    hoverClass='city-select-hover'
-                    onClick={() => handleSelectCity(loc)}
-                  >
-                    {loc.name}
+            {/* 城市列表 + 右侧索引 */}
+            <View className='city-body-wrapper'>
+              <ScrollView
+                scrollY
+                className='city-list-scroll'
+                scrollIntoView={scrollIntoViewId}
+                scrollWithAnimation
+              >
+                {groupedCities.length > 0 ? groupedCities.map(group => (
+                  <View key={group.letter} id={`city-group-${group.letter}`}>
+                    <View className='city-group-title'>
+                      <Text>{group.letter}</Text>
+                    </View>
+                    <View className='city-grid-container'>
+                      {group.cities.map(loc => (
+                        <View
+                          key={loc.id}
+                          className={`city-grid-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
+                          hoverClass='city-select-hover'
+                          onClick={() => handleSelectCity(loc)}
+                        >
+                          {loc.name}
+                        </View>
+                      ))}
+                    </View>
                   </View>
-                ))}
-            </View>
-              {locations
-              .filter(loc => !citySearchKeyword || loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase())).length === 0 && (
-                <View className='empty-city-tip'>当前无城市可选</View>
+                )) : (
+                  <View className='empty-city-tip'>当前无城市可选</View>
+                )}
+              </ScrollView>
+
+              {/* 右侧字母索引栏 */}
+              {indexLetters.length > 0 && (
+                <View className='city-index-bar'>
+                  {indexLetters.map(letter => (
+                    <View
+                      key={letter}
+                      className='city-index-letter'
+                      onClick={() => handleIndexTap(letter)}
+                    >
+                      <Text>{letter}</Text>
+                    </View>
+                  ))}
+                </View>
               )}
-            </ScrollView>
+            </View>
           </View>
         </View>
       )}
