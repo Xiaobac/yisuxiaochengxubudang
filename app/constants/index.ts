@@ -125,7 +125,7 @@ export type LocationTypeValue = typeof LOCATION_TYPE[keyof typeof LOCATION_TYPE]
  * 用户角色
  */
 export const ROLES = {
-  USER: 'user',           // 普通用户
+  STAFF: 'staff',         // 职员
   MERCHANT: 'merchant',   // 商户
   ADMIN: 'admin',         // 管理员
   ADMINISTRATOR: 'administrator', // 管理员（兼容旧数据）

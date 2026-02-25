@@ -1,7 +1,7 @@
 
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/app/api/utils/auth';
+import { verifyAuth, getEffectiveMerchantIdFromToken } from '@/app/api/utils/auth';
 
 /**
  * @swagger
@@ -96,7 +96,8 @@ export async function GET(
     }
 
     const isUser = booking.userId === userId;
-    const isMerchant = (booking as any).hotel?.merchantId === userId;
+    const effectiveMerchantId = getEffectiveMerchantIdFromToken(authResult.user);
+    const isMerchant = effectiveMerchantId != null && (booking as any).hotel?.merchantId === effectiveMerchantId;
 
     if (!isUser && !isMerchant) {
       return NextResponse.json({ success: false, error: '无权查看此订单' }, { status: 403 });
@@ -133,7 +134,8 @@ export async function PUT(
     }
 
     const isUser = booking.userId === userId;
-    const isMerchant = booking.hotel?.merchantId === userId;
+    const effectiveMerchantId = getEffectiveMerchantIdFromToken(authResult.user);
+    const isMerchant = effectiveMerchantId != null && booking.hotel?.merchantId === effectiveMerchantId;
 
     if (!isUser && !isMerchant) {
       return NextResponse.json({ success: false, error: '无权操作此订单' }, { status: 403 });
@@ -142,7 +144,7 @@ export async function PUT(
     const body = await request.json();
     const { guestInfo, status } = body;
 
-    // 2. 处理取消订单 (用户和商户均可)
+    // 2. 处理取消订单 (用户和商户/职员均可)
     if (status === 'cancelled') {
         if (booking.status === 'cancelled') {
            return NextResponse.json({ success: true, message: '订单已取消' });
@@ -246,7 +248,8 @@ export async function DELETE(
     }
 
     const isUser = booking.userId === userId;
-    const isMerchant = booking.hotel?.merchantId === userId;
+    const effectiveMerchantIdDel = getEffectiveMerchantIdFromToken(authResult.user);
+    const isMerchant = effectiveMerchantIdDel != null && booking.hotel?.merchantId === effectiveMerchantIdDel;
 
     if (!isUser && !isMerchant) {
       return NextResponse.json({ success: false, error: '无权操作此订单' }, { status: 403 });

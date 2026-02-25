@@ -1,21 +1,21 @@
 import { start } from 'repl';
 import { get, put, del, post } from '@/app/lib/request';
 import type { Booking, BookingStatus, ApiResponse, BookingFormData } from '@/app/types';
-import { getStoredUser } from './auth';
+import { getStoredUser, getEffectiveMerchantId } from './auth';
 
 /**
- * 获取当前商户的所有酒店预订列表
+ * 获取当前商户/职员的所有酒店预订列表
  * (优化版：直接调用后端聚合接口)
  */
 export const getMyBookings = async () => {
-  const user = getStoredUser();
-  if (!user) {
-    throw new Error('用户未登录');
+  const merchantId = getEffectiveMerchantId();
+  if (!merchantId) {
+    throw new Error('未登录或无商户关联');
   }
 
   // 直接请求 /api/bookings?merchantId=xxx
   // 后端会根据 merchantId 返回该商户名下所有酒店的订单
-  const response = await get<ApiResponse<Booking[]>>(`/bookings?merchantId=${user.id}`);
+  const response = await get<ApiResponse<Booking[]>>(`/bookings?merchantId=${merchantId}`);
 
   if (!response.success || !response.data) {
       return [];

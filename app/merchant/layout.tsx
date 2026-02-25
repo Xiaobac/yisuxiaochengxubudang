@@ -131,7 +131,7 @@ export default function MerchantLayout({
           }}
         >
           <div style={{ fontSize: '16px', fontWeight: 500 }}>
-            商户管理系统
+            {user?.role?.name?.toUpperCase() === 'STAFF' ? '职员管理系统' : '商户管理系统'}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <Dropdown menu={{ items: userMenuItems }}>

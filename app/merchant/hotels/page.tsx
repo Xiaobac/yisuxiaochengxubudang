@@ -147,7 +147,7 @@ export default function HotelManagementPage() {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 15, total: 0 });
-  
+
   // Comments states
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -155,6 +155,10 @@ export default function HotelManagementPage() {
   const [currentHotelId, setCurrentHotelId] = useState<number | null>(null);
 
   const { message } = App.useApp();
+
+  // 判断当前用户是否为职员（职员不能创建/编辑/删除酒店）
+  const currentUser = getStoredUser();
+  const isStaff = currentUser?.role?.name?.toUpperCase() === 'STAFF';
 
   useEffect(() => {
     fetchHotels(1, 15);
@@ -484,13 +488,15 @@ export default function HotelManagementPage() {
       width: 150,
       render: (_, record) => (
         <Space>
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            编辑
-          </Button>
+          {!isStaff && (
+            <Button
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            >
+              编辑
+            </Button>
+          )}
           <Button
             type="link"
             icon={<CommentOutlined />}
@@ -498,16 +504,18 @@ export default function HotelManagementPage() {
           >
             评论
           </Button>
-          <Popconfirm
-            title="确定要删除这个酒店吗？"
-            onConfirm={() => handleDelete(record.id!)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
-          </Popconfirm>
+          {!isStaff && (
+            <Popconfirm
+              title="确定要删除这个酒店吗？"
+              onConfirm={() => handleDelete(record.id!)}
+              okText="确定"
+              cancelText="取消"
+            >
+              <Button type="link" danger icon={<DeleteOutlined />}>
+                删除
+              </Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -516,9 +524,11 @@ export default function HotelManagementPage() {
   return (
     <div>
       <div style={{ marginBottom: 16 }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          添加酒店
-        </Button>
+        {!isStaff && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            添加酒店
+          </Button>
+        )}
       </div>
 
       <Table
@@ -695,14 +705,16 @@ export default function HotelManagementPage() {
                       <div className="font-medium">{item.user.name || '匿名用户'}</div>
                       <div className="text-gray-400 text-xs mt-1">{new Date(item.createdAt).toLocaleString()}</div>
                     </div>
-                    <Popconfirm
-                      title="确定删除这条评论吗？"
-                      onConfirm={() => handleDeleteComment(item.id)}
-                      okText="确定"
-                      cancelText="取消"
-                    >
-                      <Button type="link" danger size="small" icon={<DeleteOutlined />}>删除</Button>
-                    </Popconfirm>
+                    {!isStaff && (
+                      <Popconfirm
+                        title="确定删除这条评论吗？"
+                        onConfirm={() => handleDeleteComment(item.id)}
+                        okText="确定"
+                        cancelText="取消"
+                      >
+                        <Button type="link" danger size="small" icon={<DeleteOutlined />}>删除</Button>
+                      </Popconfirm>
+                    )}
                   </div>
                   <div className="mt-2 text-gray-600">
                     {item.content}

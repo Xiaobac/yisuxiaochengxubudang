@@ -325,6 +325,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
+  // 职员无权创建酒店
+  if (auth.user.role?.toUpperCase() === 'STAFF') {
+    return NextResponse.json({ success: false, error: '职员无权创建酒店' }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
 

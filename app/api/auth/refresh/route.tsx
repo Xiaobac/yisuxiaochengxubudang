@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
       role: user.role?.name,
       roleId: user.roleId,
+      merchantId: user.merchantId ?? null,
     };
 
     const newAccessToken = jwt.sign(accessTokenPayload, JWT_SECRET, {

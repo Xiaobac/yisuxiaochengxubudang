@@ -38,11 +38,12 @@ export default function LoginPage() {
         
         if (roleName === 'merchant') {
           router.push('/merchant/hotels');
+        } else if (roleName === 'staff') {
+          router.push('/merchant/dashboard');
         } else if (roleName === 'admin' || roleName === 'administrator') {
           router.push('/admin/review');
         } else {
-          // 默认为普通用户
-           router.push('/');
+          router.push('/');
         }
       } else {
          message.error('登录异常：未获取到有效 Token');

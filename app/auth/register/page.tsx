@@ -6,7 +6,8 @@ import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-de
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { register, login, saveAuth } from '@/app/services/auth';
-import type { RegisterData } from '@/app/types';
+import { get } from '@/app/lib/request';
+import type { RegisterData, User, ApiResponse } from '@/app/types';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -14,12 +15,31 @@ const { Option } = Select;
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [merchants, setMerchants] = useState<{ id: number; name: string; email: string }[]>([]);
   const router = useRouter();
   const { message } = App.useApp();
+  const [form] = Form.useForm();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleRoleChange = async (value: string) => {
+    setSelectedRole(value);
+    // 选择职员时，清空已选商户并加载商户列表
+    if (value === 'staff') {
+      form.setFieldValue('merchantId', undefined);
+      try {
+        const res = await get<ApiResponse<{ id: number; name: string; email: string }[]>>('/users?role=MERCHANT');
+        if (res.success && res.data) {
+          setMerchants(res.data);
+        }
+      } catch {
+        message.error('获取商户列表失败');
+      }
+    }
+  };
 
   const onFinish = async (values: RegisterData & { confirmPassword: string }) => {
     try {
@@ -44,6 +64,8 @@ export default function RegisterPage() {
         const roleName = loginResult.user.role?.name?.toLowerCase();
         if (roleName === 'merchant') {
           router.push('/merchant/hotels');
+        } else if (roleName === 'staff') {
+          router.push('/merchant/dashboard');
         } else if (roleName === 'admin' || roleName === 'administrator') {
           router.push('/admin/review');
         } else {
@@ -94,6 +116,7 @@ export default function RegisterPage() {
         </Title>
 
         <Form
+          form={form}
           name="register"
           onFinish={onFinish}
           autoComplete="off"
@@ -146,7 +169,7 @@ export default function RegisterPage() {
               placeholder="确认密码"
             />
           </Form.Item>
-          
+
           <Form.Item
             name="name"
             rules={[
@@ -175,11 +198,24 @@ export default function RegisterPage() {
             name="role"
             rules={[{ required: true, message: '请选择角色' }]}
           >
-            <Select placeholder="选择角色">
+            <Select placeholder="选择角色" onChange={handleRoleChange}>
               <Option value="merchant">商户</Option>
-              <Option value="user">普通用户</Option>
+              <Option value="staff">职员</Option>
             </Select>
           </Form.Item>
+
+          {selectedRole === 'staff' && (
+            <Form.Item
+              name="merchantId"
+              rules={[{ required: true, message: '请选择所属商户' }]}
+            >
+              <Select placeholder="选择所属商户" showSearch optionFilterProp="children">
+                {merchants.map(m => (
+                  <Option key={m.id} value={m.id}>{m.name || m.email}</Option>
+                ))}
+              </Select>
+            </Form.Item>
+          )}
 
           <Form.Item>
             <Button

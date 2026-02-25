@@ -136,3 +136,17 @@ export const refreshAccessToken = async () => {
 export const isAuthenticated = (): boolean => {
   return authStorage.isAuthenticated();
 };
+
+/**
+ * 获取当前用户的有效商户ID
+ * 商户角色: 返回自己的ID
+ * 职员角色: 返回其所属商户的ID (user.merchantId)
+ */
+export const getEffectiveMerchantId = (): number | null => {
+  const user = getStoredUser();
+  if (!user) return null;
+  const role = user.role?.name?.toUpperCase();
+  if (role === 'MERCHANT') return user.id;
+  if (role === 'STAFF') return user.merchantId ?? null;
+  return null;
+};

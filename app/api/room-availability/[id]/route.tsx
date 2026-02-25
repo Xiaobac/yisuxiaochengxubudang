@@ -92,7 +92,21 @@ async function checkOwner(userId: number, availabilityId: number) {
     });
 
     if (!record || !record.roomType || !record.roomType.hotel) return { record: null, isOwner: false };
-    return { record, isOwner: record.roomType.hotel.merchantId === userId };
+
+    const hotelMerchantId = record.roomType.hotel.merchantId;
+    // 商户直接匹配
+    if (hotelMerchantId === userId) return { record, isOwner: true };
+
+    // 职员：检查是否属于该商户
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { merchantId: true, role: { select: { name: true } } }
+    });
+    if (user?.role?.name === 'STAFF' && user.merchantId === hotelMerchantId) {
+        return { record, isOwner: true };
+    }
+
+    return { record, isOwner: false };
 }
 
 export async function PUT(

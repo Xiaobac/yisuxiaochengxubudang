@@ -6,8 +6,8 @@ import { JWT_SECRET } from '@/app/api/utils/auth';
 
 // In-memory rate limiter: max 5 attempts per IP per 15 minutes
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 5;
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const RATE_LIMIT_MAX = 30;
+const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
 
 function checkRateLimit(ip: string): { allowed: boolean; retryAfterSec: number } {
   const now = Date.now();
@@ -138,8 +138,9 @@ export async function POST(request: NextRequest) {
     const tokenPayload = {
       userId: user.id,
       email: user.email,
-      role: user.role?.name, 
+      role: user.role?.name,
       roleId: user.roleId,
+      merchantId: user.merchantId ?? null,
     };
 
     const accessToken = jwt.sign(tokenPayload, JWT_SECRET, {
