@@ -62,7 +62,7 @@ interface RoomListProps {
 function RoomList({ value = [], onChange }: RoomListProps) {
   const handleAdd = () => {
     // @ts-ignore - Temporary ID for key handling if needed, though index is used usually
-    onChange?.([...value, { name: '', price: 0, stock: 1, discount: 1, description: '' }]);
+    onChange?.([...value, { name: '', price: 0, stock: 1, discount: 1, description: '', images: [] }]);
   };
 
   const handleRemove = (index: number) => {
@@ -76,6 +76,41 @@ function RoomList({ value = [], onChange }: RoomListProps) {
     // @ts-ignore
     newRooms[index] = { ...newRooms[index], [field]: val };
     onChange?.(newRooms);
+  };
+
+  const handleRoomUpload = async (index: number, { file, onSuccess, onError }: any) => {
+    try {
+      const result = await uploadImage(file as File);
+      const url = (result as any)?.url;
+      if (url) {
+        const currentImages = value[index]?.images || [];
+        handleChange(index, 'images', [...currentImages, url] as any);
+      }
+      onSuccess?.(result);
+    } catch (error) {
+      onError?.(error as Error);
+    }
+  };
+
+  const handleRoomImageRemove = (index: number, fileUid: string) => {
+    const room = value[index];
+    const currentImages = room?.images || [];
+    // fileUid for existing images is `-{imgIndex}`, for new uploads is the url itself
+    const fileIndex = parseInt(fileUid.replace('-', ''));
+    if (!isNaN(fileIndex) && fileIndex < currentImages.length) {
+      const newImages = currentImages.filter((_, i) => i !== fileIndex);
+      handleChange(index, 'images', newImages as any);
+    }
+  };
+
+  const getRoomFileList = (room: RoomType): UploadFile[] => {
+    if (!room.images || !Array.isArray(room.images)) return [];
+    return (room.images as string[]).map((url, i) => ({
+      uid: `-${i}`,
+      name: `room-img-${i}`,
+      status: 'done' as const,
+      url,
+    }));
   };
 
   return (
@@ -118,7 +153,7 @@ function RoomList({ value = [], onChange }: RoomListProps) {
                     />
                 </Col>
                 <Col span={24}>
-                    <Space.Compact style={{ width: '100%' }}>
+                    <Space.Compact style={{ width: '100%', marginBottom: 8 }}>
                         <span className="ant-input-group-addon">描述</span>
                         <Input
                             placeholder="房型描述（选填）"
@@ -126,6 +161,24 @@ function RoomList({ value = [], onChange }: RoomListProps) {
                             onChange={(e) => handleChange(index, 'description', e.target.value)}
                         />
                     </Space.Compact>
+                </Col>
+                <Col span={24}>
+                    <div style={{ marginBottom: 4, fontSize: 13, color: '#666' }}>房型图片（最多4张）</div>
+                    <Upload
+                      listType="picture-card"
+                      fileList={getRoomFileList(room)}
+                      customRequest={(options) => handleRoomUpload(index, options)}
+                      onRemove={(file) => {
+                        handleRoomImageRemove(index, file.uid);
+                      }}
+                    >
+                      {(room.images?.length || 0) >= 4 ? null : (
+                        <div>
+                          <UploadOutlined />
+                          <div style={{ marginTop: 4, fontSize: 12 }}>上传</div>
+                        </div>
+                      )}
+                    </Upload>
                 </Col>
             </Row>
         </Card>

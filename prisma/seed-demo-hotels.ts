@@ -125,6 +125,7 @@ async function seedHotels() {
           locationId: hotelData.locationId,
           type: hotelData.type,
           status: hotelData.status,
+          merchantId: 2, // merchant@hotel.com 的用户ID
           // 创建房型
           roomTypes: {
             create: hotelData.roomTypes.map(rt => ({

@@ -373,6 +373,7 @@ export async function POST(request: NextRequest) {
                 price: rt.price,
                 stock: rt.stock || 0,
                 discount: rt.discount || 1,
+                images: Array.isArray(rt.images) ? rt.images : [],
             }))
         };
     }

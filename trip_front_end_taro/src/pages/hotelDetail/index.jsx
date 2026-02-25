@@ -183,6 +183,19 @@ function HotelDetail() {
               }
             }
 
+            // 处理房型图片
+            let roomImages = [];
+            if (room.images) {
+              try {
+                roomImages = typeof room.images === 'string'
+                  ? JSON.parse(room.images)
+                  : room.images;
+                if (!Array.isArray(roomImages)) roomImages = [];
+              } catch (e) {
+                roomImages = [];
+              }
+            }
+
             return {
               id: room.id,
               name: room.name || '标准大床房',
@@ -192,6 +205,7 @@ function HotelDetail() {
               capacity: '2人入住',
               price: parseFloat(room.price) || 299,
               features: amenitiesList,
+              images: roomImages,
               remainingRooms: room.remainingRooms ?? null,
               dynamicPrice: room.dynamicPrice ?? null,
             };
@@ -726,7 +740,7 @@ function HotelDetail() {
                 <View className='room-preview-row'>
                   <Image
                     className='room-preview-img'
-                    src={getImageUrl(hotel.img)}
+                    src={room.images && room.images.length > 0 ? getImageUrl(room.images[0]) : getImageUrl(hotel.img)}
                     mode='aspectFill'
                   />
                   <View className='room-preview-details'>
