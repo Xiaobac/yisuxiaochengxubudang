@@ -598,7 +598,7 @@ async function main() {
             description: `这是一家位于${location.name}的优质${type === 'homestay' ? '民宿' : '酒店'}，环境优美，服务周到。`,
             facilities: JSON.stringify(randomFacilities),
             openingYear: randomInt(1990, 2023),
-            images: null, // 保持为空
+            images: JSON.stringify([`/hotels/hotel_cover_${(i - 1) % 20 + 1}.jpg`]), 
             latitude: null, // 保持为空
             longitude: null, // 保持为空
             status: status,
@@ -628,9 +628,24 @@ async function main() {
         // 5.4 为酒店创建几个房型 (RoomType) 以便能展示价格
          if (status === 'published') {
              const roomTypes = ['标准大床房', '双床房', '豪华套房', '海景房', '家庭房'];
+             const roomImageMap: Record<string, { folder: string; count: number }> = {
+                 '标准大床房': { folder: 'big_bed', count: 8 },
+                 '双床房': { folder: 'double_bed', count: 9 },
+                 '豪华套房': { folder: 'luxury_bed', count: 8 },
+                 '海景房': { folder: 'sea_bed', count: 8 },
+                 '家庭房': { folder: 'home_bed', count: 7 },
+             };
+             
              const selectedRoomTypes = randomItems(roomTypes, randomInt(2, 4));
              
              for (const rtName of selectedRoomTypes) {
+                 const imageConfig = roomImageMap[rtName];
+                 const imageCount = imageConfig ? imageConfig.count : 5;
+                 const folderName = imageConfig ? imageConfig.folder : 'big_bed';
+                 // 随机选择 1 到 max 的图片
+                 const randomImageIndex = randomInt(1, imageCount);
+                 const imagePath = `/roomtypes/${folderName}/${folderName}_${randomImageIndex}.webp`;
+
                  await prisma.roomType.create({
                      data: {
                          hotelId: createdHotel.id,
@@ -640,12 +655,56 @@ async function main() {
                          discount: 1.0,
                          stock: randomInt(5, 20),
                          amenities: JSON.stringify(randomItems(['WiFi', '以及', '电视', '空调', '热水壶'], 3)),
-                         images: JSON.stringify([`/uploads/rooms/room_${randomInt(1, 5)}.jpg`])
+                         images: JSON.stringify([imagePath])
                      }
                  });
              }
          }
     }
+  }
+
+  // --- 6. Coupons (优惠券) ---
+  console.log('Seeding Coupons...');
+  const couponsData = [
+    {
+      code: 'WELCOME50',
+      name: '新用户立减券',
+      description: '新用户专享，无门槛立减50元',
+      discount: 50.00,
+      minSpend: 0.00,
+      points: 0,
+      validFrom: new Date(),
+      validTo: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // 1年有效
+    },
+    {
+      code: 'NEWYEAR100',
+      name: '新年特惠券',
+      description: '满500减100',
+      discount: 100.00,
+      minSpend: 500.00,
+      points: 10,
+      validFrom: new Date(),
+      validTo: new Date(new Date().setMonth(new Date().getMonth() + 3)), // 3个月有效
+    },
+    {
+      code: 'VIP200',
+      name: 'VIP尊享券',
+      description: '满1000减200，仅限VIP',
+      discount: 200.00,
+      minSpend: 1000.00,
+      points: 500, // 需要500积分兑换
+      validFrom: new Date(),
+      validTo: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+    },
+  ];
+
+  for (const coupon of couponsData) {
+      await prisma.coupon.upsert({
+          where: { code: coupon.code },
+          update: {},
+          create: coupon,
+      });
+      console.log(`Upserted coupon: ${coupon.name}`);
   }
 
   console.log('Seeding finished.');
