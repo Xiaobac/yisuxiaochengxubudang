@@ -112,6 +112,16 @@ function HotelList() {
     loadHotels(newParams);
   };
 
+  // ---------- 重置城市筛选（显示所有酒店） ----------
+  const handleResetCity = () => {
+    setSelectedLocation(null);
+    setIsCitySelectorVisible(false);
+    setCitySearchKeyword('');
+    const { locationId, locationName, ...restParams } = searchParams;
+    setSearchParams(restParams);
+    loadHotels(restParams);
+  };
+
   // ---------- 日期选择处理 ----------
   const handleOpenCalendar = () => {
     setIsCalendarVisible(true);
@@ -720,6 +730,9 @@ function HotelList() {
         <View className='city-selector-mask visible' onClick={() => setIsCitySelectorVisible(false)}>
           <View className='city-selector-content' onClick={e => e.stopPropagation()}>
             <View className='city-selector-header'>
+              <View className='city-reset-btn' hoverClass='city-reset-hover' onClick={handleResetCity}>
+                <Text className='city-reset-text'>重置</Text>
+              </View>
               选择城市
               <View className='city-selector-close' onClick={() => setIsCitySelectorVisible(false)}>
                 <Icon name='x' size={36} color={iconSecondaryColor} />

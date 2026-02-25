@@ -151,7 +151,7 @@ export default function HotelManagementPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }} className="p-4 bg-white dark:bg-zinc-800 rounded-lg shadow-sm">
+      <div style={{ marginBottom: 16 }} className="p-4 bg-white rounded-lg shadow-sm">
         <Form layout="inline">
             <Form.Item label="搜索">
                 <Input
@@ -169,6 +169,7 @@ export default function HotelManagementPage() {
                     value={selectedLocation}
                     onChange={setSelectedLocation}
                     options={locations.map(loc => ({ label: loc.name, value: loc.id }))}
+                    popupStyle={{ background: '#fff' }}
                 />
             </Form.Item>
             <Form.Item label="状态">
@@ -184,6 +185,7 @@ export default function HotelManagementPage() {
                         { label: '已下线', value: 'offline' },
                         { label: '已拒绝', value: 'rejected' },
                     ]}
+                    popupStyle={{ background: '#fff' }}
                 />
             </Form.Item>
             <Form.Item>

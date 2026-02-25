@@ -357,8 +357,10 @@ function Home() {
           className='banner-swiper'
         >
           {BANNER_IMAGES.map((item, index) => (
-            <SwiperItem key={index} onClick={() => Taro.navigateTo({ url: item.url })}>
-              <Image className='banner-img' src={item.src} mode='scaleToFill' lazyLoad />
+            <SwiperItem key={index}>
+              <View className='banner-link' onClick={() => item.isTab ? Taro.switchTab({ url: item.url }) : Taro.navigateTo({ url: item.url })}>
+                <Image className='banner-img' src={item.src} mode='scaleToFill' lazyLoad />
+              </View>
             </SwiperItem>
           ))}
         </Swiper>
