@@ -52,6 +52,26 @@ import { verifyAuth } from '@/app/api/utils/auth';
  */
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const roleFilter = searchParams.get('role');
+
+    // 公开接口：按角色筛选（如 ?role=MERCHANT）— 仅返回基本信息，用于注册页选择商户
+    if (roleFilter) {
+      const users = await prisma.user.findMany({
+        where: {
+          role: { name: roleFilter.toUpperCase() },
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      return NextResponse.json({ success: true, data: users });
+    }
+
+    // 完整用户列表：需要认证和权限
     // 1. 验证身份
     const authResult = verifyAuth(request);
     if (!authResult.success) {
@@ -93,8 +113,8 @@ export async function GET(request: NextRequest) {
         createdAt: true,
         role: {
           select: {
-            id: true, 
-            name: true 
+            id: true,
+            name: true
           }
         }
       },

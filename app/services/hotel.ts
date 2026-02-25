@@ -9,7 +9,7 @@ import type {
   Location,
   Tag
 } from '@/app/types';
-import { getStoredUser } from './auth';
+import { getStoredUser, getEffectiveMerchantId } from './auth';
 
 /**
  * 获取酒店列表（公开API）
@@ -29,11 +29,11 @@ export const getHotelById = (id: number) => {
  * 获取我的酒店列表（商户）
  */
 export const getMyHotels = async (params?: { page?: number; limit?: number }) => {
-  const user = getStoredUser();
-  if (!user) {
-    throw new Error('未登录');
+  const merchantId = getEffectiveMerchantId();
+  if (!merchantId) {
+    throw new Error('未登录或无商户关联');
   }
-  const queryParams = { ...params, merchantId: user.id };
+  const queryParams = { ...params, merchantId };
   return get<HotelListResponse>('/hotels', { params: queryParams });
 };
 

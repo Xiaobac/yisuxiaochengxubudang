@@ -12,6 +12,18 @@ export interface DecodedUser {
   email: string;
   role: string | undefined;
   roleId: number | null;
+  merchantId: number | null;
+}
+
+/**
+ * 获取已认证用户的有效商户ID
+ * 商户: 返回自己的ID
+ * 职员: 返回其所属商户ID (token中的merchantId)
+ */
+export function getEffectiveMerchantIdFromToken(decoded: DecodedUser): number | null {
+  if (decoded.role?.toUpperCase() === 'MERCHANT') return decoded.userId;
+  if (decoded.role?.toUpperCase() === 'STAFF') return decoded.merchantId;
+  return null;
 }
 
 export function verifyAuth(request: NextRequest): { success: true; user: DecodedUser } | { success: false; error: string; status: number } {

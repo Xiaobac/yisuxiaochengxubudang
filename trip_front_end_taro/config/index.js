@@ -35,6 +35,8 @@ export default defineConfig(async (merge, { command, mode }) => {
     },
     mini: {
       debugReact: true,
+      // 需要额外编译的 npm 包
+      esnextModules: ['lunar-javascript'],
       postcss: {
         pxtransform: {
           enable: true,

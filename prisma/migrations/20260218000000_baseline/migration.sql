@@ -1,5 +1,3 @@
-Loaded Prisma config from prisma.config.ts.
-
 -- CreateTable
 CREATE TABLE `Permission` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,

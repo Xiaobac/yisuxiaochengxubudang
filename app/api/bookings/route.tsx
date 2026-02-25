@@ -115,15 +115,18 @@ export async function GET(request: NextRequest) {
     let where: any = {};
 
     if (merchantIdParam) {
-      // 商户查询自己酒店的订单
-      // 安全检查：确保当前用户就是查询的商户，或者是管理员
+      // 商户/职员查询酒店的订单
       const merchantId = parseInt(merchantIdParam);
-      
-      // 这里简单校验：如果请求特定merchantId，当前用户必须是该merchant (或者我们可以允许Admin)
-      // 如果不是同一个用户，暂时拒绝 (防止用户枚举别人的订单)
-      // 但如果当前角色是管理员，可以放行。这里主要服务于 Dashboard (用户查自己的)。
-      if (merchantId !== currentUserId) {
-         // 可选：检查是否管理员。这里简单起见，仅允许查自己。
+
+      // 安全检查：商户只能查自己的，职员只能查所属商户的
+      // 查询当前用户信息以判断职员归属
+      let effectiveMerchantId = currentUserId;
+      if (authResult.user.role?.toUpperCase() === 'STAFF') {
+        // 职员：从token中获取所属商户ID，或从数据库查询
+        effectiveMerchantId = authResult.user.merchantId ?? 0;
+      }
+
+      if (merchantId !== effectiveMerchantId) {
          return NextResponse.json({ success: false, error: '无权查看他人商户订单' }, { status: 403 });
       }
 

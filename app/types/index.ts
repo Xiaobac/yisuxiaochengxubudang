@@ -12,6 +12,7 @@ export interface User {
   name?: string;
   roleId?: number;
   role?: Role;
+  merchantId?: number;  // 职员所属商户ID
   points?: number;
   createdAt?: string;
 }
@@ -33,7 +34,8 @@ export interface RegisterData {
   password: string;
   name?: string;
   phone?: string;
-  role: 'user' | 'merchant'; // API 期望字符串枚举
+  role: 'staff' | 'merchant'; // API 期望字符串枚举
+  merchantId?: number;         // 职员注册时需要选择所属商户
 }
 
 // 酒店相关类型

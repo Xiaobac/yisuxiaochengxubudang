@@ -10,7 +10,7 @@ import type { LoginData } from '@/app/types';
 
 const { Title } = Typography;
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -25,30 +25,21 @@ export default function LoginPage() {
       setLoading(true);
       const result = await login(values);
 
-      // 保存 token 和用户信息
-      // 注意：API 返回的是 accessToken 而不是 token
       if (result.success && result.accessToken) {
+        const roleName = result.user.role?.name?.toLowerCase();
+
+        // 校验必须是管理员角色
+        if (roleName !== 'admin' && roleName !== 'administrator') {
+          message.error('该账号不是管理员，请使用商户登录');
+          return;
+        }
+
         saveAuth(result.accessToken, result.refreshToken, result.user);
         message.success('登录成功');
-
-        // 根据角色跳转
-        // 注意：ROLE 名称在后端可能是全大写 (MERCHANT)，或者是前端约定的 merchant
-        // 建议增加空值保护
-        const roleName = result.user.role?.name?.toLowerCase();
-        
-        if (roleName === 'merchant') {
-          router.push('/merchant/hotels');
-        } else if (roleName === 'staff') {
-          router.push('/merchant/dashboard');
-        } else if (roleName === 'admin' || roleName === 'administrator') {
-          router.push('/admin/review');
-        } else {
-          router.push('/');
-        }
+        router.push('/admin/review');
       } else {
-         message.error('登录异常：未获取到有效 Token');
+        message.error('登录异常：未获取到有效 Token');
       }
-
     } catch (error: any) {
       console.error('登录失败:', error);
       message.error(error.response?.data?.error || '登录失败，请检查邮箱和密码');
@@ -56,7 +47,6 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
 
   return (
     <div
@@ -83,14 +73,14 @@ export default function LoginPage() {
         }}
       >
         <Title level={2} style={{ textAlign: 'center', marginBottom: 32 }}>
-          易宿酒店管理系统
+          易宿酒店管理员版
         </Title>
         <Title level={4} style={{ textAlign: 'center', marginBottom: 24, fontWeight: 'normal' }}>
-          登录
+          管理员登录
         </Title>
 
         <Form
-          name="login"
+          name="admin-login"
           onFinish={onFinish}
           autoComplete="off"
           size="large"
@@ -104,7 +94,7 @@ export default function LoginPage() {
           >
             <Input
               prefix={<UserOutlined />}
-              placeholder="邮箱"
+              placeholder="管理员邮箱"
             />
           </Form.Item>
 
@@ -130,7 +120,7 @@ export default function LoginPage() {
           </Form.Item>
 
           <div style={{ textAlign: 'center' }}>
-            还没有账号？ <Link href="/auth/register">立即注册</Link>
+            <Link href="/auth/login">返回商户登录</Link>
           </div>
         </Form>
       </Card>

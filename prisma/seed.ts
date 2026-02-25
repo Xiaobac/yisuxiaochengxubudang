@@ -492,13 +492,18 @@ async function main() {
 
   // --- 4. Roles & RolePermissions (User, Merchant, Admin) ---
   
-  // 4.1 普通用户 (USER)
-  await prisma.role.upsert({
+  // 4.1 职员 (STAFF) — 原 USER 角色改造
+  // 先尝试将已有的 USER 角色重命名为 STAFF
+  await prisma.role.updateMany({
     where: { name: 'USER' },
-    update: { description: '普通用户，可以浏览和预订' },
-    create: { name: 'USER', description: '普通用户，可以浏览和预订' },
+    data: { name: 'STAFF', description: '职员，可以管理所属商户的酒店运营' },
   });
-  console.log('Upserted role: USER');
+  await prisma.role.upsert({
+    where: { name: 'STAFF' },
+    update: { description: '职员，可以管理所属商户的酒店运营' },
+    create: { name: 'STAFF', description: '职员，可以管理所属商户的酒店运营' },
+  });
+  console.log('Upserted role: STAFF');
 
   // 4.2 商户 (MERCHANT)
   await prisma.role.upsert({

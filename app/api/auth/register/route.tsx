@@ -72,13 +72,34 @@ import bcrypt from 'bcryptjs';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, name, phone, role } = body;
+    const { email, password, name, phone, role, merchantId } = body;
 
     if (!email || !password || !role) {
       return NextResponse.json(
         { success: false, error: '缺少必要字段: email, password, role' },
         { status: 400 }
       );
+    }
+
+    // 职员注册时需要指定所属商户
+    if (role.toLowerCase() === 'staff') {
+      if (!merchantId) {
+        return NextResponse.json(
+          { success: false, error: '职员注册必须选择所属商户' },
+          { status: 400 }
+        );
+      }
+      // 验证商户存在且角色为 MERCHANT
+      const merchantUser = await prisma.user.findUnique({
+        where: { id: merchantId },
+        include: { role: true },
+      });
+      if (!merchantUser || merchantUser.role?.name?.toUpperCase() !== 'MERCHANT') {
+        return NextResponse.json(
+          { success: false, error: '所选商户不存在或角色不正确' },
+          { status: 400 }
+        );
+      }
     }
 
     // 1. 检查用户是否已存在
@@ -93,49 +114,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. 查找对应的角色名的ID
-    const roleName = role.toLowerCase();
-    
+    // 2. 查找对应的角色名的ID（兼容大小写）
+    const roleNameUpper = role.toUpperCase();
+    const roleNameLower = role.toLowerCase();
+
     let dbRole = await prisma.role.findUnique({
-      where: { name: roleName },
+      where: { name: roleNameUpper },
     });
-    
+
+    if (!dbRole) {
+       dbRole = await prisma.role.findUnique({
+           where: { name: roleNameLower },
+       });
+    }
+
     if (!dbRole) {
        dbRole = await prisma.role.findUnique({
            where: { name: role },
        });
-       
-       if (!dbRole) {
-           dbRole = await prisma.role.create({
-               data: { name: roleName, description: `Default ${roleName} role` }
-           });
-       }
+    }
+
+    if (!dbRole) {
+       dbRole = await prisma.role.create({
+           data: { name: roleNameUpper, description: `Default ${roleNameUpper} role` }
+       });
     }
 
     // 3. 密码加密
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. 创建用户
+    // 4. 创建用户（使用关系语法连接 role 和 merchant）
+    const createData: any = {
+      email,
+      password: hashedPassword,
+      name,
+      phone,
+      role: { connect: { id: dbRole.id } },
+    };
+
+    if (role.toLowerCase() === 'staff' && merchantId) {
+      createData.merchant = { connect: { id: merchantId } };
+    }
+
     const newUser = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-        phone,
-        roleId: dbRole.id,
-      },
+      data: createData,
       select: {
         id: true,
         email: true,
         name: true,
         phone: true,
         role: true,
+        merchantId: true,
         createdAt: true,
       },
     });
 
     return NextResponse.json({ success: true, data: newUser }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error);
     return NextResponse.json(
       { success: false, error: '注册失败' },

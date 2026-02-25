@@ -193,6 +193,11 @@ export async function PUT(
     }
     const userId = authResult.user.userId;
 
+    // 职员无权编辑酒店
+    if (authResult.user.role?.toUpperCase() === 'STAFF') {
+      return NextResponse.json({ success: false, error: '职员无权编辑酒店' }, { status: 403 });
+    }
+
     // 2. 获取当前用户及其角色权限
     const currentUser = await prisma.user.findUnique({
       where: { id: userId },
@@ -332,6 +337,11 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: authResult.error }, { status: authResult.status });
     }
     const userId = authResult.user.userId;
+
+    // 职员无权删除酒店
+    if (authResult.user.role?.toUpperCase() === 'STAFF') {
+      return NextResponse.json({ success: false, error: '职员无权删除酒店' }, { status: 403 });
+    }
 
     // 2. 获取当前用户权限
     const currentUser = await prisma.user.findUnique({
