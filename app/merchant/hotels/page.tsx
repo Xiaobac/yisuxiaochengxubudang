@@ -48,6 +48,7 @@ import { getCommentsByHotelId, deleteComment } from '@/app/services/comment';
 import { getStoredUser } from '@/app/services/auth';
 import type { Hotel, RoomType, Location, Tag as HotelTag, Comment } from '@/app/types';
 import dayjs from 'dayjs';
+import { pinyin } from 'pinyin-pro';
 import TencentMapSelector from '@/app/components/TencentMapSelector';
 
 const { TextArea } = Input;
@@ -247,9 +248,16 @@ export default function HotelManagementPage() {
   
   const fetchLocations = async () => {
     try {
-        const res = await getLocations();
+        const res = await getLocations({ type: 'domestic' });
         // @ts-ignore
-        setLocations(res.data || []);
+        const locs: Location[] = res.data || [];
+        // 按拼音首字母排序
+        locs.sort((a, b) => {
+          const pa = pinyin(a.name, { pattern: 'first', toneType: 'none' }).charAt(0).toUpperCase();
+          const pb = pinyin(b.name, { pattern: 'first', toneType: 'none' }).charAt(0).toUpperCase();
+          return pa.localeCompare(pb);
+        });
+        setLocations(locs);
     } catch(e) {
         console.error(e);
     }
@@ -639,10 +647,37 @@ export default function HotelManagementPage() {
             name="locationId"
             rules={[{ required: true, message: '请选择城市' }]}
           >
-             <Select placeholder="请选择城市">
-                {locations.map(loc => (
-                    <Option key={loc.id} value={loc.id}>{loc.name}</Option>
-                ))}
+             <Select
+               showSearch
+               placeholder="输入城市名搜索或下拉选择"
+               filterOption={(input, option) => {
+                 const label = (option?.label ?? option?.children ?? '') as string;
+                 if (typeof label !== 'string') return false;
+                 // 支持中文名匹配和拼音首字母匹配
+                 const py = pinyin(label, { pattern: 'first', toneType: 'none' });
+                 const fullPy = pinyin(label, { toneType: 'none' });
+                 return label.includes(input) ||
+                   py.toLowerCase().includes(input.toLowerCase()) ||
+                   fullPy.toLowerCase().includes(input.toLowerCase());
+               }}
+             >
+                {(() => {
+                  // 按拼音首字母分组
+                  const grouped: Record<string, Location[]> = {};
+                  locations.forEach(loc => {
+                    const letter = pinyin(loc.name, { pattern: 'first', toneType: 'none' }).charAt(0).toUpperCase();
+                    if (!grouped[letter]) grouped[letter] = [];
+                    grouped[letter].push(loc);
+                  });
+                  const letters = Object.keys(grouped).sort();
+                  return letters.map(letter => (
+                    <Select.OptGroup key={letter} label={letter}>
+                      {grouped[letter].map(loc => (
+                        <Option key={loc.id} value={loc.id}>{loc.name}</Option>
+                      ))}
+                    </Select.OptGroup>
+                  ));
+                })()}
              </Select>
           </Form.Item>
 
