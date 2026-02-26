@@ -46,13 +46,140 @@ function HotelDetail() {
   const COMMENT_PREVIEW_COUNT = 3;
   const [roomPriceData, setRoomPriceData] = useState(null); // 存储选中房型的每日价格数据
 
-  // 加载酒店详情和房型数据
+  // 解析房型数据（复用于初始加载和日期刷新）
+  const transformRoomTypes = (roomData) => {
+    const transformed = roomData.map(room => {
+      let amenitiesList = [];
+      if (room.amenities) {
+        try {
+          amenitiesList = typeof room.amenities === 'string'
+            ? JSON.parse(room.amenities)
+            : room.amenities;
+        } catch (e) {
+          amenitiesList = ['免费WiFi', '独立卫浴'];
+        }
+      }
+
+      let roomImages = [];
+      if (room.images) {
+        try {
+          roomImages = typeof room.images === 'string'
+            ? JSON.parse(room.images)
+            : room.images;
+          if (!Array.isArray(roomImages)) roomImages = [];
+        } catch (e) {
+          roomImages = [];
+        }
+      }
+
+      return {
+        id: room.id,
+        name: room.name || '标准大床房',
+        bed: room.description || '大床',
+        area: room.description || '30㎡',
+        floor: '10-20层',
+        capacity: '2人入住',
+        price: parseFloat(room.price) || 299,
+        features: amenitiesList,
+        images: roomImages,
+        remainingRooms: room.remainingRooms ?? null,
+        dynamicPrice: room.dynamicPrice ?? null,
+      };
+    });
+    transformed.sort((a, b) => (a.dynamicPrice ?? a.price) - (b.dynamicPrice ?? b.price));
+    return transformed;
+  };
+
+  // 初始加载：并行请求酒店详情、房型、收藏状态、评论
   useEffect(() => {
-    if (hotelId) {
-      loadHotelDetail();
-      checkHotelFavorite();
-      loadComments();
-    }
+    if (!hotelId) return;
+    const loadAll = async () => {
+      setLoading(true);
+      try {
+        const [hotelRes, roomTypesRes, favoriteRes, commentList] = await Promise.all([
+          getHotelById(hotelId),
+          getHotelRoomTypes(hotelId, startDate, endDate),
+          storage.isAuthenticated() ? checkFavorite(hotelId).catch(() => null) : Promise.resolve(null),
+          getHotelCommentsCombined(hotelId),
+        ]);
+
+        // 处理酒店详情
+        if (hotelRes.success && hotelRes.data) {
+          const rawData = hotelRes.data;
+
+          let facilitiesList = [];
+          if (rawData.facilities) {
+            try {
+              facilitiesList = typeof rawData.facilities === 'string'
+                ? JSON.parse(rawData.facilities)
+                : rawData.facilities;
+            } catch (e) {
+              facilitiesList = ['免费WiFi', '24小时前台', '行李寄存'];
+            }
+          } else {
+            facilitiesList = ['免费WiFi', '24小时前台', '行李寄存'];
+          }
+
+          let imageUrl = 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400';
+          let imagesList = [imageUrl];
+          if (rawData.images) {
+            try {
+              const images = typeof rawData.images === 'string'
+                ? JSON.parse(rawData.images)
+                : rawData.images;
+              if (Array.isArray(images) && images.length > 0) {
+                imageUrl = images[0];
+                imagesList = images;
+              }
+            } catch (e) { /* 使用默认图片 */ }
+          }
+
+          setHotel({
+            id: rawData.id,
+            name: rawData.nameZh || rawData.name || '未知酒店',
+            score: (rawData.score !== null && rawData.score !== undefined) ? Number(rawData.score).toFixed(1) : '暂无评分',
+            scoreDesc: rawData.score >= 4.8 ? '超棒' : rawData.score >= 4.5 ? '很好' : rawData.score >= 4.0 ? '不错' : '',
+            reviews: `${rawData.reviewCount || 0}点评`,
+            collects: `${Number((rawData.favoriteCount || 0) / 10000).toFixed(1)}万收藏`,
+            tags: rawData.hotelTags?.map(t => t.tag?.name).filter(Boolean) || [rawData.location?.name || '市中心'],
+            notice: rawData.description || '优质酒店，环境舒适，服务周到',
+            services: facilitiesList,
+            price: rawData.basePrice || '299',
+            img: imageUrl,
+            images: imagesList,
+            address: rawData.address || '未知地址',
+            location: rawData.location?.name || '市中心',
+            latitude: rawData.latitude || null,
+            longitude: rawData.longitude || null,
+          });
+        }
+
+        // 处理房型
+        if (roomTypesRes.success && roomTypesRes.data && roomTypesRes.data.length > 0) {
+          const transformedRoomTypes = transformRoomTypes(roomTypesRes.data);
+          setRoomTypes(transformedRoomTypes);
+          if (transformedRoomTypes.length > 0) {
+            setSelectedRoomTypeId(transformedRoomTypes[0].id);
+          }
+        } else {
+          setRoomTypes([]);
+        }
+
+        // 处理收藏状态
+        if (favoriteRes && favoriteRes.success) {
+          setIsFavorite(favoriteRes.data?.isFavorite || false);
+        }
+
+        // 处理评论
+        setComments(commentList || []);
+      } catch (error) {
+        console.error('获取酒店详情失败:', error);
+        Taro.showToast({ title: '加载失败，请重试', icon: 'none' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAll();
   }, [hotelId]);
 
   // 日期变化时重新请求带库存的房型数据
@@ -76,7 +203,6 @@ function HotelDetail() {
               dynamicPrice: fresh.dynamicPrice ?? null,
             };
           });
-          // 保持按价格从低到高排序
           updated.sort((a, b) => (a.dynamicPrice ?? a.price) - (b.dynamicPrice ?? b.price));
           return updated;
         });
@@ -92,148 +218,6 @@ function HotelDetail() {
           if (res.confirm) refreshRoomAvailability(start, end);
         },
       });
-    }
-  };
-
-  const loadComments = async () => {
-    try {
-      const merged = await getHotelCommentsCombined(hotelId);
-      setComments(merged);
-    } catch (error) {
-      console.error('加载评论失败:', error);
-    }
-  };
-
-  const loadHotelDetail = async () => {
-    try {
-      setLoading(true);
-
-      // 加载酒店详情
-      const hotelRes = await getHotelById(hotelId);
-
-      if (hotelRes.success && hotelRes.data) {
-        const rawData = hotelRes.data;
-
-        // 处理设施数据：如果是JSON字符串则解析，否则使用默认值
-        let facilitiesList = [];
-        if (rawData.facilities) {
-          try {
-            facilitiesList = typeof rawData.facilities === 'string'
-              ? JSON.parse(rawData.facilities)
-              : rawData.facilities;
-          } catch (e) {
-            facilitiesList = ['免费WiFi', '24小时前台', '行李寄存'];
-          }
-        } else {
-          facilitiesList = ['免费WiFi', '24小时前台', '行李寄存'];
-        }
-
-        // 处理图片数据
-        let imageUrl = 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400';
-        let imagesList = [imageUrl];
-        
-        if (rawData.images) {
-          try {
-            const images = typeof rawData.images === 'string'
-              ? JSON.parse(rawData.images)
-              : rawData.images;
-            if (Array.isArray(images) && images.length > 0) {
-              imageUrl = images[0];
-              imagesList = images;
-            }
-          } catch (e) {
-            // 使用默认图片
-          }
-        }
-
-        const hotelData = {
-          id: rawData.id,
-          name: rawData.nameZh || rawData.name || '未知酒店',
-          score: (rawData.score !== null && rawData.score !== undefined) ? Number(rawData.score).toFixed(1) : '暂无评分',
-          scoreDesc: rawData.score >= 4.8 ? '超棒' : rawData.score >= 4.5 ? '很好' : rawData.score >= 4.0 ? '不错' : '',
-          reviews: `${rawData.reviewCount || 0}点评`,
-          collects: `${Number((rawData.favoriteCount || 0) / 10000).toFixed(1)}万收藏`,
-          tags: rawData.hotelTags?.map(t => t.tag?.name).filter(Boolean) || [rawData.location?.name || '市中心'],
-          notice: rawData.description || '优质酒店，环境舒适，服务周到',
-          services: facilitiesList,
-          price: rawData.basePrice || '299',
-          img: imageUrl,
-          images: imagesList,
-          address: rawData.address || '未知地址',
-          location: rawData.location?.name || '市中心',
-          latitude: rawData.latitude || null,
-          longitude: rawData.longitude || null,
-        };
-        setHotel(hotelData);
-
-        // 加载房型列表（带日期以获取库存和动态价格）
-        const roomTypesRes = await getHotelRoomTypes(hotelId, startDate, endDate);
-
-        if (roomTypesRes.success && roomTypesRes.data && roomTypesRes.data.length > 0) {
-          const transformedRoomTypes = roomTypesRes.data.map(room => {
-            // 解析amenities JSON字符串
-            let amenitiesList = [];
-            if (room.amenities) {
-              try {
-                amenitiesList = typeof room.amenities === 'string'
-                  ? JSON.parse(room.amenities)
-                  : room.amenities;
-              } catch (e) {
-                amenitiesList = ['免费WiFi', '独立卫浴'];
-              }
-            }
-
-            // 处理房型图片
-            let roomImages = [];
-            if (room.images) {
-              try {
-                roomImages = typeof room.images === 'string'
-                  ? JSON.parse(room.images)
-                  : room.images;
-                if (!Array.isArray(roomImages)) roomImages = [];
-              } catch (e) {
-                roomImages = [];
-              }
-            }
-
-            return {
-              id: room.id,
-              name: room.name || '标准大床房',
-              bed: room.description || '大床',
-              area: room.description || '30㎡',
-              floor: '10-20层',
-              capacity: '2人入住',
-              price: parseFloat(room.price) || 299,
-              features: amenitiesList,
-              images: roomImages,
-              remainingRooms: room.remainingRooms ?? null,
-              dynamicPrice: room.dynamicPrice ?? null,
-            };
-          });
-          // 按价格从低到高排序（优先使用动态价格）
-          transformedRoomTypes.sort((a, b) => {
-            const priceA = a.dynamicPrice ?? a.price;
-            const priceB = b.dynamicPrice ?? b.price;
-            return priceA - priceB;
-          });
-          setRoomTypes(transformedRoomTypes);
-
-          // 默认选择第一个房型
-          if (transformedRoomTypes.length > 0) {
-            setSelectedRoomTypeId(transformedRoomTypes[0].id);
-          }
-        } else {
-          setRoomTypes([]);
-        }
-      }
-    } catch (error) {
-      console.error('获取酒店详情失败:', error);
-      Taro.showToast({
-        title: '加载失败，请重试',
-        icon: 'none'
-      });
-    } finally {
-      setLoading(false);
     }
   };
 

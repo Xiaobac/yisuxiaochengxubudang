@@ -9,26 +9,17 @@ import { get } from './request';
  * @param {Object} params - 查询参数 { name, type }
  * @returns {Promise} 返回位置列表
  */
-export const getLocations = async (params = {}) => {
-  try {
-    let url = '/locations';
-    const queryList = [];
-    if (params.name) queryList.push(`name=${encodeURIComponent(params.name)}`);
-    if (params.type) queryList.push(`type=${encodeURIComponent(params.type)}`);
-    
-    if (queryList.length > 0) {
-      url += `?${queryList.join('&')}`;
-    }
+export const getLocations = (params = {}) => {
+  let url = '/locations';
+  const queryList = [];
+  if (params.name) queryList.push(`name=${encodeURIComponent(params.name)}`);
+  if (params.type) queryList.push(`type=${encodeURIComponent(params.type)}`);
 
-    const res = await get(url);
-
-    console.log('✅ 获取位置列表成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 获取位置列表失败:', error);
-    throw error;
+  if (queryList.length > 0) {
+    url += `?${queryList.join('&')}`;
   }
+
+  return get(url);
 };
 
 /**
@@ -36,17 +27,8 @@ export const getLocations = async (params = {}) => {
  * @param {number} id - 位置 ID
  * @returns {Promise} 返回位置详情
  */
-export const getLocationById = async (id) => {
-  try {
-    const res = await get(`/locations/${id}`);
-
-    console.log('✅ 获取位置详情成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 获取位置详情失败:', error);
-    throw error;
-  }
+export const getLocationById = (id) => {
+  return get(`/locations/${id}`);
 };
 
 export default {

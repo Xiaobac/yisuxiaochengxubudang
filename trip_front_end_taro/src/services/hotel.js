@@ -21,66 +21,56 @@ import { get } from './request';
  * @returns {Promise} 返回酒店列表
  */
 export const getHotels = async (params = {}) => {
-  try {
-    const queryParams = {};
+  const queryParams = {};
 
-    if (params.locationId) {
-      queryParams.locationId = params.locationId;
-    }
-
-    if (params.tags) {
-      // 将标签数组转换为逗号分隔的字符串
-      queryParams.tags = Array.isArray(params.tags) ? params.tags.join(',') : params.tags;
-    }
-
-    if (params.keyword) {
-      queryParams.keyword = params.keyword;
-    }
-
-    if (params.type) {
-      queryParams.type = params.type;
-    }
-
-    if (params.minPrice) {
-      queryParams.minPrice = params.minPrice;
-    }
-
-    if (params.maxPrice) {
-      queryParams.maxPrice = params.maxPrice;
-    }
-
-    if (params.checkIn) {
-      queryParams.checkIn = params.checkIn;
-    }
-
-    if (params.checkOut) {
-      queryParams.checkOut = params.checkOut;
-    }
-
-    if (params.starRating) {
-      queryParams.starRating = params.starRating;
-    }
-
-    if (params.page) {
-      queryParams.page = params.page;
-    }
-
-    if (params.pageSize) {
-      queryParams.limit = params.pageSize;
-    }
-    if (params.limit) {
-      queryParams.limit = params.limit;
-    }
-
-    const res = await get('/hotels', queryParams);
-
-    console.log('✅ 获取酒店列表成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 获取酒店列表失败:', error);
-    throw error;
+  if (params.locationId) {
+    queryParams.locationId = params.locationId;
   }
+
+  if (params.tags) {
+    queryParams.tags = Array.isArray(params.tags) ? params.tags.join(',') : params.tags;
+  }
+
+  if (params.keyword) {
+    queryParams.keyword = params.keyword;
+  }
+
+  if (params.type) {
+    queryParams.type = params.type;
+  }
+
+  if (params.minPrice) {
+    queryParams.minPrice = params.minPrice;
+  }
+
+  if (params.maxPrice) {
+    queryParams.maxPrice = params.maxPrice;
+  }
+
+  if (params.checkIn) {
+    queryParams.checkIn = params.checkIn;
+  }
+
+  if (params.checkOut) {
+    queryParams.checkOut = params.checkOut;
+  }
+
+  if (params.starRating) {
+    queryParams.starRating = params.starRating;
+  }
+
+  if (params.page) {
+    queryParams.page = params.page;
+  }
+
+  if (params.pageSize) {
+    queryParams.limit = params.pageSize;
+  }
+  if (params.limit) {
+    queryParams.limit = params.limit;
+  }
+
+  return get('/hotels', queryParams);
 };
 
 /**
@@ -88,17 +78,8 @@ export const getHotels = async (params = {}) => {
  * @param {number} id - 酒店 ID
  * @returns {Promise} 返回酒店详情
  */
-export const getHotelById = async (id) => {
-  try {
-    const res = await get(`/hotels/${id}`);
-
-    console.log('✅ 获取酒店详情成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 获取酒店详情失败:', error);
-    throw error;
-  }
+export const getHotelById = (id) => {
+  return get(`/hotels/${id}`);
 };
 
 /**
@@ -108,21 +89,11 @@ export const getHotelById = async (id) => {
  * @param {string} [endDate] - 结束日期 YYYY-MM-DD
  * @returns {Promise} 返回房型列表
  */
-export const getHotelRoomTypes = async (hotelId, startDate, endDate) => {
-  try {
-    const params = {};
-    if (startDate) params.startDate = startDate;
-    if (endDate) params.endDate = endDate;
-
-    const res = await get(`/hotels/${hotelId}/room-types`, params);
-
-    console.log('✅ 获取房型列表成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 获取房型列表失败:', error);
-    throw error;
-  }
+export const getHotelRoomTypes = (hotelId, startDate, endDate) => {
+  const params = {};
+  if (startDate) params.startDate = startDate;
+  if (endDate) params.endDate = endDate;
+  return get(`/hotels/${hotelId}/room-types`, params);
 };
 
 /**
@@ -132,20 +103,8 @@ export const getHotelRoomTypes = async (hotelId, startDate, endDate) => {
  * @param {string} endDate - 结束日期 YYYY-MM-DD
  * @returns {Promise} 返回房型可用性数据
  */
-export const getRoomAvailability = async (roomTypeId, startDate, endDate) => {
-  try {
-    const res = await get(`/room-types/${roomTypeId}/availability`, {
-      startDate,
-      endDate,
-    });
-
-    console.log('✅ 获取房型可用性成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 获取房型可用性失败:', error);
-    throw error;
-  }
+export const getRoomAvailability = (roomTypeId, startDate, endDate) => {
+  return get(`/room-types/${roomTypeId}/availability`, { startDate, endDate });
 };
 
 /**
@@ -154,33 +113,8 @@ export const getRoomAvailability = async (roomTypeId, startDate, endDate) => {
  * @param {object} filters - 筛选条件
  * @returns {Promise} 返回搜索结果
  */
-export const searchHotels = async (keyword, filters = {}) => {
-  try {
-    const params = {
-      keyword,
-      ...filters,
-    };
-
-    return await getHotels(params);
-  } catch (error) {
-    console.error('❌ 搜索酒店失败:', error);
-    throw error;
-  }
-};
-
-export const getHotelMinPrice = async (hotelId) => {
-  try {
-    const res = await getHotelRoomTypes(hotelId);
-    // 假设返回格式为 { success: boolean, data: RoomType[] }
-    if (res.success && Array.isArray(res.data)) {
-      const prices = res.data.map(rt => rt.price).filter(p => p && p > 0);
-      return prices.length > 0 ? Math.min(...prices) : 0;
-    }
-    return 0;
-  } catch (error) {
-    console.error(`获取酒店 ${hotelId} 最低价格失败:`, error);
-    return 0;
-  }
+export const searchHotels = (keyword, filters = {}) => {
+  return getHotels({ keyword, ...filters });
 };
 
 export default {

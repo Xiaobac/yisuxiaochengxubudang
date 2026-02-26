@@ -4,7 +4,6 @@ import Taro, { usePullDownRefresh, useDidShow } from '@tarojs/taro';
 import dayjs from 'dayjs';
 import { getHotels } from '../../services/hotel';
 import { getLocations } from '../../services/location';
-import { getHotelMinPrice } from '../../services/hotel';
 import { formatStars, formatPrice } from '../../utils/format';
 import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
 import { getImageUrl } from '../../config/images';
@@ -187,9 +186,9 @@ function HotelList() {
     return '共1晚';
   };
 
-  // ---------- 格式化酒店数据 ----------
-  const formatHotelsWithPrice = async (rawList) => {
-    const baseHotels = rawList.map(hotel => {
+  // ---------- 格式化酒店数据（同步，从已返回的 roomTypes 计算最低价） ----------
+  const formatHotelsWithPrice = (rawList) => {
+    return rawList.map(hotel => {
       let images = [];
       try {
         images = hotel.images && hotel.images.length > 0
@@ -202,6 +201,13 @@ function HotelList() {
           ? (typeof hotel.facilities === 'string' ? JSON.parse(hotel.facilities) : hotel.facilities)
           : [];
       } catch { facilities = []; }
+
+      // 直接从后端已返回的 roomTypes 计算最低价，避免 N+1 请求
+      const prices = (hotel.roomTypes || [])
+        .map(rt => parseFloat(rt.price))
+        .filter(p => p > 0);
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+
       return {
         id: hotel.id,
         name: hotel.nameZh || hotel.name,
@@ -212,8 +218,8 @@ function HotelList() {
         tags: hotel.location?.name ? [hotel.location.name] : [],
         notice: hotel.description || '',
         services: Array.isArray(facilities) ? facilities.slice(0, 4) : [],
-        price: '0',
-        priceNum: 0,
+        price: minPrice.toString(),
+        priceNum: minPrice,
         img: images[0] || DEFAULT_HOTEL_IMAGE,
         facilities: Array.isArray(facilities) ? facilities : [],
         latitude: hotel.latitude,
@@ -221,17 +227,6 @@ function HotelList() {
         address: hotel.address || ''
       };
     });
-
-    return Promise.all(
-      baseHotels.map(async (hotel) => {
-        try {
-          const minPrice = await getHotelMinPrice(hotel.id);
-          return { ...hotel, price: minPrice.toString(), priceNum: minPrice };
-        } catch {
-          return hotel;
-        }
-      })
-    );
   };
 
   // ---------- 加载酒店列表 ----------
@@ -255,7 +250,7 @@ function HotelList() {
       });
 
       if (res.success && res.data && res.data.length > 0) {
-        const hotelsWithPrice = await formatHotelsWithPrice(res.data);
+        const hotelsWithPrice = formatHotelsWithPrice(res.data);
         setHotelList(hotelsWithPrice);
         generateMapMarkers(hotelsWithPrice);
         const total = res.total ?? res.data.length;
@@ -296,7 +291,7 @@ function HotelList() {
       });
 
       if (res.success && res.data && res.data.length > 0) {
-        const newHotels = await formatHotelsWithPrice(res.data);
+        const newHotels = formatHotelsWithPrice(res.data);
         setHotelList(prev => {
           const updated = [...prev, ...newHotels];
           generateMapMarkers(updated);

@@ -16,30 +16,21 @@ import { get, post, put, del } from './request';
  * @param {string} data.specialRequests - 特殊要求
  * @returns {Promise} 返回预订结果
  */
-export const createBooking = async (data) => {
-  try {
-    const res = await post('/bookings', {
-      hotelId: data.hotelId,
-      roomTypeId: data.roomTypeId,
-      checkInDate: data.checkInDate,
-      checkOutDate: data.checkOutDate,
-      guestCount: data.guestCount || 1,
-      totalPrice: data.totalPrice,
-      guestInfo: {
-        specialRequests: data.specialRequests || '',
-        guestName: data.guestName || '',
-        guestPhone: data.guestPhone || '',
-        arrivalTime: data.arrivalTime || '',
-      },
-    });
-
-    console.log('✅ 创建预订成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 创建预订失败:', error);
-    throw error;
-  }
+export const createBooking = (data) => {
+  return post('/bookings', {
+    hotelId: data.hotelId,
+    roomTypeId: data.roomTypeId,
+    checkInDate: data.checkInDate,
+    checkOutDate: data.checkOutDate,
+    guestCount: data.guestCount || 1,
+    totalPrice: data.totalPrice,
+    guestInfo: {
+      specialRequests: data.specialRequests || '',
+      guestName: data.guestName || '',
+      guestPhone: data.guestPhone || '',
+      arrivalTime: data.arrivalTime || '',
+    },
+  });
 };
 
 /**
@@ -48,17 +39,8 @@ export const createBooking = async (data) => {
  * @param {string} params.status - 订单状态筛选
  * @returns {Promise} 返回预订列表
  */
-export const getMyBookings = async (params = {}) => {
-  try {
-    const res = await get('/bookings', params);
-
-    console.log('✅ 获取预订列表成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 获取预订列表失败:', error);
-    throw error;
-  }
+export const getMyBookings = (params = {}) => {
+  return get('/bookings', params);
 };
 
 /**
@@ -66,17 +48,8 @@ export const getMyBookings = async (params = {}) => {
  * @param {number} id - 预订 ID
  * @returns {Promise} 返回预订详情
  */
-export const getBookingById = async (id) => {
-  try {
-    const res = await get(`/bookings/${id}`);
-
-    console.log('✅ 获取预订详情成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 获取预订详情失败:', error);
-    throw error;
-  }
+export const getBookingById = (id) => {
+  return get(`/bookings/${id}`);
 };
 
 /**
@@ -85,17 +58,8 @@ export const getBookingById = async (id) => {
  * @param {string} status - 新状态
  * @returns {Promise} 返回更新结果
  */
-export const updateBookingStatus = async (id, status) => {
-  try {
-    const res = await put(`/bookings/${id}`, { status });
-
-    console.log('✅ 更新预订状态成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 更新预订状态失败:', error);
-    throw error;
-  }
+export const updateBookingStatus = (id, status) => {
+  return put(`/bookings/${id}`, { status });
 };
 
 /**
@@ -103,19 +67,8 @@ export const updateBookingStatus = async (id, status) => {
  * @param {number} id - 预订 ID
  * @returns {Promise} 返回取消结果
  */
-export const cancelBooking = async (id) => {
-  try {
-    const res = await put(`/bookings/${id}`, {
-      status: 'cancelled',
-    });
-
-    console.log('✅ 取消预订成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 取消预订失败:', error);
-    throw error;
-  }
+export const cancelBooking = (id) => {
+  return put(`/bookings/${id}`, { status: 'cancelled' });
 };
 
 /**
@@ -123,17 +76,8 @@ export const cancelBooking = async (id) => {
  * @param {number} id - 预订 ID
  * @returns {Promise} 返回删除结果
  */
-export const deleteBooking = async (id) => {
-  try {
-    const res = await del(`/bookings/${id}`);
-
-    console.log('✅ 删除预订成功:', res);
-
-    return res;
-  } catch (error) {
-    console.error('❌ 删除预订失败:', error);
-    throw error;
-  }
+export const deleteBooking = (id) => {
+  return del(`/bookings/${id}`);
 };
 
 export default {
