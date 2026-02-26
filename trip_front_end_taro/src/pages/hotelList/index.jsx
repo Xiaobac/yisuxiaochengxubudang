@@ -437,7 +437,8 @@ function HotelList() {
     const keys = ['recommend', 'distance', 'priceAsc', 'priceDesc'];
     Taro.showActionSheet({
       itemList,
-      success: (res) => handleSortChange(keys[res.tapIndex])
+      success: (res) => handleSortChange(keys[res.tapIndex]),
+      fail: () => {} // 用户取消时忽略
     });
   };
 
@@ -643,7 +644,7 @@ function HotelList() {
         <Skeleton type='hotelCard' count={4} />
       ) : filteredHotels.length === 0 ? (
         <EmptyState
-          image='🏨'
+          image='buildings'
           title='没有找到符合条件的酒店'
           description='试试调整筛选条件或换个搜索词吧'
           buttonText='重新搜索'

@@ -4,6 +4,7 @@ import Taro, { useRouter } from '@tarojs/taro';
 import { getHotels } from '../../services/hotel';
 import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import Icon from '../../components/Icon';
 import { useTheme } from '../../utils/useTheme';
 import { getIconUri } from '../../utils/icons';
 import './index.css';
@@ -92,25 +93,31 @@ function HotelMap() {
       });
 
       if (res.success && res.data && res.data.length > 0) {
-        const hotelData = res.data.map(hotel => {
-          let images = [];
-          try {
-            images = hotel.images && hotel.images.length > 0
-              ? (typeof hotel.images === 'string' ? JSON.parse(hotel.images) : hotel.images)
-              : [];
-          } catch { images = []; }
-          return {
-            id: hotel.id,
-            name: hotel.nameZh || hotel.name,
-            address: hotel.address || '',
-            price: hotel.minPrice || '0',
-            rating: hotel.rating || '4.5',
-            starRating: hotel.starRating || 3,
-            latitude: hotel.latitude || DEFAULT_LAT + (Math.random() - 0.5) * 0.1,
-            longitude: hotel.longitude || DEFAULT_LNG + (Math.random() - 0.5) * 0.1,
-            image: images[0] || DEFAULT_HOTEL_IMAGE
-          };
-        });
+        const hotelData = res.data
+          .map(hotel => {
+            let images = [];
+            try {
+              images = hotel.images && hotel.images.length > 0
+                ? (typeof hotel.images === 'string' ? JSON.parse(hotel.images) : hotel.images)
+                : [];
+            } catch { images = []; }
+            const lat = parseFloat(hotel.latitude);
+            const lng = parseFloat(hotel.longitude);
+            const validLat = lat && lat >= -90 && lat <= 90;
+            const validLng = lng && lng >= -180 && lng <= 180;
+            return {
+              id: hotel.id,
+              name: hotel.nameZh || hotel.name,
+              address: hotel.address || '',
+              price: hotel.minPrice || '0',
+              rating: hotel.rating || '4.5',
+              starRating: hotel.starRating || 3,
+              latitude: validLat ? lat : DEFAULT_LAT + (Math.random() - 0.5) * 0.1,
+              longitude: validLng ? lng : DEFAULT_LNG + (Math.random() - 0.5) * 0.1,
+              image: images[0] || DEFAULT_HOTEL_IMAGE,
+              hasValidCoords: validLat && validLng
+            };
+          });
 
         setHotels(hotelData);
         setMarkers(hotelData.map(hotel => ({
@@ -242,7 +249,9 @@ function HotelMap() {
       {/* 搜索列表模式：选中酒店卡片 */}
       {!singleMode && selectedHotel && (
         <View className='hotel-card-popup'>
-          <View className='card-close' onClick={() => setSelectedHotel(null)}>✕</View>
+          <View className='card-close' onClick={() => setSelectedHotel(null)}>
+            <Icon name='x' size={28} color='#999' />
+          </View>
           <View className='card-content' onClick={() => Taro.navigateTo({
             url: `/pages/hotelDetail/index?id=${selectedHotel.id}&checkIn=${searchParams.checkInDate || ''}&checkOut=${searchParams.checkOutDate || ''}`
           })}>

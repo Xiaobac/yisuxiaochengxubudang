@@ -6,6 +6,7 @@ import { createReview } from '../../services/comments';
 import { formatDate, formatPrice } from '../../utils/format';
 import { getImageUrl, DEFAULT_HOTEL_IMAGE } from '../../config/images';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import Icon from '../../components/Icon';
 import { useTheme } from '../../utils/useTheme'
 import './index.css';
 import AiChatWidget from '../../components/AiChatWidget';
@@ -213,7 +214,7 @@ function OrderDetail() {
       {/* 订单状态卡片 */}
       <View className='status-card'>
         <View className='status-icon-wrapper'>
-          <Text className='status-icon'>{order.status === 'confirmed' ? '✓' : order.status === 'cancelled' ? '✕' : '⏱'}</Text>
+          <Icon name={order.status === 'confirmed' ? 'checkCircle' : order.status === 'cancelled' ? 'prohibit' : 'hourglassSimple'} size={48} color={order.statusColor} />
         </View>
         <Text className='status-text' style={{ color: order.statusColor }}>{order.statusText}</Text>
         <Text className='order-no'>订单号: {order.orderNo}</Text>
@@ -233,11 +234,11 @@ function OrderDetail() {
         </View>
         <View className='hotel-actions'>
           <View className='action-btn' onClick={handleContactHotel}>
-            <Text className='action-icon'>📞</Text>
+            <Icon name='phone' size={36} color={tokens['--color-primary']} />
             <Text className='action-text'>联系酒店</Text>
           </View>
           <View className='action-btn' onClick={handleNavigateToHotel}>
-            <Text className='action-icon'>📍</Text>
+            <Icon name='mapPin' size={36} color={tokens['--color-primary']} />
             <Text className='action-text'>查看位置</Text>
           </View>
         </View>

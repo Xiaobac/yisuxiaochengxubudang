@@ -231,7 +231,7 @@ function OrderList() {
           ))
         ) : (
           <EmptyState
-            image='📋'
+            image='clipboardText'
             title='暂无订单'
             description='快去预订心仪的酒店吧~'
             buttonText='去预订'

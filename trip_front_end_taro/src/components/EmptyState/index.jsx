@@ -11,6 +11,7 @@ const ICON_MAP = {
   '🏨': 'buildings',
   '📋': 'clipboardText',
   '❤️': 'heart',
+  '💝': 'heartFill',
   '📝': 'noteBlank',
   '⭐': 'star',
 };
@@ -24,7 +25,7 @@ const ICON_MAP = {
  * @param {function} onButtonClick - Button click handler
  */
 function EmptyState({
-  image = '🏨',
+  image = 'buildings',
   title = '暂无数据',
   description = '',
   buttonText = '',
