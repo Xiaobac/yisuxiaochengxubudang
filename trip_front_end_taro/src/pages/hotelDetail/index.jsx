@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, Image, ScrollView, Button, Swiper, SwiperItem } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import dayjs from 'dayjs';
@@ -45,6 +45,7 @@ function HotelDetail() {
   const [showAllComments, setShowAllComments] = useState(false);
   const COMMENT_PREVIEW_COUNT = 3;
   const [roomPriceData, setRoomPriceData] = useState(null); // 存储选中房型的每日价格数据
+  const dateChangeTimerRef = useRef(null); // 用于日期切换防抖
 
   // 解析房型数据（复用于初始加载和日期刷新）
   const transformRoomTypes = (roomData) => {
@@ -182,44 +183,65 @@ function HotelDetail() {
     loadAll();
   }, [hotelId]);
 
-  // 日期变化时重新请求带库存的房型数据
+  // 日期变化时重新请求带库存的房型数据（带防抖和竞态保护）
   useEffect(() => {
-    if (hotelId && startDate && endDate) {
-      refreshRoomAvailability(startDate, endDate);
+    // 清理上次的定时器
+    if (dateChangeTimerRef.current) {
+      clearTimeout(dateChangeTimerRef.current);
     }
-  }, [startDate, endDate]);
 
-  const refreshRoomAvailability = async (start, end) => {
-    try {
-      const res = await getHotelRoomTypes(hotelId, start, end);
-      if (res.success && res.data) {
-        setRoomTypes(prev => {
-          const updated = prev.map(room => {
-            const fresh = res.data.find(r => r.id === room.id);
-            if (!fresh) return room;
-            return {
-              ...room,
-              remainingRooms: fresh.remainingRooms ?? null,
-              dynamicPrice: fresh.dynamicPrice ?? null,
-            };
+    let cancelled = false;
+
+    const loadData = async () => {
+      try {
+        const res = await getHotelRoomTypes(hotelId, startDate, endDate);
+        if (cancelled) return; // 忽略过期结果
+
+        if (res.success && res.data) {
+          setRoomTypes(prev => {
+            const updated = prev.map(room => {
+              const fresh = res.data.find(r => r.id === room.id);
+              if (!fresh) return room;
+              return {
+                ...room,
+                remainingRooms: fresh.remainingRooms ?? null,
+                dynamicPrice: fresh.dynamicPrice ?? null,
+              };
+            });
+            updated.sort((a, b) => (a.dynamicPrice ?? a.price) - (b.dynamicPrice ?? b.price));
+            return updated;
           });
-          updated.sort((a, b) => (a.dynamicPrice ?? a.price) - (b.dynamicPrice ?? b.price));
-          return updated;
-        });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('刷新房型库存失败:', error);
+        }
       }
-    } catch (error) {
-      console.error('刷新房型库存失败:', error);
-      Taro.showModal({
-        title: '加载失败',
-        content: '获取房间可用性失败，是否重试？',
-        confirmText: '重试',
-        cancelText: '取消',
-        success: (res) => {
-          if (res.confirm) refreshRoomAvailability(start, end);
-        },
-      });
+    };
+
+    if (hotelId && startDate && endDate) {
+      // Debounce: 500ms 后才发送请求
+      dateChangeTimerRef.current = setTimeout(() => {
+        loadData();
+      }, 500);
     }
-  };
+
+    return () => {
+      cancelled = true;
+      if (dateChangeTimerRef.current) {
+        clearTimeout(dateChangeTimerRef.current);
+      }
+    };
+  }, [hotelId, startDate, endDate]);
+
+  // 组件卸载时清理定时器
+  useEffect(() => {
+    return () => {
+      if (dateChangeTimerRef.current) {
+        clearTimeout(dateChangeTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleScroll = (e) => {
     const scrollTop = e.detail.scrollTop;

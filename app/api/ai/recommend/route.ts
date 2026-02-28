@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { ChatOpenAI } from "@langchain/openai";
 import { z } from "zod";
 import { SystemMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
 import { prisma } from '@/app/lib/prisma';
 import type { Prisma } from '@/app/generated/prisma/client';
+import { verifyAuth } from '@/app/api/utils/auth';
 
 // Define the extraction schema using Zod
 const searchSchema = z.object({
@@ -15,8 +16,44 @@ const searchSchema = z.object({
   sort: z.enum(["price_asc", "price_desc", "rating"]).nullable().describe("排序方式")
 });
 
-export async function POST(req: Request) {
+// 简易内存限流器
+const requestCounts = new Map<number, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10; // 每小时 10 次
+const WINDOW_MS = 60 * 60 * 1000; // 1 小时
+
+function checkRateLimit(userId: number): boolean {
+  const now = Date.now();
+  const userLimit = requestCounts.get(userId);
+
+  if (!userLimit || now > userLimit.resetAt) {
+    requestCounts.set(userId, { count: 1, resetAt: now + WINDOW_MS });
+    return true;
+  }
+
+  if (userLimit.count >= RATE_LIMIT) {
+    return false;
+  }
+
+  userLimit.count++;
+  return true;
+}
+
+export async function POST(req: NextRequest) {
   try {
+    // 1. 身份验证
+    const authResult = verifyAuth(req);
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    // 2. 限流检查
+    if (!checkRateLimit(authResult.user.userId)) {
+      return NextResponse.json(
+        { error: '请求过于频繁，请稍后再试' },
+        { status: 429 }
+      );
+    }
+
     const { messages } = await req.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {

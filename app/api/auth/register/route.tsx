@@ -31,7 +31,7 @@ import bcrypt from 'bcryptjs';
  *                 type: string
  *               role:
  *                 type: string
- *                 enum: [user, merchant]
+ *                 enum: [staff, merchant]
  *                 description: 注册角色类型
  *     responses:
  *       201:
@@ -114,8 +114,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. 查找对应的角色名的ID（兼容大小写）
+    // 2. 角色白名单验证（只允许 STAFF 和 MERCHANT 注册，ADMIN 由管理员创建）
+    const ALLOWED_ROLES = ['STAFF', 'MERCHANT'];
     const roleNameUpper = role.toUpperCase();
+
+    if (!ALLOWED_ROLES.includes(roleNameUpper)) {
+      return NextResponse.json(
+        { success: false, error: `不允许注册该角色: ${role}` },
+        { status: 400 }
+      );
+    }
+
+    // 3. 查找对应的角色（禁止自动创建）
     const roleNameLower = role.toLowerCase();
 
     let dbRole = await prisma.role.findUnique({
@@ -135,15 +145,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (!dbRole) {
-       dbRole = await prisma.role.create({
-           data: { name: roleNameUpper, description: `Default ${roleNameUpper} role` }
-       });
+      return NextResponse.json(
+        { success: false, error: `无效角色: ${role}，请联系管理员` },
+        { status: 400 }
+      );
     }
 
-    // 3. 密码加密
+    // 4. 密码加密
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. 创建用户（使用关系语法连接 role 和 merchant）
+    // 5. 创建用户（使用关系语法连接 role 和 merchant）
     const createData: any = {
       email,
       password: hashedPassword,

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
 import { z } from 'zod';
 import { handleApiError } from '@/app/lib/error-handler';
+import { PAGINATION } from '@/app/constants';
 
 const createBookingSchema = z.object({
   hotelId:     z.number().int().positive(),
@@ -112,6 +113,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const merchantIdParam = searchParams.get('merchantId');
 
+    // 分页参数
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(
+      PAGINATION.MAX_PAGE_SIZE,
+      Math.max(1, parseInt(searchParams.get('limit') || String(PAGINATION.DEFAULT_PAGE_SIZE)))
+    );
+    const skip = (page - 1) * limit;
+
     let where: any = {};
 
     if (merchantIdParam) {
@@ -142,37 +151,49 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const bookings = await prisma.booking.findMany({
-      where,
-      include: {
-        hotel: {
-          select: {
-            id: true,
-            nameZh: true,
-            images: true
+    // 并发查询总数和数据
+    const [total, bookings] = await prisma.$transaction([
+      prisma.booking.count({ where }),
+      prisma.booking.findMany({
+        where,
+        include: {
+          hotel: {
+            select: {
+              id: true,
+              nameZh: true,
+              images: true
+            }
+          },
+          roomType: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          user: {
+             select: {
+                 id: true,
+                 name: true,
+                 email: true,
+                 phone: true
+             }
           }
         },
-        roomType: {
-          select: {
-            id: true,
-            name: true,
-          }
+        orderBy: {
+          createdAt: 'desc'
         },
-        user: {
-           select: {
-               id: true,
-               name: true,
-               email: true,
-               phone: true
-           }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+        skip,
+        take: limit,
+      }),
+    ]);
 
-    return NextResponse.json({ success: true, data: bookings });
+    return NextResponse.json({
+      success: true,
+      data: bookings,
+      total,
+      page,
+      limit
+    });
   } catch (error) {
     const err = handleApiError(error, '获取预订列表失败');
     return NextResponse.json({ success: false, error: err.error }, { status: err.status });
