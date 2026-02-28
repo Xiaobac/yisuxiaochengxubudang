@@ -2,6 +2,48 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+// 类型定义
+interface PriceFilter {
+  gte?: number;
+  lte?: number;
+}
+
+interface RoomTypeFilter {
+  some?: {
+    stock?: { gt: number };
+    price?: PriceFilter;
+    availability?: {
+      none: {
+        date: { gte: Date; lt: Date };
+        isClosed: boolean;
+      };
+    };
+  };
+}
+
+interface HotelWhereInput {
+  locationId?: number;
+  merchantId?: number;
+  type?: string;
+  starRating?: { gte: number };
+  roomTypes?: RoomTypeFilter;
+  OR?: Array<{
+    nameZh?: { contains: string };
+    nameEn?: { contains: string };
+    address?: { contains: string };
+  }>;
+  AND?: Array<{
+    hotelTags: {
+      some: {
+        tag: {
+          name: string;
+        };
+      };
+    };
+  }>;
+  status?: string;
+}
+
 
 /**
  * @swagger
@@ -142,7 +184,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: HotelWhereInput = {};
     if (locationId) where.locationId = parseInt(locationId);
     if (merchantId) where.merchantId = parseInt(merchantId);
     if (type) where.type = type;
@@ -178,22 +220,22 @@ export async function GET(request: NextRequest) {
 
         // If price filter also exists, merge it into the same roomTypes.some
         if (minPrice || maxPrice) {
-          const priceFilter: any = {};
+          const priceFilter: PriceFilter = {};
           if (minPrice) priceFilter.gte = parseFloat(minPrice);
           if (maxPrice) priceFilter.lte = parseFloat(maxPrice);
           // Merge price filter
-          where.roomTypes.some.price = priceFilter;
+          where.roomTypes!.some!.price = priceFilter;
         }
       } else if (minPrice || maxPrice) {
         // Only price filter no date
-         const priceFilter: any = {};
+         const priceFilter: PriceFilter = {};
          if (minPrice) priceFilter.gte = parseFloat(minPrice);
          if (maxPrice) priceFilter.lte = parseFloat(maxPrice);
          where.roomTypes = { some: { price: priceFilter } };
       }
     } else if (minPrice || maxPrice) {
        // Only price filter
-       const priceFilter: any = {};
+       const priceFilter: PriceFilter = {};
        if (minPrice) priceFilter.gte = parseFloat(minPrice);
        if (maxPrice) priceFilter.lte = parseFloat(maxPrice);
        where.roomTypes = { some: { price: priceFilter } };
@@ -238,10 +280,21 @@ export async function GET(request: NextRequest) {
       prisma.hotel.findMany({
         where,
         include: {
-          location: true,
-          merchant: { select: { id: true, name: true, email: true } },
-          hotelTags: { include: { tag: true } },
-          roomTypes: true,
+          location: { select: { id: true, name: true, type: true } },
+          merchant: { select: { id: true, name: true } },
+          hotelTags: {
+            select: {
+              tag: { select: { id: true, name: true } }
+            }
+          },
+          roomTypes: {
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              stock: true
+            }
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -349,48 +402,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: '缺少必要字段' }, { status: 400 });
     }
 
-    const createData: any = {
+    const newHotel = await prisma.hotel.create({
+      data: {
         nameZh: body.nameZh,
         nameEn: body.nameEn,
         address: body.address,
         description: body.description,
-        facilities: body.facilities, // 注意：facilities是Json类型
+        facilities: body.facilities,
         openingYear: body.openingYear ? Number(body.openingYear) : null,
         images: body.images,
         latitude: body.latitude ? parseFloat(body.latitude) : null,
         longitude: body.longitude ? parseFloat(body.longitude) : null,
         merchantId,
         locationId: locationId ?? null,
-        // status 使用schema中定义的默认值 "pending"
-    };
-
-    // Construct nested creation for Room Types
-    if (roomTypes.length > 0) {
-        createData.roomTypes = {
-            create: roomTypes.map((rt: any) => ({
-                name: rt.name,
-                description: rt.description,
-                price: rt.price,
-                stock: rt.stock || 0,
-                discount: rt.discount || 1,
-                images: Array.isArray(rt.images) ? rt.images : [],
+        ...(roomTypes.length > 0 ? {
+          roomTypes: {
+            create: roomTypes.map((rt: { name: string; description?: string; price: number; stock?: number; discount?: number; images?: string[] }) => ({
+              name: rt.name,
+              description: rt.description,
+              price: rt.price,
+              stock: rt.stock || 0,
+              discount: rt.discount || 1,
+              images: Array.isArray(rt.images) ? rt.images : [],
             }))
-        };
-    }
-
-    // Construct nested creation for Hotel Tags
-    if (tagIds.length > 0) {
-        createData.hotelTags = {
+          }
+        } : {}),
+        ...(tagIds.length > 0 ? {
+          hotelTags: {
             create: tagIds.map((tagId: number) => ({
-                tag: {
-                    connect: { id: Number(tagId) }
-                }
+              tag: { connect: { id: Number(tagId) } }
             }))
-        };
-    }
-
-    const newHotel = await prisma.hotel.create({
-      data: createData,
+          }
+        } : {}),
+      },
     });
 
     return NextResponse.json({ success: true, data: newHotel }, { status: 201 });

@@ -1,6 +1,7 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+import { checkPermission } from '@/app/api/utils/permissions';
 
 /**
  * @swagger
@@ -79,25 +80,8 @@ export async function GET(request: NextRequest) {
     }
     const userId = authResult.user.userId;
 
-    // 2. 权限检查：检查用户是否有查看用户列表的权限 (USER_READ)
-    const currentUser = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        role: {
-          include: {
-            rolePermission: {
-              include: {
-                permission: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const hasPermission = currentUser?.role?.rolePermission.some(
-      (rp) => rp.permission.name === 'USER_READ'
-    );
+    // 2. 权限检查：使用统一权限检查函数
+    const hasPermission = await checkPermission(userId, 'USER_READ');
 
     if (!hasPermission) {
       return NextResponse.json({ success: false, error: '无权查看用户列表' }, { status: 403 });

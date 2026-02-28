@@ -90,11 +90,31 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           hotel: {
-            include: {
-              location: true,
-              merchant: { select: { id: true, name: true, email: true } },
-              hotelTags: { include: { tag: true } },
-              roomTypes: true,
+            select: {
+              id: true,
+              nameZh: true,
+              nameEn: true,
+              address: true,
+              description: true,
+              starRating: true,
+              images: true,
+              type: true,
+              score: true,
+              location: { select: { id: true, name: true, type: true } },
+              merchant: { select: { id: true, name: true } },
+              hotelTags: {
+                select: {
+                  tag: { select: { id: true, name: true } }
+                }
+              },
+              roomTypes: {
+                select: {
+                  id: true,
+                  name: true,
+                  price: true,
+                  stock: true
+                }
+              },
             }
           }
         },

@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     const name = searchParams.get('name');
     const type = searchParams.get('type');
 
-    const where: any = {};
+    const where: { name?: { contains: string }; type?: string } = {};
     if (name) {
       where.name = { contains: name };
     }

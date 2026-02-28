@@ -1,6 +1,7 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+import { checkPermission } from '@/app/api/utils/permissions';
 
 /**
  * @swagger
@@ -72,37 +73,11 @@ export async function PUT(
     }
     const currentUserId = authResult.user.userId;
 
-    // 2. 权限判断
-    let canUpdate = false;
-    
-    // 如果是本人，允许
-    if (currentUserId === targetUserId) {
-      canUpdate = true;
-    } else {
-      // 否则检查是否有 USER_UPDATE 权限
-      const currentUser = await prisma.user.findUnique({
-        where: { id: currentUserId },
-        include: {
-          role: {
-            include: {
-              rolePermission: {
-                include: { permission: true }
-              }
-            }
-          }
-        }
-      });
-      
-      const hasPermission = currentUser?.role?.rolePermission.some(
-        (rp) => rp.permission.name === 'USER_UPDATE'
-      );
-      
-      if (hasPermission) {
-        canUpdate = true;
-      }
-    }
+    // 2. 权限判断：本人或有USER_UPDATE权限
+    const isSelf = currentUserId === targetUserId;
+    const hasPermission = isSelf || await checkPermission(currentUserId, 'USER_UPDATE');
 
-    if (!canUpdate) {
+    if (!hasPermission) {
       return NextResponse.json({ success: false, error: '无权修改该用户信息' }, { status: 403 });
     }
 
@@ -113,7 +88,7 @@ export async function PUT(
     }
 
     // 4. 执行更新
-    const updateData: any = {};
+    const updateData: { name?: string; phone?: string } = {};
     if (body.name !== undefined) updateData.name = body.name;
     if (body.phone !== undefined) updateData.phone = body.phone;
     // 如果允许管理员修改角色，可以在这里加判断
@@ -181,37 +156,11 @@ export async function DELETE(
       }
       const currentUserId = authResult.user.userId;
   
-      // 2. 权限判断
-      let canDelete = false;
-      
-      // 如果是本人，允许
-      if (currentUserId === targetUserId) {
-        canDelete = true;
-      } else {
-        // 否则检查是否有 USER_DELETE 权限
-        const currentUser = await prisma.user.findUnique({
-          where: { id: currentUserId },
-          include: {
-            role: {
-              include: {
-                rolePermission: {
-                  include: { permission: true }
-                }
-              }
-            }
-          }
-        });
-        
-        const hasPermission = currentUser?.role?.rolePermission.some(
-          (rp) => rp.permission.name === 'USER_DELETE'
-        );
-        
-        if (hasPermission) {
-          canDelete = true;
-        }
-      }
-  
-      if (!canDelete) {
+      // 2. 权限判断：本人或有USER_DELETE权限
+      const isSelf = currentUserId === targetUserId;
+      const hasPermission = isSelf || await checkPermission(currentUserId, 'USER_DELETE');
+
+      if (!hasPermission) {
         return NextResponse.json({ success: false, error: '无权删除该用户' }, { status: 403 });
       }
   

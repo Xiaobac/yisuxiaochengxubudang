@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   );
   const skip = (page - 1) * limit;
 
-  const where: any = {};
+  const where: { hotelId?: number; userId?: number } = {};
   if (hotelId) where.hotelId = parseInt(hotelId);
   if (userId) where.userId = parseInt(userId);
 

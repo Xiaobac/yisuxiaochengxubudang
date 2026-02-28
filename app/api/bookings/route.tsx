@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
     );
     const skip = (page - 1) * limit;
 
-    let where: any = {};
+    let where: { userId?: number; hotel?: { merchantId: number } } = {};
 
     if (merchantIdParam) {
       // 商户/职员查询酒店的订单
@@ -239,57 +239,95 @@ export async function POST(request: NextRequest) {
         throw new Error('房型不存在或不属于该酒店');
       }
 
-      // 3.2 计算每一天的价格和库存
-      // 需要遍历 checkIn 到 checkOut 的每一天
+      // 3.2 批量处理：生成所有日期并批量查询
+      const dateArray: Date[] = [];
       let currentDate = new Date(start);
-      let totalPrice = 0;
-
       while (currentDate < end) {
-        const dateKey = new Date(currentDate);
-        const dateStr = currentDate.toISOString().split('T')[0];
+        dateArray.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
 
-        // 3.2.1 确保 RoomAvailability 记录存在（upsert 不修改已有记录）
-        await tx.roomAvailability.upsert({
-          where: {
-            roomTypeId_date: { roomTypeId, date: dateKey },
-          },
-          update: {}, // 已存在则不修改
-          create: {
+      // 3.2.1 批量查询所有日期的 availability（1次查询代替N次）
+      const existingAvailabilities = await tx.roomAvailability.findMany({
+        where: {
+          roomTypeId,
+          date: { in: dateArray }
+        }
+      });
+
+      // 3.2.2 批量创建缺失的 availability 记录
+      const existingDatesSet = new Set(
+        existingAvailabilities.map(a => a.date.toISOString())
+      );
+      const missingDates = dateArray.filter(
+        d => !existingDatesSet.has(d.toISOString())
+      );
+
+      if (missingDates.length > 0) {
+        await tx.roomAvailability.createMany({
+          data: missingDates.map(date => ({
             roomTypeId,
-            date: dateKey,
+            date,
             booked: 0,
             quota: roomType.stock,
-            price: roomType.price,
-          },
+            price: roomType.price
+          })),
+          skipDuplicates: true
         });
+      }
 
-        // 3.2.2 查询当天状态
-        const availability = await tx.roomAvailability.findUnique({
-          where: { roomTypeId_date: { roomTypeId, date: dateKey } },
-        });
+      // 3.2.3 重新批量查询所有日期（确保包含新创建的记录）
+      const allAvailabilities = await tx.roomAvailability.findMany({
+        where: {
+          roomTypeId,
+          date: { in: dateArray }
+        }
+      });
 
-        if (availability?.isClosed) {
+      // 3.2.4 在内存中验证所有日期的库存状态和计算总价
+      const availabilityMap = new Map(
+        allAvailabilities.map(a => [a.date.toISOString(), a])
+      );
+      let totalPrice = 0;
+
+      for (const date of dateArray) {
+        const dateStr = date.toISOString().split('T')[0];
+        const availability = availabilityMap.get(date.toISOString());
+
+        if (!availability) {
+          throw new Error(`日期 ${dateStr} 库存数据异常`);
+        }
+
+        if (availability.isClosed) {
           throw new Error(`日期 ${dateStr} 房间已关闭`);
         }
 
-        const price = availability?.price ?? roomType.price;
-        totalPrice += Number(price);
-
-        // 3.2.3 原子条件更新：仅当 booked < quota 时才扣减库存，防止并发超卖
-        const updated = await tx.roomAvailability.updateMany({
-          where: {
-            roomTypeId,
-            date: dateKey,
-            booked: { lt: availability?.quota ?? roomType.stock },
-          },
-          data: { booked: { increment: 1 } },
-        });
-
-        if (updated.count === 0) {
+        const quota = availability.quota ?? roomType.stock;
+        if (availability.booked >= quota) {
           throw new Error(`日期 ${dateStr} 房间已售罄`);
         }
 
-        currentDate.setDate(currentDate.getDate() + 1);
+        totalPrice += Number(availability.price ?? roomType.price);
+      }
+
+      // 3.2.5 逐日原子更新库存（保证并发安全，但查询次数从N*3降至N+3）
+      for (const date of dateArray) {
+        const dateStr = date.toISOString().split('T')[0];
+        const availability = availabilityMap.get(date.toISOString())!;
+        const quota = availability.quota ?? roomType.stock;
+
+        const updated = await tx.roomAvailability.updateMany({
+          where: {
+            roomTypeId,
+            date,
+            booked: { lt: quota }
+          },
+          data: { booked: { increment: 1 } }
+        });
+
+        if (updated.count === 0) {
+          throw new Error(`日期 ${dateStr} 房间已售罄（并发冲突）`);
+        }
       }
 
       // 3.4 优惠券验证与折扣计算

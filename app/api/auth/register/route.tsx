@@ -155,7 +155,14 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // 5. 创建用户（使用关系语法连接 role 和 merchant）
-    const createData: any = {
+    const createData: {
+      email: string;
+      password: string;
+      name?: string;
+      phone?: string;
+      role: { connect: { id: number } };
+      merchant?: { connect: { id: number } };
+    } = {
       email,
       password: hashedPassword,
       name,
