@@ -22,6 +22,7 @@ import {
   Drawer,
   List,
   Avatar,
+  Empty,
   message
 } from 'antd';
 import type { TableColumnsType, UploadFile, UploadProps } from 'antd';
@@ -599,6 +600,7 @@ export default function HotelManagementPage() {
         loading={loading}
         pagination={pagination}
         onChange={handleTableChange}
+        locale={{ emptyText: <Empty description="暂无酒店数据" /> }}
       />
 
       <Modal

@@ -72,22 +72,42 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: users });
     }
 
-    // 完整用户列表：需要认证和权限
-    // 1. 验证身份
+    // 认证接口
     const authResult = verifyAuth(request);
     if (!authResult.success) {
       return NextResponse.json({ success: false, error: authResult.error }, { status: authResult.status });
     }
     const userId = authResult.user.userId;
+    const userRole = authResult.user.role?.toUpperCase();
 
-    // 2. 权限检查：使用统一权限检查函数
+    // 商户查询自己的职员列表
+    const myStaff = searchParams.get('myStaff');
+    if (myStaff === 'true') {
+      if (userRole !== 'MERCHANT') {
+        return NextResponse.json({ success: false, error: '仅商户可查看职员列表' }, { status: 403 });
+      }
+      const staffList = await prisma.user.findMany({
+        where: { merchantId: userId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+          createdAt: true,
+          role: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      return NextResponse.json({ success: true, data: staffList });
+    }
+
+    // 完整用户列表：需要 USER_READ 权限
     const hasPermission = await checkPermission(userId, 'USER_READ');
 
     if (!hasPermission) {
       return NextResponse.json({ success: false, error: '无权查看用户列表' }, { status: 403 });
     }
 
-    // 3. 获取用户列表
     const users = await prisma.user.findMany({
       select: {
         id: true,

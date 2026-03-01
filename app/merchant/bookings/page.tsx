@@ -15,7 +15,8 @@ import {
   Popconfirm,
   Modal,
   Form,
-  InputNumber
+  InputNumber,
+  Empty
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
@@ -370,6 +371,7 @@ export default function BookingsPage() {
         loading={loading}
         pagination={{ pageSize: 10 }}
         scroll={{ x: 1200 }}
+        locale={{ emptyText: <Empty description="暂无预订数据" /> }}
       />
       
       <Modal

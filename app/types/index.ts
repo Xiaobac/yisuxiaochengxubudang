@@ -191,6 +191,7 @@ export interface Coupon {
   description: string;
   discount: number;
   minSpend: number;
+  points: number;
   validFrom: string;
   validTo: string;
 }

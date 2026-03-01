@@ -16,8 +16,10 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className="antialiased">
-        <Providers>{children}</Providers>
-        <AiChatWidget />
+        <Providers>
+          {children}
+          <AiChatWidget />
+        </Providers>
       </body>
     </html>
   );

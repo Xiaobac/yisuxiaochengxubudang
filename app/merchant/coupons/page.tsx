@@ -17,27 +17,27 @@ import {
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { useAdminAuth } from '@/app/hooks/useAuth';
 import { getCoupons, createCoupon, updateCoupon, deleteCoupon } from '@/app/services/coupon';
+import { getStoredUser } from '@/app/services/auth';
 import type { Coupon } from '@/app/types';
 import dayjs from 'dayjs';
 
 const { TextArea } = Input;
 
-export default function CouponManagement() {
+export default function CouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const [form] = Form.useForm();
   const { message } = App.useApp();
-  const { user, loading: authLoading } = useAdminAuth();
+
+  const currentUser = getStoredUser();
+  const isMerchant = currentUser?.role?.name?.toUpperCase() === 'MERCHANT';
 
   useEffect(() => {
-    if (user) {
-      fetchCoupons();
-    }
-  }, [user]);
+    fetchCoupons();
+  }, []);
 
   const fetchCoupons = async () => {
     setLoading(true);
@@ -192,8 +192,12 @@ export default function CouponManagement() {
     },
   ];
 
-  if (authLoading) {
-    return <div style={{ textAlign: 'center', padding: '100px 0' }}>加载中...</div>;
+  if (!isMerchant) {
+    return (
+      <div style={{ textAlign: 'center', padding: '100px 0' }}>
+        <Empty description="无权访问优惠券管理" />
+      </div>
+    );
   }
 
   return (
