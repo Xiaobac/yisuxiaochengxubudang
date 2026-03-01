@@ -413,11 +413,12 @@ function HotelDetail() {
         checkInDate: startDate,
         checkOutDate: endDate,
         guestCount: guestInfo.guestCount,
-        totalPrice: totalPrice,
-        specialRequests: guestInfo.specialRequests || '',
-        guestName: guestInfo.guestName,
-        guestPhone: guestInfo.guestPhone,
-        arrivalTime: guestInfo.arrivalTime
+        guestInfo: {
+          name: guestInfo.guestName,
+          phone: guestInfo.guestPhone,
+          specialRequests: guestInfo.specialRequests || '',
+          arrivalTime: guestInfo.arrivalTime
+        }
       };
 
       const result = await createBooking(bookingData);

@@ -23,13 +23,7 @@ export const createBooking = (data) => {
     checkInDate: data.checkInDate,
     checkOutDate: data.checkOutDate,
     guestCount: data.guestCount || 1,
-    totalPrice: data.totalPrice,
-    guestInfo: {
-      specialRequests: data.specialRequests || '',
-      guestName: data.guestName || '',
-      guestPhone: data.guestPhone || '',
-      arrivalTime: data.arrivalTime || '',
-    },
+    guestInfo: data.guestInfo,
   });
 };
 
