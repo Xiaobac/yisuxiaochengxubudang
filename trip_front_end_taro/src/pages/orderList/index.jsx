@@ -4,6 +4,7 @@ import Taro, { usePullDownRefresh } from '@tarojs/taro';
 import { getMyBookings, cancelBooking } from '../../services/booking';
 import { formatDate, formatPrice } from '../../utils/format';
 import { storage } from '../../utils/storage';
+import { getStatusText, getStatusColor } from '../../utils/status';
 import Skeleton from '../../components/Skeleton';
 import EmptyState from '../../components/EmptyState';
 import { useTheme } from '../../utils/useTheme';
@@ -47,7 +48,7 @@ function OrderList() {
           totalPrice: formatPrice(order.totalPrice || 0),
           status: order.status || 'pending',
           statusText: getStatusText(order.status),
-          statusColor: getStatusColor(order.status),
+          statusColor: getStatusColor(order.status, tokens),
           paymentMethod: '在线支付',
           guestCount: order.guestCount || 1,
           createdAt: formatDate(order.createdAt, 'YYYY-MM-DD HH:mm'),
@@ -60,22 +61,6 @@ function OrderList() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getStatusText = (status) => {
-    const statusMap = {
-      'pending': '待确认', 'confirmed': '已确认',
-      'cancelled': '已取消', 'completed': '已完成'
-    };
-    return statusMap[status] || status;
-  };
-
-  const getStatusColor = (status) => {
-    const colorMap = {
-      'pending': tokens['--color-warning'], 'confirmed': tokens['--color-success'],
-      'cancelled': tokens['--color-text-tertiary'], 'completed': tokens['--color-info']
-    };
-    return colorMap[status] || tokens['--color-text-tertiary'];
   };
 
   const handleCancelOrder = (orderId, hotelName) => {

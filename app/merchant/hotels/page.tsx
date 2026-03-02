@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Table,
   Button,
@@ -47,23 +48,28 @@ import {
 } from '@/app/services/hotel';
 import { getCommentsByHotelId, deleteComment } from '@/app/services/comment';
 import { getStoredUser } from '@/app/services/auth';
-import type { Hotel, RoomType, Location, Tag as HotelTag, Comment } from '@/app/types';
+import type { Hotel, RoomType, Location, Tag as HotelTag, Comment, UploadResponse, HotelFormData } from '@/app/types';
 import dayjs from 'dayjs';
 import { pinyin } from 'pinyin-pro';
-import TencentMapSelector from '@/app/components/TencentMapSelector';
+
+const TencentMapSelector = dynamic(() => import('@/app/components/TencentMapSelector'), {
+  ssr: false,
+  loading: () => <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>地图加载中...</div>,
+});
 
 const { TextArea } = Input;
 const { Option } = Select;
 
-// 房型动态表单组件
+// 房型表单项类型（新建时无 id）
+type RoomFormItem = Partial<RoomType> & { name: string; price: number; stock: number };
+
 interface RoomListProps {
-  value?: RoomType[];
-  onChange?: (value: RoomType[]) => void;
+  value?: RoomFormItem[];
+  onChange?: (value: RoomFormItem[]) => void;
 }
 
 function RoomList({ value = [], onChange }: RoomListProps) {
   const handleAdd = () => {
-    // @ts-ignore - Temporary ID for key handling if needed, though index is used usually
     onChange?.([...value, { name: '', price: 0, stock: 1, discount: 1, description: '', images: [] }]);
   };
 
@@ -73,20 +79,18 @@ function RoomList({ value = [], onChange }: RoomListProps) {
     onChange?.(newRooms);
   };
 
-  const handleChange = (index: number, field: keyof RoomType, val: any) => {
+  const handleChange = (index: number, field: keyof RoomFormItem, val: string | number | string[] | null) => {
     const newRooms = [...value];
-    // @ts-ignore
     newRooms[index] = { ...newRooms[index], [field]: val };
     onChange?.(newRooms);
   };
 
-  const handleRoomUpload = async (index: number, { file, onSuccess, onError }: any) => {
+  const handleRoomUpload = async (index: number, { file, onSuccess, onError }: { file: File | Blob | string; onSuccess?: (body: unknown) => void; onError?: (err: Error) => void }) => {
     try {
-      const result = await uploadImage(file as File);
-      const url = (result as any)?.url;
-      if (url) {
+      const result = await uploadImage(file as File) as UploadResponse;
+      if (result.url) {
         const currentImages = value[index]?.images || [];
-        handleChange(index, 'images', [...currentImages, url] as any);
+        handleChange(index, 'images', [...currentImages, result.url]);
       }
       onSuccess?.(result);
     } catch (error) {
@@ -97,15 +101,14 @@ function RoomList({ value = [], onChange }: RoomListProps) {
   const handleRoomImageRemove = (index: number, fileUid: string) => {
     const room = value[index];
     const currentImages = room?.images || [];
-    // fileUid for existing images is `-{imgIndex}`, for new uploads is the url itself
     const fileIndex = parseInt(fileUid.replace('-', ''));
     if (!isNaN(fileIndex) && fileIndex < currentImages.length) {
       const newImages = currentImages.filter((_, i) => i !== fileIndex);
-      handleChange(index, 'images', newImages as any);
+      handleChange(index, 'images', newImages);
     }
   };
 
-  const getRoomFileList = (room: RoomType): UploadFile[] => {
+  const getRoomFileList = (room: RoomFormItem): UploadFile[] => {
     if (!room.images || !Array.isArray(room.images)) return [];
     return (room.images as string[]).map((url, i) => ({
       uid: `-${i}`,
@@ -242,15 +245,14 @@ export default function HotelManagementPage() {
     }
   };
   
-  const handleTableChange = (newPagination: any) => {
+  const handleTableChange = (newPagination: { current?: number; pageSize?: number }) => {
     fetchHotels(newPagination.current, newPagination.pageSize);
   };
 
   
   const fetchLocations = async () => {
     try {
-        const res = await getLocations({ type: 'domestic' });
-        // @ts-ignore
+        const res = await getLocations({ type: 'domestic' }) as { data?: Location[] };
         const locs: Location[] = res.data || [];
         // 按拼音首字母排序
         locs.sort((a, b) => {
@@ -266,8 +268,7 @@ export default function HotelManagementPage() {
 
   const fetchTags = async () => {
       try {
-          const res = await getTags();
-          // @ts-ignore
+          const res = await getTags() as { data?: HotelTag[] };
           setTags(res.data || []);
       } catch(e) {
           console.error(e);
@@ -319,15 +320,14 @@ export default function HotelManagementPage() {
     setEditingHotel(record);
 
     // 转换日期字段
-    const formData: any = {
+    const formData = {
       ...record,
       name: record.nameZh,
       name_en: record.nameEn,
       star_rating: record.starRating ?? 3,
       opening_date: record.openingYear ? dayjs(`${record.openingYear}-01-01`) : null,
       locationId: record.locationId,
-      // map hotelTags from [{ tag: { id, name } }] to [id, id]
-      hotelTags: record.hotelTags?.map((ht: any) => ht.tagId || ht.tag?.id),
+      hotelTags: record.hotelTags?.map((ht: { tagId?: number; tag?: { id: number } }) => ht.tagId || ht.tag?.id),
       rooms: record.roomTypes || [],
       latitude: record.latitude,
       longitude: record.longitude,
@@ -356,9 +356,10 @@ export default function HotelManagementPage() {
       await deleteHotel(id);
       message.success('删除成功');
       fetchHotels();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('删除失败:', error);
-      message.error(error.response?.data?.message || '删除失败');
+      const errMsg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      message.error(errMsg || '删除失败');
     }
   };
 
@@ -386,11 +387,10 @@ export default function HotelManagementPage() {
       // 收集图片 URL
       const images = fileList
         .filter((file) => file.status === 'done')
-        .map((file) => file.url || (file.response as any)?.url)
+        .map((file) => file.url || (file.response as UploadResponse)?.url)
         .filter(Boolean) as string[];
 
-      // 1. 准备酒店数据
-      const hotelData: any = {
+      const hotelData: HotelFormData = {
         nameZh: values.name,
         nameEn: values.name_en,
         starRating: values.star_rating,
@@ -420,8 +420,7 @@ export default function HotelManagementPage() {
         if (values.rooms) {
            const currentRooms = values.rooms as RoomType[];
            const originalIds = editingHotel.roomTypes?.map(r => r.id) || [];
-           // @ts-ignore
-           const currentIds = currentRooms.map(r => r.id).filter(id => !!id);
+           const currentIds = currentRooms.map(r => r.id).filter((id): id is number => !!id);
            
            // Delete
            const toDelete = originalIds.filter(id => !currentIds.includes(id));
@@ -447,9 +446,9 @@ export default function HotelManagementPage() {
 
       setModalVisible(false);
       fetchHotels();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('提交失败:', error);
-      message.error(error.message || '提交失败');
+      message.error((error as Error).message || '提交失败');
     }
   };
 

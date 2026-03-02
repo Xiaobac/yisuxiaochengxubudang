@@ -30,6 +30,7 @@ import {
 import type { Booking, BookingStatus, Hotel, RoomType } from '@/app/types';
 import { getMyBookings, updateBookingStatus, createBooking } from '@/app/services/booking';
 import { getMyHotels } from '@/app/services/hotel';
+import { getStatusColor, getStatusText } from '@/app/lib/status-utils';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
@@ -60,8 +61,7 @@ export default function BookingsPage() {
   const fetchHotels = async () => {
       try {
           const res = await getMyHotels();
-          // @ts-ignore
-          setHotels(res.data || res || []);
+          setHotels(res.data || []);
       } catch (e) {
           console.error(e);
       }
@@ -83,7 +83,6 @@ export default function BookingsPage() {
   const handleHotelChange = (hotelId: number) => {
       const hotel = hotels.find(h => h.id === hotelId);
       if (hotel) {
-          // @ts-ignore
           setSelectedHotelRooms(hotel.roomTypes || []);
           bookingForm.setFieldsValue({ roomTypeId: undefined });
       }
@@ -120,9 +119,9 @@ export default function BookingsPage() {
           message.success('创建预订成功');
           setCreateModalVisible(false);
           fetchBookings();
-      } catch (e: any) {
+      } catch (e: unknown) {
           console.error(e);
-          message.error(e.message || '创建失败');
+          message.error((e as Error).message || '创建失败');
       }
   };
 
@@ -143,34 +142,11 @@ export default function BookingsPage() {
       if (selectedBooking?.id === id) {
         setSelectedBooking({ ...selectedBooking, status: newStatus });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('更新状态失败:', error);
-      message.error(error.response?.data?.error || '更新状态失败');
+      const errMsg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      message.error(errMsg || '更新状态失败');
     }
-  };
-
-  const getStatusColor = (status: BookingStatus): string => {
-    const colorMap: Record<BookingStatus, string> = {
-      pending: 'orange',
-      confirmed: 'blue',
-      checked_in: 'green',
-      checked_out: 'default',
-      completed: 'gray',
-      cancelled: 'red',
-    };
-    return colorMap[status];
-  };
-
-  const getStatusText = (status: BookingStatus): string => {
-    const textMap: Record<BookingStatus, string> = {
-      pending: '待确认',
-      confirmed: '已确认',
-      checked_in: '已入住',
-      checked_out: '已退房',
-      completed: '已完成',
-      cancelled: '已取消',
-    };
-    return textMap[status];
   };
 
   const filteredBookings = bookings.filter(booking => {

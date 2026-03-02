@@ -24,9 +24,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import type { Booking, BookingStatus } from '@/app/types';
+import type { Booking, BookingStatus, Hotel, RoomType } from '@/app/types';
 import { getMyBookings } from '@/app/services/booking';
 import { getMyHotels } from '@/app/services/hotel';
+import { getStatusColor, getStatusText } from '@/app/lib/status-utils';
 import dayjs from 'dayjs';
 
 export default function DashboardPage() {
@@ -77,12 +78,9 @@ export default function DashboardPage() {
         )
         .reduce((sum, b) => sum + Number(b.totalPrice), 0);
 
-      // 计算总房间数（注意：这里需要从实际的房型数据获取，暂时使用估算值）
-      // 使用 reduce 累加每个酒店下所有房型的 stock
-      // @ts-ignore
-      const totalRooms = hotels.reduce((sum, hotel) => {
-          // @ts-ignore
-          const hotelRooms = hotel.roomTypes?.reduce((rSum, room) => rSum + (room.stock || 0), 0) || 0;
+      // 计算总房间数：累加每个酒店下所有房型的 stock
+      const totalRooms = hotels.reduce((sum: number, hotel: Hotel) => {
+          const hotelRooms = hotel.roomTypes?.reduce((rSum: number, room: RoomType) => rSum + (room.stock || 0), 0) || 0;
           return sum + hotelRooms;
       }, 0);
 
@@ -171,30 +169,6 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getStatusColor = (status: BookingStatus): string => {
-    const colorMap: Record<BookingStatus, string> = {
-      pending: 'orange',
-      confirmed: 'blue',
-      checked_in: 'green',
-      checked_out: 'default',
-      completed: 'cyan',
-      cancelled: 'red',
-    };
-    return colorMap[status] || 'default';
-  };
-
-  const getStatusText = (status: BookingStatus): string => {
-    const textMap: Record<BookingStatus, string> = {
-      pending: '待确认',
-      confirmed: '已确认',
-      checked_in: '已入住',
-      checked_out: '已退房',
-      completed: '已完成',
-      cancelled: '已取消',
-    };
-    return textMap[status] || status;
   };
 
   const columns: TableColumnsType<Booking> = [

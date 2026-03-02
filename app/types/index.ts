@@ -116,6 +116,8 @@ export interface HotelFormData {
   longitude?: number;
   images?: string[];
   merchantId: number;
+  tagIds?: number[];
+  roomTypes?: Partial<RoomType>[];
 }
 
 // 搜索和筛选相关类型
@@ -141,6 +143,17 @@ export interface HotelListResponse {
 // 预订相关类型
 export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'completed' | 'cancelled';
 
+export interface GuestInfo {
+  name?: string;
+  phone?: string;
+  email?: string;
+  idCard?: string;
+  specialRequests?: string;
+  guestName?: string;
+  guestPhone?: string;
+  arrivalTime?: string;
+}
+
 export interface Booking {
   id: number;
   userId?: number;
@@ -151,7 +164,7 @@ export interface Booking {
   guestCount: number;
   totalPrice: number;
   status: BookingStatus;
-  guestInfo?: any;
+  guestInfo?: GuestInfo;
   createdAt?: string;
   hotel?: Hotel;
   roomType?: RoomType;
@@ -164,7 +177,7 @@ export interface BookingFormData {
   checkInDate: string;
   checkOutDate: string;
   guestCount: number;
-  guestInfo?: any;
+  guestInfo?: GuestInfo;
 }
 
 // 审核相关类型
@@ -210,7 +223,11 @@ export interface Comment {
 }
 
 // API 响应通用类型
-export interface ApiResponse<T = any> {
+export interface UploadResponse {
+  url: string;
+}
+
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   message?: string;
