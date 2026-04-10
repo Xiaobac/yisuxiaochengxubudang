@@ -12,7 +12,6 @@ module.exports = {
       }
     }]
   ],
-  // 👇 关键：添加刚刚安装的插件
   plugins: [
     '@babel/plugin-transform-optional-chaining',
     '@babel/plugin-transform-nullish-coalescing-operator',
