@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Table,
   Button,
@@ -22,6 +23,7 @@ import {
   Drawer,
   List,
   Avatar,
+  Empty,
   message
 } from 'antd';
 import type { TableColumnsType, UploadFile, UploadProps } from 'antd';
@@ -46,23 +48,29 @@ import {
 } from '@/app/services/hotel';
 import { getCommentsByHotelId, deleteComment } from '@/app/services/comment';
 import { getStoredUser } from '@/app/services/auth';
-import type { Hotel, RoomType, Location, Tag as HotelTag, Comment } from '@/app/types';
+import type { Hotel, RoomType, Location, Tag as HotelTag, Comment, UploadResponse, HotelFormData } from '@/app/types';
 import dayjs from 'dayjs';
-import TencentMapSelector from '@/app/components/TencentMapSelector';
+import { pinyin } from 'pinyin-pro';
+
+const TencentMapSelector = dynamic(() => import('@/app/components/TencentMapSelector'), {
+  ssr: false,
+  loading: () => <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>地图加载中...</div>,
+});
 
 const { TextArea } = Input;
 const { Option } = Select;
 
-// 房型动态表单组件
+// 房型表单项类型（新建时无 id）
+type RoomFormItem = Partial<RoomType> & { name: string; price: number; stock: number };
+
 interface RoomListProps {
-  value?: RoomType[];
-  onChange?: (value: RoomType[]) => void;
+  value?: RoomFormItem[];
+  onChange?: (value: RoomFormItem[]) => void;
 }
 
 function RoomList({ value = [], onChange }: RoomListProps) {
   const handleAdd = () => {
-    // @ts-ignore - Temporary ID for key handling if needed, though index is used usually
-    onChange?.([...value, { name: '', price: 0, stock: 1, discount: 1, description: '' }]);
+    onChange?.([...value, { name: '', price: 0, stock: 1, discount: 1, description: '', images: [] }]);
   };
 
   const handleRemove = (index: number) => {
@@ -71,11 +79,43 @@ function RoomList({ value = [], onChange }: RoomListProps) {
     onChange?.(newRooms);
   };
 
-  const handleChange = (index: number, field: keyof RoomType, val: any) => {
+  const handleChange = (index: number, field: keyof RoomFormItem, val: string | number | string[] | null) => {
     const newRooms = [...value];
-    // @ts-ignore
     newRooms[index] = { ...newRooms[index], [field]: val };
     onChange?.(newRooms);
+  };
+
+  const handleRoomUpload = async (index: number, { file, onSuccess, onError }: { file: File | Blob | string; onSuccess?: (body: unknown) => void; onError?: (err: Error) => void }) => {
+    try {
+      const result = await uploadImage(file as File) as UploadResponse;
+      if (result.url) {
+        const currentImages = value[index]?.images || [];
+        handleChange(index, 'images', [...currentImages, result.url]);
+      }
+      onSuccess?.(result);
+    } catch (error) {
+      onError?.(error as Error);
+    }
+  };
+
+  const handleRoomImageRemove = (index: number, fileUid: string) => {
+    const room = value[index];
+    const currentImages = room?.images || [];
+    const fileIndex = parseInt(fileUid.replace('-', ''));
+    if (!isNaN(fileIndex) && fileIndex < currentImages.length) {
+      const newImages = currentImages.filter((_, i) => i !== fileIndex);
+      handleChange(index, 'images', newImages);
+    }
+  };
+
+  const getRoomFileList = (room: RoomFormItem): UploadFile[] => {
+    if (!room.images || !Array.isArray(room.images)) return [];
+    return (room.images as string[]).map((url, i) => ({
+      uid: `-${i}`,
+      name: `room-img-${i}`,
+      status: 'done' as const,
+      url,
+    }));
   };
 
   return (
@@ -118,7 +158,7 @@ function RoomList({ value = [], onChange }: RoomListProps) {
                     />
                 </Col>
                 <Col span={24}>
-                    <Space.Compact style={{ width: '100%' }}>
+                    <Space.Compact style={{ width: '100%', marginBottom: 8 }}>
                         <span className="ant-input-group-addon">描述</span>
                         <Input
                             placeholder="房型描述（选填）"
@@ -126,6 +166,24 @@ function RoomList({ value = [], onChange }: RoomListProps) {
                             onChange={(e) => handleChange(index, 'description', e.target.value)}
                         />
                     </Space.Compact>
+                </Col>
+                <Col span={24}>
+                    <div style={{ marginBottom: 4, fontSize: 13, color: '#666' }}>房型图片（最多4张）</div>
+                    <Upload
+                      listType="picture-card"
+                      fileList={getRoomFileList(room)}
+                      customRequest={(options) => handleRoomUpload(index, options)}
+                      onRemove={(file) => {
+                        handleRoomImageRemove(index, file.uid);
+                      }}
+                    >
+                      {(room.images?.length || 0) >= 4 ? null : (
+                        <div>
+                          <UploadOutlined />
+                          <div style={{ marginTop: 4, fontSize: 12 }}>上传</div>
+                        </div>
+                      )}
+                    </Upload>
                 </Col>
             </Row>
         </Card>
@@ -187,16 +245,22 @@ export default function HotelManagementPage() {
     }
   };
   
-  const handleTableChange = (newPagination: any) => {
+  const handleTableChange = (newPagination: { current?: number; pageSize?: number }) => {
     fetchHotels(newPagination.current, newPagination.pageSize);
   };
 
   
   const fetchLocations = async () => {
     try {
-        const res = await getLocations();
-        // @ts-ignore
-        setLocations(res.data || []);
+        const res = await getLocations({ type: 'domestic' }) as { data?: Location[] };
+        const locs: Location[] = res.data || [];
+        // 按拼音首字母排序
+        locs.sort((a, b) => {
+          const pa = pinyin(a.name, { pattern: 'first', toneType: 'none' }).charAt(0).toUpperCase();
+          const pb = pinyin(b.name, { pattern: 'first', toneType: 'none' }).charAt(0).toUpperCase();
+          return pa.localeCompare(pb);
+        });
+        setLocations(locs);
     } catch(e) {
         console.error(e);
     }
@@ -204,8 +268,7 @@ export default function HotelManagementPage() {
 
   const fetchTags = async () => {
       try {
-          const res = await getTags();
-          // @ts-ignore
+          const res = await getTags() as { data?: HotelTag[] };
           setTags(res.data || []);
       } catch(e) {
           console.error(e);
@@ -257,15 +320,14 @@ export default function HotelManagementPage() {
     setEditingHotel(record);
 
     // 转换日期字段
-    const formData: any = {
+    const formData = {
       ...record,
       name: record.nameZh,
       name_en: record.nameEn,
       star_rating: record.starRating ?? 3,
       opening_date: record.openingYear ? dayjs(`${record.openingYear}-01-01`) : null,
       locationId: record.locationId,
-      // map hotelTags from [{ tag: { id, name } }] to [id, id]
-      hotelTags: record.hotelTags?.map((ht: any) => ht.tagId || ht.tag?.id),
+      hotelTags: record.hotelTags?.map((ht: { tagId?: number; tag?: { id: number } }) => ht.tagId || ht.tag?.id),
       rooms: record.roomTypes || [],
       latitude: record.latitude,
       longitude: record.longitude,
@@ -294,9 +356,10 @@ export default function HotelManagementPage() {
       await deleteHotel(id);
       message.success('删除成功');
       fetchHotels();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('删除失败:', error);
-      message.error(error.response?.data?.message || '删除失败');
+      const errMsg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      message.error(errMsg || '删除失败');
     }
   };
 
@@ -324,11 +387,10 @@ export default function HotelManagementPage() {
       // 收集图片 URL
       const images = fileList
         .filter((file) => file.status === 'done')
-        .map((file) => file.url || (file.response as any)?.url)
+        .map((file) => file.url || (file.response as UploadResponse)?.url)
         .filter(Boolean) as string[];
 
-      // 1. 准备酒店数据
-      const hotelData: any = {
+      const hotelData: HotelFormData = {
         nameZh: values.name,
         nameEn: values.name_en,
         starRating: values.star_rating,
@@ -358,8 +420,7 @@ export default function HotelManagementPage() {
         if (values.rooms) {
            const currentRooms = values.rooms as RoomType[];
            const originalIds = editingHotel.roomTypes?.map(r => r.id) || [];
-           // @ts-ignore
-           const currentIds = currentRooms.map(r => r.id).filter(id => !!id);
+           const currentIds = currentRooms.map(r => r.id).filter((id): id is number => !!id);
            
            // Delete
            const toDelete = originalIds.filter(id => !currentIds.includes(id));
@@ -385,9 +446,9 @@ export default function HotelManagementPage() {
 
       setModalVisible(false);
       fetchHotels();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('提交失败:', error);
-      message.error(error.message || '提交失败');
+      message.error((error as Error).message || '提交失败');
     }
   };
 
@@ -538,6 +599,7 @@ export default function HotelManagementPage() {
         loading={loading}
         pagination={pagination}
         onChange={handleTableChange}
+        locale={{ emptyText: <Empty description="暂无酒店数据" /> }}
       />
 
       <Modal
@@ -586,10 +648,37 @@ export default function HotelManagementPage() {
             name="locationId"
             rules={[{ required: true, message: '请选择城市' }]}
           >
-             <Select placeholder="请选择城市">
-                {locations.map(loc => (
-                    <Option key={loc.id} value={loc.id}>{loc.name}</Option>
-                ))}
+             <Select
+               showSearch
+               placeholder="输入城市名搜索或下拉选择"
+               filterOption={(input, option) => {
+                 const label = (option?.label ?? option?.children ?? '') as string;
+                 if (typeof label !== 'string') return false;
+                 // 支持中文名匹配和拼音首字母匹配
+                 const py = pinyin(label, { pattern: 'first', toneType: 'none' });
+                 const fullPy = pinyin(label, { toneType: 'none' });
+                 return label.includes(input) ||
+                   py.toLowerCase().includes(input.toLowerCase()) ||
+                   fullPy.toLowerCase().includes(input.toLowerCase());
+               }}
+             >
+                {(() => {
+                  // 按拼音首字母分组
+                  const grouped: Record<string, Location[]> = {};
+                  locations.forEach(loc => {
+                    const letter = pinyin(loc.name, { pattern: 'first', toneType: 'none' }).charAt(0).toUpperCase();
+                    if (!grouped[letter]) grouped[letter] = [];
+                    grouped[letter].push(loc);
+                  });
+                  const letters = Object.keys(grouped).sort();
+                  return letters.map(letter => (
+                    <Select.OptGroup key={letter} label={letter}>
+                      {grouped[letter].map(loc => (
+                        <Option key={loc.id} value={loc.id}>{loc.name}</Option>
+                      ))}
+                    </Select.OptGroup>
+                  ));
+                })()}
              </Select>
           </Form.Item>
 

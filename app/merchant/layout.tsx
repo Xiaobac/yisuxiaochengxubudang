@@ -10,6 +10,8 @@ import {
   CalendarOutlined,
   DashboardOutlined,
   OrderedListOutlined,
+  TeamOutlined,
+  GiftOutlined,
 } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -39,6 +41,7 @@ export default function MerchantLayout({
       key: 'profile',
       icon: <UserOutlined />,
       label: '个人信息',
+      onClick: () => router.push('/merchant/profile'),
     },
     {
       type: 'divider',
@@ -50,6 +53,8 @@ export default function MerchantLayout({
       onClick: handleLogout,
     },
   ];
+
+  const isMerchant = user?.role?.name?.toUpperCase() === 'MERCHANT';
 
   const menuItems: MenuProps['items'] = [
     {
@@ -76,9 +81,23 @@ export default function MerchantLayout({
       label: '预订管理',
       onClick: () => router.push('/merchant/bookings'),
     },
+    ...(isMerchant ? [
+      {
+        key: '/merchant/staff',
+        icon: <TeamOutlined />,
+        label: '职员管理',
+        onClick: () => router.push('/merchant/staff'),
+      },
+      {
+        key: '/merchant/coupons',
+        icon: <GiftOutlined />,
+        label: '优惠券管理',
+        onClick: () => router.push('/merchant/coupons'),
+      },
+    ] : []),
   ];
 
-  if (loading) {
+  if (loading || !user) {
     return (
       <div
         style={{

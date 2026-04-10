@@ -2,6 +2,7 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+import { checkPermission } from '@/app/api/utils/permissions';
 
 /**
  * @swagger
@@ -82,35 +83,31 @@ import { verifyAuth } from '@/app/api/utils/auth';
  */
 
 async function checkOwnership(userId: number, roomTypeId: number) {
-  // First check if user is the merchant owner of the hotel
-  const roomType = await prisma.roomType.findUnique({
-    where: { id: roomTypeId },
-    include: { hotel: { select: { merchantId: true } } },
-  });
+  // 1. 并行查询房型和用户信息（提升性能）
+  const [roomType, user] = await Promise.all([
+    prisma.roomType.findUnique({
+      where: { id: roomTypeId },
+      include: { hotel: { select: { merchantId: true } } },
+    }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: { select: { name: true } }, merchantId: true }
+    })
+  ]);
 
   if (!roomType || !roomType.hotel) return null;
+
+  // 2. 检查是否是商户拥有者
   if (roomType.hotel.merchantId === userId) return true;
 
-  // Check if user is a staff member belonging to this hotel's merchant
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      role: {
-        include: {
-          rolePermission: {
-            include: { permission: true }
-          }
-        }
-      }
-    }
-  });
-
+  // 3. 检查是否是属于该商户的员工
   if (user?.role?.name === 'STAFF' && user.merchantId === roomType.hotel.merchantId) {
     return true;
   }
 
+  // 4. 检查管理员权限（使用统一权限检查函数）
   if (user?.role?.name === 'ADMIN' || user?.role?.name === 'SUPERADMIN') {
-     return !!user.role?.rolePermission.some(rp => rp.permission.name === 'HOTEL_UPDATE');
+     return await checkPermission(userId, 'HOTEL_UPDATE');
   }
 
   return false;

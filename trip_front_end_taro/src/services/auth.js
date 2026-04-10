@@ -14,30 +14,20 @@ import Taro from '@tarojs/taro';
  * @returns {Promise} 返回登录结果
  */
 export const login = async (data) => {
-  try {
-    const res = await post('/auth/login', {
-      email: data.username || data.email, // 前端用 username，后端用 email
-      password: data.password,
-    });
+  const res = await post('/auth/login', {
+    email: data.username || data.email,
+    password: data.password,
+  });
 
-    // 登录成功，保存 token 和用户信息
-    if (res.success && res.accessToken) {
-      storage.setToken(res.accessToken);
-
-      if (res.user) {
-        storage.setUser(res.user);
-      }
-
-      console.log('✅ 登录成功:', res.user);
-
-      return res;
+  if (res.success && res.accessToken) {
+    storage.setToken(res.accessToken);
+    if (res.user) {
+      storage.setUser(res.user);
     }
-
-    throw new Error(res.error || '登录失败');
-  } catch (error) {
-    console.error('❌ 登录失败:', error);
-    throw error;
+    return res;
   }
+
+  throw new Error(res.error || '登录失败');
 };
 
 /**
@@ -49,48 +39,30 @@ export const login = async (data) => {
  * @param {string} data.phone - 手机号（可选）
  * @returns {Promise} 返回注册结果
  */
-export const register = async (data) => {
-  try {
-    const res = await post('/auth/register', {
-      name: data.name,
-      email: data.email,
-      password: data.password,
-      phone: data.phone || undefined,
-      role: 'user', // 用户端固定为普通用户角色
-    });
-
-    console.log('✅ 注册成功');
-
-    return res;
-  } catch (error) {
-    console.error('❌ 注册失败:', error);
-    throw error;
-  }
+export const register = (data) => {
+  return post('/auth/register', {
+    name: data.name,
+    email: data.email,
+    password: data.password,
+    phone: data.phone || undefined,
+    role: 'user',
+  });
 };
 
 /**
  * 用户退出登录
  * @returns {Promise}
  */
-export const logout = async () => {
-  try {
-    // 清除本地认证信息
-    storage.clearAuth();
+export const logout = () => {
+  storage.clearAuth();
 
-    console.log('✅ 退出成功');
+  Taro.showToast({
+    title: '已退出登录',
+    icon: 'success',
+    duration: 1500,
+  });
 
-    // 可选：显示提示
-    Taro.showToast({
-      title: '已退出登录',
-      icon: 'success',
-      duration: 1500,
-    });
-
-    return Promise.resolve();
-  } catch (error) {
-    console.error('❌ 退出失败:', error);
-    throw error;
-  }
+  return Promise.resolve();
 };
 
 /**
@@ -115,24 +87,15 @@ export const isLoggedIn = () => {
  * @returns {Promise} 返回新的 Token
  */
 export const refreshToken = async (refreshToken) => {
-  try {
-    const res = await post('/auth/refresh', {
-      refreshToken,
-    });
+  const res = await post('/auth/refresh', { refreshToken });
 
-    if (res.success && res.accessToken) {
-      storage.setToken(res.accessToken);
-      console.log('✅ Token 刷新成功');
-      return res;
-    }
-
-    throw new Error('Token 刷新失败');
-  } catch (error) {
-    console.error('❌ Token 刷新失败:', error);
-    // Token 刷新失败，清除认证信息
-    storage.clearAuth();
-    throw error;
+  if (res.success && res.accessToken) {
+    storage.setToken(res.accessToken);
+    return res;
   }
+
+  storage.clearAuth();
+  throw new Error('Token 刷新失败');
 };
 
 /**
@@ -144,7 +107,6 @@ export const saveAuth = (token, user) => {
   if (token) {
     storage.setToken(token);
   }
-
   if (user) {
     storage.setUser(user);
   }

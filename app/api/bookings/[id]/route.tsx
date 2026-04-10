@@ -187,7 +187,7 @@ export async function PUT(
     }
 
     // 普通更新 (如 guestInfo 或其他状态)
-    const updateData: any = {};
+    const updateData: Partial<{ guestInfo: typeof guestInfo; status: string }> = {};
     if (guestInfo) updateData.guestInfo = guestInfo;
     if (status) updateData.status = status;
 

@@ -2,6 +2,7 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+import { checkPermission } from '@/app/api/utils/permissions';
 
 /**
  * @swagger
@@ -198,27 +199,7 @@ export async function PUT(
       return NextResponse.json({ success: false, error: '职员无权编辑酒店' }, { status: 403 });
     }
 
-    // 2. 获取当前用户及其角色权限
-    const currentUser = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        role: {
-          include: {
-            rolePermission: {
-              include: {
-                permission: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!currentUser) {
-      return NextResponse.json({ success: false, error: '用户不存在' }, { status: 401 });
-    }
-
-    // 3. 获取当前酒店信息以对比状态
+    // 2. 并行获取酒店信息（提升性能）
     const existingHotel = await prisma.hotel.findUnique({
       where: { id: hotelId },
     });
@@ -228,7 +209,7 @@ export async function PUT(
     }
 
     // 准备更新数据
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       updatedAt: new Date(),
     };
 
@@ -250,11 +231,9 @@ export async function PUT(
     const isStatusChange = newStatus && newStatus !== existingHotel.status;
 
     if (isStatusChange) {
-      // 4. 检查权限
+      // 3. 检查权限（使用统一权限检查函数）
       const isOwner = existingHotel.merchantId === userId;
-      const hasAuditPermission = !!currentUser.role?.rolePermission.some(
-        (rp) => rp.permission.name === 'HOTEL_AUDIT'
-      );
+      const hasAuditPermission = await checkPermission(userId, 'HOTEL_AUDIT');
 
       // 允许下线的情况：拥有者 或 管理员(有HOTEL_AUDIT权限)
       // 允许其他状态变更的情况：仅管理员

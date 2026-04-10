@@ -11,6 +11,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         locale={zhCN}
         theme={{
           algorithm: antdTheme.defaultAlgorithm,
+          cssVar: { prefix: 'ant' },
+          hashed: false,
           token: {
             colorPrimary: '#1677ff',
           },

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { FloatButton, Card, Input, List, Avatar, Button, Spin, theme } from 'antd';
+import { FloatButton, Card, Input, Avatar, Button, Spin, theme } from 'antd';
 import { MessageOutlined, CloseOutlined, UserOutlined, RobotOutlined, SendOutlined } from '@ant-design/icons';
+import { getToken } from '@/app/lib/auth-storage';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -33,11 +34,15 @@ export default function AiChatWidget() {
     setLoading(true);
 
     try {
+      const token = getToken();
       const response = await fetch('/api/ai/recommend', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          messages: [...messages, userMsg] 
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMsg]
         }),
       });
 
@@ -125,37 +130,33 @@ export default function AiChatWidget() {
         >
           {/* Messages Area */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px', background: '#f5f5f5' }}>
-            <List
-              dataSource={messages}
-              split={false}
-              renderItem={(item) => (
-                <List.Item style={{ padding: '8px 0', border: 'none', justifyContent: item.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    flexDirection: item.role === 'user' ? 'row-reverse' : 'row',
-                    gap: 8,
-                    maxWidth: '85%'
+            {messages.map((item, index) => (
+              <div key={index} style={{ padding: '8px 0', display: 'flex', justifyContent: item.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: item.role === 'user' ? 'row-reverse' : 'row',
+                  gap: 8,
+                  maxWidth: '85%'
+                }}>
+                  <Avatar
+                    icon={item.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
+                    style={{ backgroundColor: item.role === 'user' ? token.colorPrimary : '#87d068', flexShrink: 0 }}
+                  />
+                  <div style={{
+                    backgroundColor: item.role === 'user' ? token.colorPrimary : '#fff',
+                    color: item.role === 'user' ? '#fff' : '#000',
+                    padding: '8px 12px',
+                    borderRadius: 12,
+                    borderTopRightRadius: item.role === 'user' ? 2 : 12,
+                    borderTopLeftRadius: item.role === 'user' ? 12 : 2,
+                    wordWrap: 'break-word',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
                   }}>
-                    <Avatar 
-                      icon={item.role === 'user' ? <UserOutlined /> : <RobotOutlined />} 
-                      style={{ backgroundColor: item.role === 'user' ? token.colorPrimary : '#87d068', flexShrink: 0 }} 
-                    />
-                    <div style={{ 
-                      backgroundColor: item.role === 'user' ? token.colorPrimary : '#fff', 
-                      color: item.role === 'user' ? '#fff' : '#000',
-                      padding: '8px 12px', 
-                      borderRadius: 12,
-                      borderTopRightRadius: item.role === 'user' ? 2 : 12,
-                      borderTopLeftRadius: item.role === 'user' ? 12 : 2,
-                      wordWrap: 'break-word',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                    }}>
-                      {item.content}
-                    </div>
+                    {item.content}
                   </div>
-                </List.Item>
-              )}
-            />
+                </div>
+              </div>
+            ))}
             {loading && <div style={{ textAlign: 'center', padding: 8 }}><Spin size="small" /></div>}
             <div ref={messagesEndRef} />
           </div>

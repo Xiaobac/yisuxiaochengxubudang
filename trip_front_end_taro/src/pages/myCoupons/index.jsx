@@ -114,7 +114,7 @@ function MyCoupons() {
           couponList.map(item => renderCouponCard(item))
         ) : (
           <EmptyState
-            image='📋'
+            image='clipboardText'
             title='暂无优惠券'
             description='去首页看看有没有可领取的优惠券吧'
           />

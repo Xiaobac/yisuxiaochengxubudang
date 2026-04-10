@@ -4,6 +4,7 @@ import { View, Text, Button, ScrollView } from '@tarojs/components'
 import dayjs from 'dayjs'
 import { useTheme } from '../../utils/useTheme'
 import { getDayExtraInfo } from '../../utils/lunarHelper'
+import Icon from '../Icon'
 import './index.css'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
@@ -367,25 +368,31 @@ const Calendar = ({
 
         {/* 预约提示 */}
         <View className='booking-notice'>
-          <Text className='notice-text'>
-            {maxDate
-              ? `📅 可选日期：今天至${maxDate.format('MM月DD日')}，向下滑动查看更多月份`
-              : '📅 向下滑动可查看更多月份'}
-          </Text>
-          {mode === 'range' && !tempStart && (
-            <Text className='notice-text' style={{ color: tokens['--color-primary'], fontWeight: 500 }}>
-              💡 请先选择入住日期
+          <View className='notice-text' style={{ display: 'flex', alignItems: 'center' }}>
+            <Icon name='calendarBlank' size={28} color={tokens['--color-text-secondary']} style={{ marginRight: '8rpx' }} />
+            <Text>
+              {maxDate
+                ? `可选日期：今天至${maxDate.format('MM月DD日')}，向下滑动查看更多月份`
+                : '向下滑动可查看更多月份'}
             </Text>
+          </View>
+          {mode === 'range' && !tempStart && (
+            <View className='notice-text' style={{ display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+              <Icon name='lightbulb' size={28} color={tokens['--color-primary']} style={{ marginRight: '8rpx' }} />
+              <Text style={{ color: tokens['--color-primary'] }}>请先选择入住日期</Text>
+            </View>
           )}
           {mode === 'range' && tempStart && !tempEnd && (
-            <Text className='notice-text' style={{ color: tokens['--color-primary'], fontWeight: 500 }}>
-              💡 请选择离店日期（系统会自动识别顺序）
-            </Text>
+            <View className='notice-text' style={{ display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+              <Icon name='lightbulb' size={28} color={tokens['--color-primary']} style={{ marginRight: '8rpx' }} />
+              <Text style={{ color: tokens['--color-primary'] }}>请选择离店日期（系统会自动识别顺序）</Text>
+            </View>
           )}
           {mode === 'range' && tempStart && tempEnd && (
-            <Text className='notice-text' style={{ color: tokens['--color-success'], fontWeight: 500 }}>
-              ✅已选好，点"确定"确认，或重新点选更改
-            </Text>
+            <View className='notice-text' style={{ display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+              <Icon name='checkCircle' size={28} color={tokens['--color-success']} style={{ marginRight: '8rpx' }} />
+              <Text style={{ color: tokens['--color-success'] }}>已选好，点"确定"确认，或重新点选更改</Text>
+            </View>
           )}
         </View>
 

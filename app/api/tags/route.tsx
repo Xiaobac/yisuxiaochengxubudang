@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const name = searchParams.get('name');
 
-    const where: any = {};
+    const where: { name?: { contains: string } } = {};
     if (name) {
       where.name = { contains: name };
     }

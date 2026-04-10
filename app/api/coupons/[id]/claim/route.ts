@@ -32,45 +32,50 @@ export async function POST(
       return NextResponse.json({ success: false, message: '优惠券不在有效期内' }, { status: 400 });
     }
 
-    // 处理积分兑换逻辑
-    if (coupon.points > 0) {
-      return await prisma.$transaction(async (tx) => {
-        // 1. 检查用户积分
+    // 统一在事务内处理，防止竞态条件
+    return await prisma.$transaction(async (tx) => {
+      // 1. 检查是否已领取（在事务内检查）
+      const existing = await tx.userCoupon.findUnique({
+        where: { userId_couponId: { userId, couponId } }
+      });
+
+      if (existing) {
+        return NextResponse.json({ success: false, message: '已领取过该优惠券' }, { status: 400 });
+      }
+
+      // 2. 如果需要积分，检查并扣减积分
+      if (coupon.points > 0) {
         const user = await tx.user.findUnique({
           where: { id: userId },
           select: { points: true }
         });
 
         if (!user || user.points < coupon.points) {
-           throw new Error('INSUFFICIENT_POINTS');
+          throw new Error('INSUFFICIENT_POINTS');
         }
 
-        // 2. 扣除积分
         await tx.user.update({
           where: { id: userId },
           data: { points: { decrement: coupon.points } }
         });
+      }
 
-        // 3. 发放优惠券
-        const userCoupon = await tx.userCoupon.create({
-          data: { userId, couponId },
-        });
-
-        return NextResponse.json({ success: true, message: '兑换成功', data: userCoupon }, { status: 201 });
+      // 3. 创建领券记录
+      const userCoupon = await tx.userCoupon.create({
+        data: { userId, couponId },
       });
-    }
 
-    // 创建领取记录（复合主键，重复领取会报 P2002）
-    const userCoupon = await prisma.userCoupon.create({
-      data: { userId, couponId },
+      return NextResponse.json(
+        { success: true, message: coupon.points > 0 ? '兑换成功' : '领取成功', data: userCoupon },
+        { status: 201 }
+      );
     });
-
-    return NextResponse.json({ success: true, data: userCoupon }, { status: 201 });
   } catch (error: any) {
     if (error.message === 'INSUFFICIENT_POINTS') {
       return NextResponse.json({ success: false, message: '积分不足' }, { status: 400 });
     }
     if (error.code === 'P2002') {
+      // 理论上事务内已检查，但保留作为后备
       return NextResponse.json({ success: false, message: '已领取过该优惠券' }, { status: 400 });
     }
     console.error('领取优惠券失败:', error);

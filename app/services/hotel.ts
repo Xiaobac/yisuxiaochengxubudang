@@ -100,8 +100,9 @@ export const deleteRoomType = (id: number) => {
 /**
  * 获取所有位置/城市
  */
-export const getLocations = () => {
-  return get<ApiResponse<Location[]>>('/locations');
+export const getLocations = (params?: { type?: string }) => {
+  const query = params?.type ? `?type=${params.type}` : '';
+  return get<ApiResponse<Location[]>>(`/locations${query}`);
 };
 
 /**

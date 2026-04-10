@@ -175,9 +175,9 @@ export const BED_TYPES = [
  * 支付方式
  */
 export const PAYMENT_METHODS = [
-  { value: 'wechat', label: '微信支付', icon: '💚' },
-  { value: 'alipay', label: '支付宝', icon: '💙' },
-  { value: 'cash', label: '到店支付', icon: '💰' },
+  { value: 'wechat', label: '微信支付', icon: 'chatCircle' },
+  { value: 'alipay', label: '支付宝', icon: 'briefcase' },
+  { value: 'cash', label: '到店支付', icon: 'ticket' },
 ];
 
 // ==================== 取消政策 ====================

@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { View, Text } from '@tarojs/components';
+import Icon from '../Icon';
 import './index.css';
 
 function SearchSuggestion({
@@ -37,7 +38,7 @@ function SearchSuggestion({
                 className='history-item'
                 onClick={() => onSelect(item)}
               >
-                <Text className='history-icon'>🕒</Text>
+                <Icon name='clock' size={28} color='#999' style={{ marginRight: '8rpx' }} />
                 <Text className='history-text'>{item}</Text>
               </View>
             ))}

@@ -1,14 +1,17 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth, getEffectiveMerchantIdFromToken } from '@/app/api/utils/auth';
 
 /**
  * @swagger
  * /api/hotels/{id}/bookings:
  *   get:
  *     summary: 获取酒店预订记录
- *     description: 查看特定酒店的预订记录 (公开访问)
+ *     description: 查看特定酒店的预订记录 (需要认证，仅限商户及其员工访问)
  *     tags:
  *       - Hotels
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -48,15 +51,15 @@ import { NextRequest, NextResponse } from 'next/server';
  *                         properties:
  *                           name:
  *                             type: string
- *                           email:
- *                             type: string
- *                           phone:
- *                             type: string
  *                       roomType:
  *                         type: object
  *                         properties:
  *                           name:
  *                             type: string
+ *       401:
+ *         description: 未认证
+ *       403:
+ *         description: 无权访问
  *       404:
  *         description: 酒店不存在
  *       500:
@@ -71,27 +74,38 @@ export async function GET(
     const params = await props.params;
     const hotelId = parseInt(params.id);
 
-    // 1. 检查酒店是否存在
+    // 1. 身份验证
+    const authResult = verifyAuth(request);
+    if (!authResult.success) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    // 2. 检查酒店是否存在
     const hotel = await prisma.hotel.findUnique({
-        where: { id: hotelId },
+      where: { id: hotelId },
+      select: { id: true, merchantId: true }
     });
 
     if (!hotel) {
-        return NextResponse.json({ success: false, error: '酒店不存在' }, { status: 404 });
+      return NextResponse.json({ success: false, error: '酒店不存在' }, { status: 404 });
     }
 
-    // 2. 查询预订记录
-    // 根据用户要求，所有人都可以查看，因此移除身份验证和权限检查
+    // 3. 权限验证：仅酒店所属商户或其员工可查看
+    const effectiveMerchantId = getEffectiveMerchantIdFromToken(authResult.user);
+
+    if (hotel.merchantId !== effectiveMerchantId) {
+      return NextResponse.json({ error: '无权查看该酒店的预订记录' }, { status: 403 });
+    }
+
+    // 4. 查询预订记录（脱敏用户信息）
     const bookings = await prisma.booking.findMany({
       where: { hotelId },
       include: {
         user: {
-            // 公开接口返回敏感信息(电话/邮箱)可能存在风险
-            // 但按照原需求保留了字段选择，如需脱敏请指示
-            select: { name: true, email: true, phone: true }
+          select: { name: true } // 仅返回姓名，移除 email 和 phone
         },
         roomType: {
-            select: { name: true }
+          select: { name: true }
         }
       },
       orderBy: { createdAt: 'desc' }

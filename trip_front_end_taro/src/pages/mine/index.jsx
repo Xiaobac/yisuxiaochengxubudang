@@ -225,21 +225,21 @@ function Mine() {
               className={`theme-seg-item${themePreference === THEME.LIGHT ? ' theme-seg-active' : ''}`}
               onClick={() => handleThemeSelect(THEME.LIGHT)}
             >
-              <Text className='theme-seg-icon'>☀️</Text>
+              <Icon name='sun' size={32} color={tokens['--color-text-primary']} />
               <Text className='theme-seg-label'>浅色</Text>
             </View>
             <View
               className={`theme-seg-item${themePreference === THEME.SYSTEM ? ' theme-seg-active' : ''}`}
               onClick={() => handleThemeSelect(THEME.SYSTEM)}
             >
-              <Text className='theme-seg-icon'>🌐</Text>
+              <Icon name='globeSimple' size={32} color={tokens['--color-text-primary']} />
               <Text className='theme-seg-label'>跟随</Text>
             </View>
             <View
               className={`theme-seg-item${themePreference === THEME.DARK ? ' theme-seg-active' : ''}`}
               onClick={() => handleThemeSelect(THEME.DARK)}
             >
-              <Text className='theme-seg-icon'>🌙</Text>
+              <Icon name='moon' size={32} color={tokens['--color-text-primary']} />
               <Text className='theme-seg-label'>深色</Text>
             </View>
           </View>

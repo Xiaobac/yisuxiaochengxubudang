@@ -594,7 +594,7 @@ async function main() {
         const randomFacilities = randomItems(facilitiesList, randomInt(3, 8));
 
         const hotelData: any = {
-            merchantId: 1, // 统一为 1
+            merchantId: 2, // merchant@hotel.com 的用户ID
             locationId: location.id,
             nameZh: `${location.name}${randomItem(['大酒店', '宾馆', '度假村', '客栈', '公寓', '民宿'])} No.${i}`,
             nameEn: `Grand ${location.name} Hotel No.${i}`,

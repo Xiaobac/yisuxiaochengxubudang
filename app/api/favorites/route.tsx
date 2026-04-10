@@ -1,6 +1,7 @@
 import { prisma } from '@/app/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/app/api/utils/auth';
+import { PAGINATION } from '@/app/constants';
 
 /**
  * @swagger
@@ -62,7 +63,7 @@ import { verifyAuth } from '@/app/api/utils/auth';
  *         description: 未登录
  */
 
-// GET - 获取用户收藏列表
+// GET - 获取用户收藏列表（带分页）
 export async function GET(request: NextRequest) {
   try {
     const authResult = verifyAuth(request);
@@ -71,20 +72,57 @@ export async function GET(request: NextRequest) {
     }
     const currentUserId = authResult.user.userId;
 
-    const favorites = await prisma.favorite.findMany({
-      where: { userId: currentUserId },
-      include: {
-        hotel: {
-          include: {
-            location: true,
-            merchant: { select: { id: true, name: true, email: true } },
-            hotelTags: { include: { tag: true } },
-            roomTypes: true,
+    // 分页参数
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(
+      PAGINATION.MAX_PAGE_SIZE,
+      Math.max(1, parseInt(searchParams.get('limit') || String(PAGINATION.DEFAULT_PAGE_SIZE)))
+    );
+    const skip = (page - 1) * limit;
+
+    const where = { userId: currentUserId };
+
+    // 并发查询总数和数据
+    const [total, favorites] = await prisma.$transaction([
+      prisma.favorite.count({ where }),
+      prisma.favorite.findMany({
+        where,
+        include: {
+          hotel: {
+            select: {
+              id: true,
+              nameZh: true,
+              nameEn: true,
+              address: true,
+              description: true,
+              starRating: true,
+              images: true,
+              type: true,
+              score: true,
+              location: { select: { id: true, name: true, type: true } },
+              merchant: { select: { id: true, name: true } },
+              hotelTags: {
+                select: {
+                  tag: { select: { id: true, name: true } }
+                }
+              },
+              roomTypes: {
+                select: {
+                  id: true,
+                  name: true,
+                  price: true,
+                  stock: true
+                }
+              },
+            }
           }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+    ]);
 
     // Format the response to include composite id
     const formattedFavorites = favorites.map(fav => ({
@@ -94,7 +132,13 @@ export async function GET(request: NextRequest) {
       hotel: fav.hotel,
     }));
 
-    return NextResponse.json({ success: true, data: formattedFavorites });
+    return NextResponse.json({
+      success: true,
+      data: formattedFavorites,
+      total,
+      page,
+      limit
+    });
   } catch (error) {
     console.error('Fetch favorites error:', error);
     return NextResponse.json({ success: false, error: '获取收藏列表失败' }, { status: 500 });

@@ -13,6 +13,7 @@ import { formatPrice } from '../../utils/format';
 import { DEFAULT_HOTEL_IMAGE } from '../../config/images';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import EmptyState from '../../components/EmptyState';
+import Icon from '../../components/Icon';
 import { useTheme } from '../../utils/useTheme'
 import { getImageUrl } from '../../config/images';
 import './index.css';
@@ -118,7 +119,7 @@ function FavoriteList() {
     return (
       <View className='favorite-page-container' style={cssVars}>
         <EmptyState
-          image='💝'
+          image='heartFill'
           title='暂无收藏'
           description='快去收藏心仪的酒店吧'
           buttonText='去逛逛'
@@ -165,7 +166,7 @@ function FavoriteList() {
                   className='favorite-btn active'
                   onClick={(e) => handleRemoveFavorite(hotel.hotelId, e)}
                 >
-                  <Text className='favorite-icon'>♥</Text>
+                  <Icon name='heartFill' size={28} color='#ff4d4f' style={{ marginRight: '4rpx' }} />
                   <Text className='favorite-text'>已收藏</Text>
                 </View>
               </View>

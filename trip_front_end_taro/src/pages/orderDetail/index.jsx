@@ -5,7 +5,9 @@ import { getBookingById, cancelBooking } from '../../services/booking';
 import { createReview } from '../../services/comments';
 import { formatDate, formatPrice } from '../../utils/format';
 import { getImageUrl, DEFAULT_HOTEL_IMAGE } from '../../config/images';
+import { getStatusText, getStatusColor } from '../../utils/status';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import Icon from '../../components/Icon';
 import { useTheme } from '../../utils/useTheme'
 import './index.css';
 import AiChatWidget from '../../components/AiChatWidget';
@@ -78,7 +80,7 @@ function OrderDetail() {
           discountAmount: Number(rawData.discountAmount || 0),
           status: rawData.status || 'pending',
           statusText: getStatusText(rawData.status),
-          statusColor: getStatusColor(rawData.status),
+          statusColor: getStatusColor(rawData.status, tokens),
           createdAt: formatDate(rawData.createdAt, 'YYYY-MM-DD HH:mm:ss'),
           arrivalTime: rawData.arrivalTime || guestInfo.arrivalTime || '14:00-18:00'
         };
@@ -94,26 +96,6 @@ function OrderDetail() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getStatusText = (status) => {
-    const statusMap = {
-      'pending': '待确认',
-      'confirmed': '已确认',
-      'cancelled': '已取消',
-      'completed': '已完成'
-    };
-    return statusMap[status] || status;
-  };
-
-  const getStatusColor = (status) => {
-    const colorMap = {
-      'pending': tokens['--color-warning'],
-      'confirmed': tokens['--color-success'],
-      'cancelled': tokens['--color-text-tertiary'],
-      'completed': tokens['--color-info']
-    };
-    return colorMap[status] || tokens['--color-text-tertiary'];
   };
 
   const getNightCount = () => {
@@ -213,7 +195,7 @@ function OrderDetail() {
       {/* 订单状态卡片 */}
       <View className='status-card'>
         <View className='status-icon-wrapper'>
-          <Text className='status-icon'>{order.status === 'confirmed' ? '✓' : order.status === 'cancelled' ? '✕' : '⏱'}</Text>
+          <Icon name={order.status === 'confirmed' ? 'checkCircle' : order.status === 'cancelled' ? 'prohibit' : 'hourglassSimple'} size={48} color={order.statusColor} />
         </View>
         <Text className='status-text' style={{ color: order.statusColor }}>{order.statusText}</Text>
         <Text className='order-no'>订单号: {order.orderNo}</Text>
@@ -233,11 +215,11 @@ function OrderDetail() {
         </View>
         <View className='hotel-actions'>
           <View className='action-btn' onClick={handleContactHotel}>
-            <Text className='action-icon'>📞</Text>
+            <Icon name='phone' size={36} color={tokens['--color-primary']} />
             <Text className='action-text'>联系酒店</Text>
           </View>
           <View className='action-btn' onClick={handleNavigateToHotel}>
-            <Text className='action-icon'>📍</Text>
+            <Icon name='mapPin' size={36} color={tokens['--color-primary']} />
             <Text className='action-text'>查看位置</Text>
           </View>
         </View>

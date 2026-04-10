@@ -10,6 +10,7 @@ import { getTags } from '../../services/tag';
 import { BANNER_IMAGES } from '../../config/images';
 import dayjs from 'dayjs';
 import { useTheme } from '../../utils/useTheme';
+import { groupByInitial } from '../../utils/pinyinMap';
 import './index.css';
 
 function Home() {
@@ -99,6 +100,8 @@ function Home() {
 
   // --- 城市选择弹窗状态 ---
   const [isCitySelectorVisible, setIsCitySelectorVisible] = useState(false);
+  const [cityTab, setCityTab] = useState(0); // 0=国内, 1=国外
+  const [scrollIntoViewId, setScrollIntoViewId] = useState('');
 
   // --- 搜索建议 ---
   const [showSearchSuggestion, setShowSearchSuggestion] = useState(false);
@@ -171,7 +174,10 @@ function Home() {
 
       if (locationsData.length > 0) {
         setLocations(locationsData);
-        const defaultCity = filterCitiesByTab(currentTab, locationsData)[0] || null;
+        // 优先使用同步的城市选择
+        const syncedCity = Taro.getStorageSync('selectedCitySync');
+        const matched = syncedCity && locationsData.find(loc => loc.id === syncedCity.id);
+        const defaultCity = matched || filterCitiesByTab(currentTab, locationsData)[0] || null;
         setSelectedLocation(defaultCity);
       } else {
         setLocations([]);
@@ -306,6 +312,35 @@ function Home() {
   const handleSelectCity = (location) => {
     setSelectedLocation(location);
     setIsCitySelectorVisible(false);
+    setSearchKeyword(''); // 选城市时清空搜索关键词
+    // 同步城市选择到酒店列表页
+    Taro.setStorageSync('selectedCitySync', { id: location.id, name: location.name });
+  };
+
+  const handleResetCity = () => {
+    setSelectedLocation(null);
+    setIsCitySelectorVisible(false);
+    setCitySearchKeyword('');
+    setSearchKeyword(''); // 重置时也清空搜索关键词
+    Taro.removeStorageSync('selectedCitySync');
+  };
+
+  // ---------- 城市分组（A-Z） ----------
+  const groupedCities = useMemo(() => {
+    const typeFilter = cityTab === 0 ? 'domestic' : 'overseas';
+    let filtered = locations.filter(loc => loc.type === typeFilter);
+    if (citySearchKeyword) {
+      filtered = filtered.filter(loc =>
+        loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase())
+      );
+    }
+    return groupByInitial(filtered);
+  }, [locations, cityTab, citySearchKeyword]);
+
+  const indexLetters = useMemo(() => groupedCities.map(g => g.letter), [groupedCities]);
+
+  const handleIndexTap = (letter) => {
+    setScrollIntoViewId(`home-city-group-${letter}`);
   };
 
   const handleToggleTag = (tag) => {
@@ -329,12 +364,18 @@ function Home() {
     else type = 'hotel';
 
     const params = {
-      locationId: selectedLocation?.id,
-      locationName: selectedLocation?.name,
       checkIn: startDate, checkOut: endDate,
-      keyword, minPrice, maxPrice, type,
+      minPrice, maxPrice, type,
       tags: selectedTags.map(t => t.id)
     };
+
+    // 关键词和城市互斥：有关键词则全局搜索，无关键词则按城市筛选
+    if (keyword) {
+      params.keyword = keyword;
+    } else if (selectedLocation) {
+      params.locationId = selectedLocation.id;
+      params.locationName = selectedLocation.name;
+    }
 
     setShowSearchSuggestion(false);
     Taro.setStorageSync('hotelSearchParams', params);
@@ -357,8 +398,10 @@ function Home() {
           className='banner-swiper'
         >
           {BANNER_IMAGES.map((item, index) => (
-            <SwiperItem key={index} onClick={() => Taro.navigateTo({ url: item.url })}>
-              <Image className='banner-img' src={item.src} mode='scaleToFill' lazyLoad />
+            <SwiperItem key={index}>
+              <View className='banner-link' onClick={() => item.isTab ? Taro.switchTab({ url: item.url }) : Taro.navigateTo({ url: item.url })}>
+                <Image className='banner-img' src={item.src} mode='scaleToFill' lazyLoad />
+              </View>
             </SwiperItem>
           ))}
         </Swiper>
@@ -383,7 +426,7 @@ function Home() {
 
         {/* 城市选择+搜索输入 */}
         <View className='row-section city-search-row'>
-          <View className='city-wrap-box' hoverClass='city-wrap-hover' onClick={() => setIsCitySelectorVisible(true)}>
+          <View className='city-wrap-box' hoverClass='city-wrap-hover' onClick={() => { setCityTab(currentTab === 1 ? 1 : 0); setCitySearchKeyword(''); setScrollIntoViewId(''); setIsCitySelectorVisible(true); }}>
             <Text className='city-label-text'>
               {selectedLocation?.name || '选择城市'}
             </Text>
@@ -395,7 +438,12 @@ function Home() {
               placeholder='位置/品牌/酒店'
               placeholderStyle='color:var(--color-text-disabled);'
               value={searchKeyword}
-              onInput={(e) => setSearchKeyword(e.detail.value)}
+              onInput={(e) => {
+                const val = e.detail.value;
+                setSearchKeyword(val);
+                // 输入关键词时清除城市选择，避免冲突
+                if (val.trim()) setSelectedLocation(null);
+              }}
               onFocus={handleSearchFocus}
               onBlur={handleSearchBlur}
             />
@@ -680,9 +728,28 @@ function Home() {
       >
         <View className='city-selector-content' onClick={e => e.stopPropagation()}>
           <View className='city-selector-header'>
+            <View className='city-reset-btn' hoverClass='city-reset-hover' onClick={handleResetCity}>
+              <Text className='city-reset-text'>重置</Text>
+            </View>
             选择城市
             <View className='city-selector-close' onClick={() => setIsCitySelectorVisible(false)}>
               <Icon name='x' size={36} color={tokens['--color-text-tertiary']} />
+            </View>
+          </View>
+
+          {/* 国内/国外 Tab */}
+          <View className='city-tab-bar'>
+            <View
+              className={`city-tab-item ${cityTab === 0 ? 'active' : ''}`}
+              onClick={() => { setCityTab(0); setCitySearchKeyword(''); }}
+            >
+              <Text>国内</Text>
+            </View>
+            <View
+              className={`city-tab-item ${cityTab === 1 ? 'active' : ''}`}
+              onClick={() => { setCityTab(1); setCitySearchKeyword(''); }}
+            >
+              <Text>国外</Text>
             </View>
           </View>
 
@@ -698,25 +765,52 @@ function Home() {
             />
           </View>
 
-          <ScrollView scrollY className='city-selector-scroll'>
-            <View className='city-grid-container'>
-              {filterCitiesByTab(currentTab, locations)
-                .filter(loc => !citySearchKeyword || loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase()))
-                .map((loc) => (
-                <View
-                  key={loc.id}
-                  className={`city-grid-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
-                  hoverClass='city-select-hover'
-                  onClick={() => handleSelectCity(loc)}
-                >
-                  {loc.name}
+          {/* 城市列表 + 右侧索引 */}
+          <View className='city-body-wrapper'>
+            <ScrollView
+              scrollY
+              className='city-list-scroll'
+              scrollIntoView={scrollIntoViewId}
+              scrollWithAnimation
+            >
+              {groupedCities.length > 0 ? groupedCities.map(group => (
+                <View key={group.letter} id={`home-city-group-${group.letter}`}>
+                  <View className='city-group-title'>
+                    <Text>{group.letter}</Text>
+                  </View>
+                  <View className='city-grid-container'>
+                    {group.cities.map(loc => (
+                      <View
+                        key={loc.id}
+                        className={`city-grid-item ${selectedLocation?.id === loc.id ? 'active' : ''}`}
+                        hoverClass='city-select-hover'
+                        onClick={() => handleSelectCity(loc)}
+                      >
+                        {loc.name}
+                      </View>
+                    ))}
+                  </View>
                 </View>
-              ))}
-            </View>
-            {filterCitiesByTab(currentTab, locations).filter(loc => !citySearchKeyword || loc.name.toLowerCase().includes(citySearchKeyword.toLowerCase())).length === 0 && (
-              <View className='empty-city-tip'>当前标签下无城市可选</View>
+              )) : (
+                <View className='empty-city-tip'>当前无城市可选</View>
+              )}
+            </ScrollView>
+
+            {/* 右侧字母索引栏 */}
+            {indexLetters.length > 0 && (
+              <View className='city-index-bar'>
+                {indexLetters.map(letter => (
+                  <View
+                    key={letter}
+                    className='city-index-letter'
+                    onClick={() => handleIndexTap(letter)}
+                  >
+                    <Text>{letter}</Text>
+                  </View>
+                ))}
+              </View>
             )}
-          </ScrollView>
+          </View>
         </View>
       </View>
     </View>
